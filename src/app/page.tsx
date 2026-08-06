@@ -1,101 +1,129 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Activity, BookOpen, Wallet, ArrowLeftRight } from "lucide-react";
+import { ledger, ApiError } from "@/lib/api";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { JsonBlock } from "@/components/ui/json-block";
+import { NAV } from "@/lib/nav";
+
+type Dashboard = {
+  walletCount?: number;
+  accountCount?: number;
+  movementCount?: number;
+  openMovementCount?: number;
+};
+
+export default function DashboardPage() {
+  const [dash, setDash] = useState<Dashboard | null>(null);
+  const [health, setHealth] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [d, h] = await Promise.all([
+          ledger.get<Dashboard>("/dashboards").catch(() => null),
+          ledger.get("/actuator/health").catch(() => null),
+        ]);
+        setDash(d);
+        setHealth(h);
+      } catch (e) {
+        setError(e instanceof ApiError ? e.message : String(e));
+      }
+    })();
+  }, []);
+
+  const metrics = [
+    { label: "Wallets", value: dash?.walletCount, icon: Wallet },
+    { label: "Accounts", value: dash?.accountCount, icon: BookOpen },
+    { label: "Movements", value: dash?.movementCount, icon: ArrowLeftRight },
+    { label: "Open movements", value: dash?.openMovementCount, icon: Activity },
+  ];
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div>
+      <PageHeader
+        title="Dashboard"
+        description="Direct admin UI for ledger-engine. No login — all calls go through /api/ledger → LEDGER_ENGINE_URL."
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {error ? (
+        <div className="mb-4">
+          <Alert variant="error">
+            Cannot reach engine: {error}. Start ledger-engine on{" "}
+            <code>localhost:8080</code> (or set <code>LEDGER_ENGINE_URL</code>).
+          </Alert>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      ) : null}
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((m) => {
+          const Icon = m.icon;
+          return (
+            <Card key={m.label}>
+              <CardBody className="flex items-center gap-3">
+                <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs text-zinc-500">{m.label}</div>
+                  <div className="text-2xl font-semibold tabular-nums">
+                    {m.value ?? "—"}
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Resources" description="Open a module to list / create / update" />
+          <CardBody className="grid gap-2 sm:grid-cols-2">
+            {NAV.filter((n) => n.href !== "/").map((n) => {
+              const Icon = n.icon;
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50/50"
+                >
+                  <Icon className="h-4 w-4 text-zinc-400" />
+                  {n.label}
+                </Link>
+              );
+            })}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Engine health"
+            description="GET /actuator/health"
+            actions={
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  void ledger.get("/actuator/health").then(setHealth).catch((e) =>
+                    setError(String(e.message || e)),
+                  )
+                }
+              >
+                Ping
+              </Button>
+            }
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <CardBody>
+            <JsonBlock value={health ?? { status: "unknown" }} maxHeight={280} />
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }

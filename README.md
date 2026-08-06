@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ledger-engine-admin-portal
 
-## Getting Started
+Next.js admin UI for **[ledger-engine](https://github.com/yky32/ledger-engine)**.
 
-First, run the development server:
+Internal tool for operating a ledger-engine deployment: resource modules, dark sidebar navigation, list / create / update panels. Built with **Next.js App Router**.
+
+## Features
+
+- **No login** (dev / internal use)
+- Browser calls **`/api/ledger/*`** → Next **rewrite** → `LEDGER_ENGINE_URL` (avoids CORS)
+- Modules for wallets, ledger accounts, movements, deposits/withdrawals/transfers, rules, recipients, VA, FX, configs, journal, transaction webhook ingest
+- List / create / update / delete where the engine API supports it
+- JSON response inspector on every page
+
+## Quick start
 
 ```bash
+# terminal 1 — engine
+cd ../ledger-engine && mvn spring-boot:run
+
+# terminal 2 — portal
+cd ../ledger-engine-admin-portal
+cp .env.example .env.local   # LEDGER_ENGINE_URL=http://localhost:8080
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Config
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Env | Default | Meaning |
+|-----|---------|---------|
+| `LEDGER_ENGINE_URL` | `http://localhost:8080` | Engine base URL (server-side rewrite target) |
 
-## Learn More
+## Layout
 
-To learn more about Next.js, take a look at the following resources:
+```text
+src/
+  app/                 # pages per resource
+  components/
+    layout/            # sidebar shell (grouped nav)
+    resource/          # shared ResourceCrud
+    ui/                # button, card, input, …
+  lib/
+    api.ts             # fetch helper
+    nav.ts             # nav config
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Not production-hardened: no auth, no RBAC, open to anyone who can reach the portal.
+- Some engine list endpoints require filters (e.g. wallets need `ownerId`).
+- Engine field names / enums must match server (see ledger-engine DTOs / Swagger if enabled).
