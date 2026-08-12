@@ -7,57 +7,55 @@ export default function HoldsPage() {
     <div className="space-y-8">
       <ResourceCrud
         title="Hold available"
-        description="POST /wallets/holds — available ↓, ledger unchanged. Idempotent movementKey."
+        description="POST /wallets/holds — reduces available only (ledger unchanged). Query wallet by ownerId."
         listPath="/wallets"
-        mode="lookup"
-        listFilters={[
+        listQueryFields={[
           {
-            name: "associatedIdentifier",
-            label: "Lookup wallet after hold (associatedIdentifier)",
-            defaultValue: "",
+            name: "ownerId",
+            label: "Lookup wallet after hold (ownerId)",
+            placeholder: "01A…",
           },
         ]}
-        buildListPath={(f) =>
-          f.associatedIdentifier
-            ? `/wallets/${encodeURIComponent(f.associatedIdentifier)}?currencies=LP`
+        listPathBuilder={(f) =>
+          f.ownerId
+            ? `/wallets/${encodeURIComponent(f.ownerId)}?currencies=LP`
             : "/wallets/_"
         }
         createPath="/wallets/holds"
         createFields={[
-          { name: "associatedIdentifier", label: "associatedIdentifier", required: true },
-          { name: "currency", label: "currency", required: true, defaultValue: "LP" },
-          { name: "amount", label: "amount", type: "number", required: true, defaultValue: "1" },
-          { name: "movementKey", label: "movementKey (optional)" },
+          { name: "ownerId", label: "ownerId", required: true },
+          { name: "currency", label: "currency", defaultValue: "LP", required: true },
+          { name: "amount", label: "amount", type: "number", defaultValue: 1, required: true },
+          { name: "movementKey", label: "movementKey (idempotent)" },
           { name: "description", label: "description" },
         ]}
-        columns={["associatedIdentifier", "settlementCurrency", "status"]}
+        columns={["ownerId", "settlementCurrency", "status"]}
       />
       <ResourceCrud
         title="Release available"
-        description="POST /wallets/releases — available ↑ (≤ ledger)."
+        description="POST /wallets/releases"
         listPath="/wallets"
-        mode="lookup"
-        listFilters={[
+        listQueryFields={[
           {
-            name: "associatedIdentifier",
-            label: "Lookup wallet after release",
-            defaultValue: "",
+            name: "ownerId",
+            label: "Lookup wallet (ownerId)",
+            placeholder: "01A…",
           },
         ]}
-        buildListPath={(f) =>
-          f.associatedIdentifier
-            ? `/wallets/${encodeURIComponent(f.associatedIdentifier)}?currencies=LP`
+        listPathBuilder={(f) =>
+          f.ownerId
+            ? `/wallets/${encodeURIComponent(f.ownerId)}?currencies=LP`
             : "/wallets/_"
         }
         createPath="/wallets/releases"
         createFields={[
-          { name: "associatedIdentifier", label: "associatedIdentifier", required: true },
-          { name: "currency", label: "currency", required: true, defaultValue: "LP" },
-          { name: "amount", label: "amount", type: "number", required: true, defaultValue: "1" },
-          { name: "movementKey", label: "movementKey (optional)" },
+          { name: "ownerId", label: "ownerId", required: true },
+          { name: "currency", label: "currency", defaultValue: "LP", required: true },
+          { name: "amount", label: "amount", type: "number", defaultValue: 1, required: true },
+          { name: "movementKey", label: "movementKey" },
           { name: "description", label: "description" },
         ]}
-        columns={["associatedIdentifier", "settlementCurrency", "status"]}
+        columns={["ownerId", "settlementCurrency", "status"]}
       />
     </div>
   );

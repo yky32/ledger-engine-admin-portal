@@ -37,7 +37,7 @@ export default function ReviewPage() {
   const load = useCallback(async () => {
     const id = cust.trim();
     if (!id) {
-      setError("Enter associatedIdentifier (CUST id)");
+      setError("Enter ownerId (CUST id)");
       return;
     }
     setLoading(true);
@@ -50,7 +50,7 @@ export default function ReviewPage() {
         ),
         ledger.get(`/wallets/${encodeURIComponent(id)}/balances/as-of?currency=LP`),
         ledger.get(
-          `/integrations/failed-transactions?associatedIdentifier=${encodeURIComponent(id)}&page=1&size=50`,
+          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
         ),
       ]);
       setWallet(w);
@@ -84,7 +84,7 @@ export default function ReviewPage() {
       const eid = `admin-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
       const res = await ledger.post("/integrations/webhooks/transactions", {
         eventId: eid,
-        associatedIdentifier: id,
+        ownerId: id,
         eventType: "PURCHASE",
         amount: 200,
         currency: "HKD",
@@ -98,7 +98,7 @@ export default function ReviewPage() {
         ledger.get(`/wallets/${encodeURIComponent(id)}/movements?page=1&size=50`),
         ledger.get(`/wallets/${encodeURIComponent(id)}/balances/as-of?currency=LP`),
         ledger.get(
-          `/integrations/failed-transactions?associatedIdentifier=${encodeURIComponent(id)}&page=1&size=50`,
+          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
         ),
       ]);
       setWallet(w);
@@ -126,7 +126,7 @@ export default function ReviewPage() {
 
       <Card className="mb-4">
         <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Field label="associatedIdentifier (CUST)">
+          <Field label="ownerId (CUST)">
             <Input
               value={cust}
               onChange={(e) => setCust(e.target.value)}
@@ -229,7 +229,7 @@ export default function ReviewPage() {
         <Card className="lg:col-span-2">
           <CardHeader
             title="Failed ingest for this CUST"
-            description="GET /integrations/failed-transactions?associatedIdentifier="
+            description="GET /integrations/failed-transactions?ownerId="
           />
           <CardBody>
             <JsonBlock value={fails ?? { hint: "Load a CUST" }} maxHeight={280} />

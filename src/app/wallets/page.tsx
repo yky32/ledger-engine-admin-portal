@@ -6,54 +6,36 @@ export default function WalletsPage() {
   return (
     <ResourceCrud
       title="Wallets (onboarding)"
-      description="1 CUST → 1 Wallet. Create with settlementCurrency + optional LP account. Lookup by path id."
+      description="POST /wallets — create still uses ownerId (stored as ownerId). GET uses ownerId."
       listPath="/wallets"
-      listFilters={[
+      listQueryFields={[
         {
-          name: "associatedIdentifier",
-          label: "associatedIdentifier (required to lookup)",
-          required: true,
-          defaultValue: "",
+          name: "ownerId",
+          label: "ownerId (lookup)",
+          placeholder: "01A…",
         },
       ]}
       createPath="/wallets"
       createFields={[
         {
-          name: "associatedIdentifier",
-          label: "associatedIdentifier",
+          name: "ownerId",
+          label: "ownerId",
           required: true,
-          placeholder: "01A12345678",
+          placeholder: "01A…",
         },
         {
           name: "settlementCurrency",
           label: "settlementCurrency",
-          required: true,
           defaultValue: "HKD",
+          required: true,
         },
-        { name: "name", label: "name", placeholder: "Display name" },
-        { name: "associatedFrom", label: "associatedFrom", defaultValue: "CRM" },
-        {
-          name: "accounts",
-          label: 'accounts JSON (optional LP book)',
-          type: "textarea",
-          defaultValue:
-            '[{"currency":"LP","name":"Loyalty","refCode":"LP"}]',
-        },
+        { name: "name", label: "name" },
       ]}
-      detailPathTemplate="/wallets/{id}"
-      getRowId={(r) => String(r.associatedIdentifier ?? r.ownerId ?? r.id ?? "")}
-      columns={[
-        "id",
-        "associatedIdentifier",
-        "ownerId",
-        "settlementCurrency",
-        "status",
-        "name",
-      ]}
-      mode="lookup"
-      buildListPath={(f) => {
-        if (!f.associatedIdentifier) return "/wallets/_";
-        return `/wallets/${encodeURIComponent(f.associatedIdentifier)}?currencies=LP,HKD`;
+      columns={["ownerId", "name", "type", "walletType", "status", "settlementCurrency"]}
+      getRowId={(r) => String(r.ownerId ?? r.id ?? "")}
+      listPathBuilder={(f) => {
+        if (!f.ownerId) return "/wallets/_";
+        return `/wallets/${encodeURIComponent(f.ownerId)}?currencies=LP,HKD`;
       }}
     />
   );
