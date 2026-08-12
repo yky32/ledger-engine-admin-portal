@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ledger, ApiError } from "@/lib/api";
 import { asRecord, nowIso } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { JsonBlock } from "@/components/ui/json-block";
 import { Alert } from "@/components/ui/alert";
 
 /**
- * Post-test review desk: paste CUST id from upstream-sim / smoke and inspect wallet, movements, legs, fails.
+ * Post-test review desk: paste CUST id from simulator / upstream-sim and inspect wallet, movements, legs, fails.
  */
 export default function ReviewPage() {
   const [cust, setCust] = useState("");
@@ -24,6 +24,15 @@ export default function ReviewPage() {
   const [asOf, setAsOf] = useState<unknown>(null);
   const [legs, setLegs] = useState<unknown>(null);
   const [fails, setFails] = useState<unknown>(null);
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("ledger-review-cust");
+      if (saved) setCust(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const load = useCallback(async () => {
     const id = cust.trim();
@@ -112,7 +121,7 @@ export default function ReviewPage() {
     <div>
       <PageHeader
         title="Customer review"
-        description="After ./scripts/upstream-sim.sh — paste CUST id and inspect balances, movements, legs, fails."
+        description="After Txn simulator or ./scripts/upstream-sim.sh — paste CUST id and inspect balances, movements, legs, fails."
       />
 
       <Card className="mb-4">
@@ -140,6 +149,12 @@ export default function ReviewPage() {
             <Button variant="secondary" onClick={() => void fireQuickPurchase()} disabled={loading}>
               Fire test PURCHASE 200 HKD
             </Button>
+            <Link
+              href="/simulator"
+              className="inline-flex items-center rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+            >
+              Simulator
+            </Link>
             <Link
               href="/failed-transactions"
               className="inline-flex items-center rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
