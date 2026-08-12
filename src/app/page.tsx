@@ -2,125 +2,159 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Activity, BookOpen, Wallet, ArrowLeftRight } from "lucide-react";
+import {
+  Activity,
+  Brain,
+  DoorOpen,
+  Search,
+  AlertTriangle,
+  Webhook,
+  Wallet,
+} from "lucide-react";
 import { ledger, ApiError } from "@/lib/api";
+import { asArray, asRecord } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { JsonBlock } from "@/components/ui/json-block";
-import { NAV } from "@/lib/nav";
 
-type Dashboard = {
-  walletCount?: number;
-  accountCount?: number;
-  movementCount?: number;
-  openMovementCount?: number;
-};
+const QUICK = [
+  { href: "/review", label: "Customer review", icon: Search, blurb: "Paste CUST after upstream-sim" },
+  { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, blurb: "Play POS purchase" },
+  { href: "/failed-transactions", label: "Failed ingest", icon: AlertTriangle, blurb: "Replay skips" },
+  { href: "/digestion-rules", label: "Digestion rules", icon: Brain, blurb: "Formulas live" },
+  { href: "/ingest-policy", label: "Ingest policy", icon: DoorOpen, blurb: "Door / auto-wallet" },
+  { href: "/wallets", label: "Wallets", icon: Wallet, blurb: "Onboard / lookup" },
+];
 
 export default function DashboardPage() {
-  const [dash, setDash] = useState<Dashboard | null>(null);
   const [health, setHealth] = useState<unknown>(null);
+  const [policy, setPolicy] = useState<unknown>(null);
+  const [rules, setRules] = useState<unknown>(null);
+  const [openFails, setOpenFails] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  async function refresh() {
+    setError(null);
+    try {
+      const [h, p, r, f] = await Promise.all([
+        ledger.get("/actuator/health"),
+        ledger.get("/ingest-policy").catch(() => null),
+        ledger.get("/digestion-rules?enabledOnly=true").catch(() => null),
+        ledger.get("/integrations/failed-transactions?status=OPEN&page=1&size=50").catch(() => null),
+      ]);
+      setHealth(h);
+      setPolicy(p);
+      setRules(r);
+      setOpenFails(asArray(f).length);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : String(e));
+    }
+  }
+
   useEffect(() => {
-    void (async () => {
-      try {
-        const [d, h] = await Promise.all([
-          ledger.get<Dashboard>("/dashboards").catch(() => null),
-          ledger.get("/actuator/health").catch(() => null),
-        ]);
-        setDash(d);
-        setHealth(h);
-      } catch (e) {
-        setError(e instanceof ApiError ? e.message : String(e));
-      }
-    })();
+    void refresh();
   }, []);
 
-  const metrics = [
-    { label: "Wallets", value: dash?.walletCount, icon: Wallet },
-    { label: "Accounts", value: dash?.accountCount, icon: BookOpen },
-    { label: "Movements", value: dash?.movementCount, icon: ArrowLeftRight },
-    { label: "Open movements", value: dash?.openMovementCount, icon: Activity },
-  ];
+  const pol = asRecord(policy);
+  const ruleCount = asArray(rules).length;
 
   return (
     <div>
       <PageHeader
         title="Dashboard"
-        description="Direct admin UI for ledger-engine. No login — all calls go through /api/ledger → LEDGER_ENGINE_URL."
+        description="Review desk for local ledger-engine. No auth. Proxy: /api/ledger → LEDGER_ENGINE_URL."
       />
 
       {error ? (
         <div className="mb-4">
           <Alert variant="error">
-            Cannot reach engine: {error}. Start ledger-engine on{" "}
-            <code>localhost:8080</code> (or set <code>LEDGER_ENGINE_URL</code>).
+            Cannot reach engine: {error}. Start ledger-engine on <code>localhost:8080</code>, then{" "}
+            <code>./scripts/upstream-sim.sh</code>, open <strong>Customer review</strong>.
           </Alert>
         </div>
       ) : null}
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((m) => {
-          const Icon = m.icon;
+        <Card>
+          <CardBody className="flex items-center gap-3">
+            <Activity className="h-5 w-5 text-emerald-600" />
+            <div>
+              <div className="text-xs text-zinc-500">Engine</div>
+              <div className="text-lg font-semibold">
+                {health && typeof health === "object" && "status" in (health as object)
+                  ? String((health as { status: string }).status)
+                  : "—"}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <div className="text-xs text-zinc-500">Ingest enabled</div>
+            <div className="text-lg font-semibold">
+              {pol ? String(pol.isEnabled) : "—"}
+            </div>
+            <div className="text-xs text-zinc-400">
+              auto-wallet: {pol ? String(pol.isAutoCreateWallet) : "—"}
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <div className="text-xs text-zinc-500">Enabled digestion rules</div>
+            <div className="text-2xl font-semibold tabular-nums">{ruleCount || "—"}</div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <div className="text-xs text-zinc-500">OPEN failed ingest (page)</div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {openFails == null ? "—" : openFails}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="mb-4 flex justify-end">
+        <Button variant="secondary" onClick={() => void refresh()}>
+          Refresh
+        </Button>
+      </div>
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {QUICK.map((q) => {
+          const Icon = q.icon;
           return (
-            <Card key={m.label}>
-              <CardBody className="flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500">{m.label}</div>
-                  <div className="text-2xl font-semibold tabular-nums">
-                    {m.value ?? "—"}
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
+            <Link
+              key={q.href}
+              href={q.href}
+              className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/40"
+            >
+              <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-zinc-900">{q.label}</div>
+                <div className="text-xs text-zinc-500">{q.blurb}</div>
+              </div>
+            </Link>
           );
         })}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Resources" description="Open a module to list / create / update" />
-          <CardBody className="grid gap-2 sm:grid-cols-2">
-            {NAV.filter((n) => n.href !== "/").map((n) => {
-              const Icon = n.icon;
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50/50"
-                >
-                  <Icon className="h-4 w-4 text-zinc-400" />
-                  {n.label}
-                </Link>
-              );
-            })}
+          <CardHeader title="Health" description="GET /actuator/health" />
+          <CardBody>
+            <JsonBlock value={health ?? { status: "unknown" }} maxHeight={200} />
           </CardBody>
         </Card>
-
         <Card>
-          <CardHeader
-            title="Engine health"
-            description="GET /actuator/health"
-            actions={
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  void ledger.get("/actuator/health").then(setHealth).catch((e) =>
-                    setError(String(e.message || e)),
-                  )
-                }
-              >
-                Ping
-              </Button>
-            }
-          />
+          <CardHeader title="Ingest policy" description="GET /ingest-policy" />
           <CardBody>
-            <JsonBlock value={health ?? { status: "unknown" }} maxHeight={280} />
+            <JsonBlock value={policy ?? {}} maxHeight={200} />
           </CardBody>
         </Card>
       </div>

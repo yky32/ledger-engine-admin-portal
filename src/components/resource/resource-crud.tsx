@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { ApiError, ledger } from "@/lib/api";
-import { asArray } from "@/lib/utils";
+import { asArray, asRecord } from "@/lib/utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -138,7 +138,8 @@ export function ResourceCrud(props: Props) {
           for (const f of listFilters) {
             if (filters[f.name]) qs.set(f.name, filters[f.name]);
           }
-          // default page size for spring pageable
+          // default pageable (engine is 1-based page)
+          if (!qs.has("page")) qs.set("page", "1");
           if (!qs.has("size")) qs.set("size", "50");
           const q = qs.toString();
           return q ? `${listPath}?${q}` : listPath;
@@ -149,11 +150,9 @@ export function ResourceCrud(props: Props) {
       const arr = asArray<Record<string, unknown>>(data);
       if (arr.length) {
         setRows(arr);
-      } else if (data && typeof data === "object" && !Array.isArray(data)) {
-        // single object response
-        setRows([data as Record<string, unknown>]);
       } else {
-        setRows([]);
+        const one = asRecord(data);
+        setRows(one ? [one] : []);
       }
     } catch (e) {
       setRows([]);

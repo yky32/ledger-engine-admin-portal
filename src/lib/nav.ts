@@ -12,6 +12,12 @@ import {
   FileStack,
   CreditCard,
   Layers,
+  Brain,
+  DoorOpen,
+  AlertTriangle,
+  Search,
+  Lock,
+  ListTree,
 } from "lucide-react";
 
 export type NavItem = {
@@ -23,6 +29,13 @@ export type NavItem = {
 
 export const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, group: "Overview" },
+  { href: "/review", label: "Customer review", icon: Search, group: "Loyalty review" },
+  { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, group: "Loyalty review" },
+  { href: "/failed-transactions", label: "Failed ingest", icon: AlertTriangle, group: "Loyalty review" },
+  { href: "/ledger-entries", label: "Ledger legs", icon: ListTree, group: "Loyalty review" },
+  { href: "/digestion-rules", label: "Digestion rules", icon: Brain, group: "Loyalty config" },
+  { href: "/ingest-policy", label: "Ingest policy", icon: DoorOpen, group: "Loyalty config" },
+  { href: "/holds", label: "Hold / Release", icon: Lock, group: "Loyalty config" },
   { href: "/wallets", label: "Wallets (onboard)", icon: Wallet, group: "Core" },
   { href: "/ledger-wallets", label: "Ledger wallets", icon: Layers, group: "Core" },
   { href: "/ledger-accounts", label: "Ledger accounts", icon: BookOpen, group: "Core" },
@@ -31,9 +44,8 @@ export const NAV: NavItem[] = [
   { href: "/deposits", label: "Deposits", icon: CreditCard, group: "Money" },
   { href: "/withdrawals", label: "Withdrawals", icon: CreditCard, group: "Money" },
   { href: "/transfers", label: "In-wallet transfers", icon: ArrowLeftRight, group: "Money" },
-  { href: "/transactions-ingest", label: "Txn ingest (webhook)", icon: Webhook, group: "Money" },
   { href: "/journal", label: "Journal post", icon: FileStack, group: "Money" },
-  { href: "/rules", label: "Rules", icon: Scale, group: "Accounting" },
+  { href: "/rules", label: "Rules (legacy)", icon: Scale, group: "Accounting" },
   { href: "/rule-executions", label: "Rule executions", icon: PlayCircle, group: "Accounting" },
   { href: "/fx-rates", label: "FX rates", icon: Globe2, group: "Config" },
   { href: "/configurations", label: "Configurations", icon: Settings2, group: "Config" },
