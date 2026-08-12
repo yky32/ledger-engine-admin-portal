@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Webhook,
   Wallet,
+  FlaskConical,
 } from "lucide-react";
 import { ledger, ApiError } from "@/lib/api";
 import { asArray, asRecord } from "@/lib/utils";
@@ -20,8 +21,9 @@ import { Alert } from "@/components/ui/alert";
 import { JsonBlock } from "@/components/ui/json-block";
 
 const QUICK = [
-  { href: "/review", label: "Customer review", icon: Search, blurb: "Paste CUST after upstream-sim" },
-  { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, blurb: "Play POS purchase" },
+  { href: "/simulator", label: "Txn simulator", icon: FlaskConical, blurb: "Configurable multi-txn filter matrix" },
+  { href: "/review", label: "Customer review", icon: Search, blurb: "Paste CUST after sim" },
+  { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, blurb: "Single event" },
   { href: "/failed-transactions", label: "Failed ingest", icon: AlertTriangle, blurb: "Replay skips" },
   { href: "/digestion-rules", label: "Digestion rules", icon: Brain, blurb: "Formulas live" },
   { href: "/ingest-policy", label: "Ingest policy", icon: DoorOpen, blurb: "Door / auto-wallet" },

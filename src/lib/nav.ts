@@ -18,6 +18,7 @@ import {
   Search,
   Lock,
   ListTree,
+  FlaskConical,
 } from "lucide-react";
 
 export type NavItem = {
@@ -29,6 +30,7 @@ export type NavItem = {
 
 export const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, group: "Overview" },
+  { href: "/simulator", label: "Txn simulator", icon: FlaskConical, group: "Loyalty review" },
   { href: "/review", label: "Customer review", icon: Search, group: "Loyalty review" },
   { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, group: "Loyalty review" },
   { href: "/failed-transactions", label: "Failed ingest", icon: AlertTriangle, group: "Loyalty review" },
