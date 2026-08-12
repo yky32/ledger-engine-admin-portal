@@ -7,11 +7,11 @@ export default function TransactionsIngestPage() {
   return (
     <ResourceCrud
       title="Fire webhook (upstream sim)"
-      description="POST /integrations/webhooks/transactions — play POS. Auto-wallet if ingest-policy allows. Prefer associatedIdentifier."
+      description="POST /integrations/webhooks/transactions — play POS. Auto-wallet if ingest-policy allows. Prefer ownerId."
       listPath="/wallets"
       listFilters={[
         {
-          name: "associatedIdentifier",
+          name: "ownerId",
           label: "Lookup wallet after fire",
           defaultValue: "",
         },
@@ -26,8 +26,8 @@ export default function TransactionsIngestPage() {
           placeholder: "unique id",
         },
         {
-          name: "associatedIdentifier",
-          label: "associatedIdentifier (CUST)",
+          name: "ownerId",
+          label: "ownerId (CUST)",
           required: true,
           placeholder: "01A12345678",
         },
@@ -49,11 +49,11 @@ export default function TransactionsIngestPage() {
       ]}
       mode="lookup"
       buildListPath={(f) =>
-        f.associatedIdentifier
-          ? `/wallets/${encodeURIComponent(f.associatedIdentifier)}?currencies=LP,HKD`
+        f.ownerId
+          ? `/wallets/${encodeURIComponent(f.ownerId)}?currencies=LP,HKD`
           : "/wallets/_"
       }
-      columns={["associatedIdentifier", "settlementCurrency", "status", "ownerId"]}
+      columns={["ownerId", "settlementCurrency", "status", "ownerId"]}
     />
   );
 }

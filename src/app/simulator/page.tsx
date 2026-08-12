@@ -228,7 +228,7 @@ export default function SimulatorPage() {
       try {
         const res = await ledger.post("/integrations/webhooks/transactions", {
           eventId,
-          associatedIdentifier: cust.trim(),
+          ownerId: cust.trim(),
           eventType,
           amount: amt,
           currency,
@@ -380,7 +380,7 @@ export default function SimulatorPage() {
 
   const runSuite = useCallback(async () => {
     if (!cust.trim()) {
-      setError("CUST / associatedIdentifier required");
+      setError("CUST / ownerId required");
       return;
     }
     setRunning(true);
@@ -469,7 +469,7 @@ export default function SimulatorPage() {
       const [w, f, m] = await Promise.all([
         ledger.get(`/wallets/${encodeURIComponent(id)}?currencies=LP,HKD`),
         ledger.get(
-          `/integrations/failed-transactions?associatedIdentifier=${encodeURIComponent(id)}&page=1&size=50`,
+          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
         ),
         ledger.get(`/wallets/${encodeURIComponent(id)}/movements?page=1&size=30`),
       ]);

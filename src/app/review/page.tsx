@@ -50,7 +50,7 @@ export default function ReviewPage() {
         ),
         ledger.get(`/wallets/${encodeURIComponent(id)}/balances/as-of?currency=LP`),
         ledger.get(
-          `/integrations/failed-transactions?associatedIdentifier=${encodeURIComponent(id)}&page=1&size=50`,
+          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
         ),
       ]);
       setWallet(w);
@@ -84,7 +84,7 @@ export default function ReviewPage() {
       const eid = `admin-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
       const res = await ledger.post("/integrations/webhooks/transactions", {
         eventId: eid,
-        associatedIdentifier: id,
+        ownerId: id,
         eventType: "PURCHASE",
         amount: 200,
         currency: "HKD",
@@ -98,7 +98,7 @@ export default function ReviewPage() {
         ledger.get(`/wallets/${encodeURIComponent(id)}/movements?page=1&size=50`),
         ledger.get(`/wallets/${encodeURIComponent(id)}/balances/as-of?currency=LP`),
         ledger.get(
-          `/integrations/failed-transactions?associatedIdentifier=${encodeURIComponent(id)}&page=1&size=50`,
+          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
         ),
       ]);
       setWallet(w);
@@ -229,7 +229,7 @@ export default function ReviewPage() {
         <Card className="lg:col-span-2">
           <CardHeader
             title="Failed ingest for this CUST"
-            description="GET /integrations/failed-transactions?associatedIdentifier="
+            description="GET /integrations/failed-transactions?ownerId="
           />
           <CardBody>
             <JsonBlock value={fails ?? { hint: "Load a CUST" }} maxHeight={280} />

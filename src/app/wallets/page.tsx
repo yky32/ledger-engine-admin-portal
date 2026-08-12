@@ -6,7 +6,7 @@ export default function WalletsPage() {
   return (
     <ResourceCrud
       title="Wallets (onboarding)"
-      description="POST /wallets — create still uses associatedIdentifier (stored as ownerId). GET uses ownerId."
+      description="POST /wallets — create still uses ownerId (stored as ownerId). GET uses ownerId."
       listPath="/wallets"
       listQueryFields={[
         {
@@ -18,8 +18,8 @@ export default function WalletsPage() {
       createPath="/wallets"
       createFields={[
         {
-          name: "associatedIdentifier",
-          label: "associatedIdentifier → ownerId",
+          name: "ownerId",
+          label: "ownerId",
           required: true,
           placeholder: "01A…",
         },

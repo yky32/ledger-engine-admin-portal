@@ -28,7 +28,7 @@ export default function FailedTransactionsPage() {
     try {
       const qs = new URLSearchParams({ page: "1", size: "50" });
       if (status.trim()) qs.set("status", status.trim());
-      if (cust.trim()) qs.set("associatedIdentifier", cust.trim());
+      if (cust.trim()) qs.set("ownerId", cust.trim());
       if (eventId.trim()) qs.set("eventId", eventId.trim());
       const data = await ledger.get(`/integrations/failed-transactions?${qs}`);
       setRaw(data);
@@ -87,7 +87,7 @@ export default function FailedTransactionsPage() {
           <Field label="status">
             <Input value={status} onChange={(e) => setStatus(e.target.value)} placeholder="OPEN" />
           </Field>
-          <Field label="associatedIdentifier">
+          <Field label="ownerId">
             <Input value={cust} onChange={(e) => setCust(e.target.value)} className="font-mono" />
           </Field>
           <Field label="eventId">
@@ -125,7 +125,7 @@ export default function FailedTransactionsPage() {
                 <tr key={String(r.id)} className="border-b border-zinc-100 align-top">
                   <td className="py-2 pr-2 font-mono">{String(r.id)}</td>
                   <td className="py-2 pr-2 font-mono">{String(r.eventId ?? "—")}</td>
-                  <td className="py-2 pr-2 font-mono">{String(r.associatedIdentifier ?? "—")}</td>
+                  <td className="py-2 pr-2 font-mono">{String(r.ownerId ?? "—")}</td>
                   <td className="py-2 pr-2">{String(r.failureCode ?? "—")}</td>
                   <td className="py-2 pr-2">{String(r.status ?? "—")}</td>
                   <td className="max-w-[220px] truncate py-2 pr-2" title={String(r.reason ?? "")}>
