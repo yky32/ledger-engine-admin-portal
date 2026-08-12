@@ -2,53 +2,51 @@
 
 Next.js admin UI for **[ledger-engine](https://github.com/yky32/ledger-engine)**.
 
-Internal tool for operating a ledger-engine deployment: resource modules, dark sidebar navigation, list / create / update panels. Built with **Next.js App Router**.
+Internal tool to **review local test results** after `upstream-sim` / smoke: wallets, digestion rules, ingest policy, webhook fire, failed-ingest replay, DE legs. **No auth.**
 
-## Features
-
-- **No login** (dev / internal use)
-- Browser calls **`/api/ledger/*`** → Next **rewrite** → `LEDGER_ENGINE_URL` (avoids CORS)
-- Modules for wallets, ledger accounts, movements, deposits/withdrawals/transfers, rules, recipients, VA, FX, configs, journal, transaction webhook ingest
-- List / create / update / delete where the engine API supports it
-- JSON response inspector on every page
-
-## Quick start
+## Quick start (review flow)
 
 ```bash
-# terminal 1 — engine
-cd ../ledger-engine && mvn spring-boot:run
+# terminal 1 — engine (greenfield create)
+cd ../ledger-engine
+mvn spring-boot:run
 
-# terminal 2 — portal
+# terminal 2 — seed + pretend upstream
+cd ../ledger-engine
+./scripts/upstream-sim.sh
+# note the CUST=01A… printed at the end
+
+# terminal 3 — portal
 cd ../ledger-engine-admin-portal
 cp .env.example .env.local   # LEDGER_ENGINE_URL=http://localhost:8080
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) → **Customer review** → paste `CUST` id.
+
+## Loyalty review modules
+
+| Page | Use |
+|------|-----|
+| `/review` | Wallet + movements + as-of + legs + fails for one CUST |
+| `/transactions-ingest` | Fire webhook as upstream |
+| `/failed-transactions` | List OPEN fails · Review · Replay |
+| `/ledger-entries` | Legs by `eventId` / `movementId` |
+| `/digestion-rules` | Runtime formulas |
+| `/ingest-policy` | Door / auto-wallet |
+| `/holds` | Hold / release available |
 
 ## Config
 
-| Env | Default | Meaning |
-|-----|---------|---------|
-| `LEDGER_ENGINE_URL` | `http://localhost:8080` | Engine base URL (server-side rewrite target) |
+| Env | Default |
+|-----|---------|
+| `LEDGER_ENGINE_URL` | `http://localhost:8080` |
 
-## Layout
-
-```text
-src/
-  app/                 # pages per resource
-  components/
-    layout/            # sidebar shell (grouped nav)
-    resource/          # shared ResourceCrud
-    ui/                # button, card, input, …
-  lib/
-    api.ts             # fetch helper
-    nav.ts             # nav config
-```
+Browser → `/api/ledger/*` → Next rewrite → engine (no CORS pain).
 
 ## Notes
 
-- Not production-hardened: no auth, no RBAC, open to anyone who can reach the portal.
-- Some engine list endpoints require filters (e.g. wallets need `ownerId`).
-- Engine field names / enums must match server (see ledger-engine DTOs / Swagger if enabled).
+- Not production-hardened (no auth/RBAC).
+- Engine `Result` envelope `{ data, pagination }` is unwrapped in the UI.
+- List APIs use **1-based** `page` (aligned with ledger-engine).

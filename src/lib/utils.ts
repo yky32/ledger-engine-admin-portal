@@ -12,13 +12,34 @@ export function formatJson(value: unknown): string {
   }
 }
 
+/** Unwrap ledger-engine `Result` envelope `{ code, data, pagination }`. */
+export function unwrapData(payload: unknown): unknown {
+  if (payload && typeof payload === "object" && "data" in payload) {
+    return (payload as { data: unknown }).data;
+  }
+  return payload;
+}
+
 export function asArray<T = unknown>(data: unknown): T[] {
-  if (Array.isArray(data)) return data as T[];
-  if (data && typeof data === "object") {
-    const o = data as Record<string, unknown>;
+  const u = unwrapData(data);
+  if (Array.isArray(u)) return u as T[];
+  if (u && typeof u === "object") {
+    const o = u as Record<string, unknown>;
     if (Array.isArray(o.content)) return o.content as T[];
     if (Array.isArray(o.items)) return o.items as T[];
     if (Array.isArray(o.data)) return o.data as T[];
   }
   return [];
+}
+
+export function asRecord(data: unknown): Record<string, unknown> | null {
+  const u = unwrapData(data);
+  if (u && typeof u === "object" && !Array.isArray(u)) {
+    return u as Record<string, unknown>;
+  }
+  return null;
+}
+
+export function nowIso(): string {
+  return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
