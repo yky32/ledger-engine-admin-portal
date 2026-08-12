@@ -37,7 +37,7 @@ export default function ReviewPage() {
   const load = useCallback(async () => {
     const id = cust.trim();
     if (!id) {
-      setError("Enter associatedIdentifier (CUST id)");
+      setError("Enter ownerId (CUST id)");
       return;
     }
     setLoading(true);
@@ -126,7 +126,7 @@ export default function ReviewPage() {
 
       <Card className="mb-4">
         <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Field label="associatedIdentifier (CUST)">
+          <Field label="ownerId (CUST)">
             <Input
               value={cust}
               onChange={(e) => setCust(e.target.value)}

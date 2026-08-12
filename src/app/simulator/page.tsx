@@ -280,7 +280,7 @@ export default function SimulatorPage() {
       const eventId = `${kind}-${Date.now()}-${n}`;
       try {
         const res = await ledger.post(path, {
-          associatedIdentifier: cust.trim(),
+          ownerId: cust.trim(),
           currency: "LP",
           amount: amt,
           movementKey: eventId,
@@ -602,7 +602,7 @@ export default function SimulatorPage() {
         <Card>
           <CardHeader title="Customer & amount" />
           <CardBody className="grid gap-3">
-            <Field label="associatedIdentifier (CUST)">
+            <Field label="ownerId / CUST">
               <div className="flex gap-2">
                 <Input
                   className="font-mono"
