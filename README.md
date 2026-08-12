@@ -29,13 +29,27 @@ Open [http://localhost:3000](http://localhost:3000) → **Customer review** → 
 
 | Page | Use |
 |------|-----|
+| **`/simulator`** ⭐ | Configurable multi-txn matrix (HKD/USD/JPY/age/amount/signup/redeem/dupe) |
 | `/review` | Wallet + movements + as-of + legs + fails for one CUST |
-| `/transactions-ingest` | Fire webhook as upstream |
+| `/transactions-ingest` | Fire single webhook |
 | `/failed-transactions` | List OPEN fails · Review · Replay |
 | `/ledger-entries` | Legs by `eventId` / `movementId` |
 | `/digestion-rules` | Runtime formulas |
 | `/ingest-policy` | Door / auto-wallet |
 | `/holds` | Hold / release available |
+
+### Suggested local loop
+
+```bash
+# terminal 1 — engine (ddl=create default)
+cd ledger-engine && mvn spring-boot:run
+
+# terminal 2 — portal
+cd ledger-engine-admin-portal && npm run dev
+# open http://localhost:3000/simulator → Run suite → Customer review
+```
+
+For full process restart + same matrix from CLI: `ledger-engine/./scripts/upstream-sim.sh`
 
 ## Config
 
