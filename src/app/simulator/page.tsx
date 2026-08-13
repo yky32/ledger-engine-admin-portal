@@ -881,11 +881,18 @@ export default function SimulatorPage() {
               const selected = active?.id === c.id;
               return (
                 <li key={c.id}>
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setActiveId(c.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveId(c.id);
+                      }
+                    }}
                     className={clsx(
-                      "flex w-full items-start gap-2 rounded-xl border px-2.5 py-2 text-left text-xs transition",
+                      "flex w-full cursor-pointer items-start gap-2 rounded-xl border px-2.5 py-2 text-left text-xs transition",
                       selected
                         ? "border-emerald-400 bg-emerald-50 ring-1 ring-emerald-200"
                         : "border-slate-200 bg-white hover:bg-slate-50",
@@ -930,7 +937,7 @@ export default function SimulatorPage() {
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                  </button>
+                  </div>
                 </li>
               );
             })}
