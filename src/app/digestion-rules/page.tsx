@@ -67,7 +67,8 @@ export default function DigestionRulesPage() {
     setError(null);
     try {
       const r = await engine.digestionRules();
-      setRows(Array.isArray(r.data) ? r.data : []);
+      const d = r.data;
+      setRows(Array.isArray(d) ? d : d ? [d] : []);
     } catch (e) {
       setError(errMsg(e));
     } finally {

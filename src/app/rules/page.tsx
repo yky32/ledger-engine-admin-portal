@@ -4,16 +4,17 @@ import SimpleResourcePage from "@/components/resource/simple-resource";
 export default function Page() {
   return (
     <SimpleResourcePage
-      title="Rules (legacy)"
-      description="GET/POST /rules — not Digestion Brain"
+      title="Rules (legacy catalog)"
+      description="GET/POST /rules — not Digestion Brain. Body: name, description?, direction?, multiplier?, targetAccount?, content?"
       listPath="/rules"
       createPath="/rules"
       pageable
       sample={{
-        name: "demo",
+        name: "demo-rule",
         description: "legacy",
         direction: "CREDIT",
-        amount: 1,
+        multiplier: 1,
+        targetAccount: null,
         content: "{}",
       }}
     />

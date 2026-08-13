@@ -5,11 +5,10 @@ export default function Page() {
   return (
     <SimpleResourcePage
       title="Ledger accounts"
-      description="No list-all API — GET /ledger-accounts/{id} or balances. Use Load with a known path via Health/custom later. POST create uses /ledger-accounts."
-      listPath="/ledger-accounts/balances"
+      description="GET /ledger-accounts (paged) · POST create"
+      listPath="/ledger-accounts"
       createPath="/ledger-accounts"
-      pageable={false}
-      autoload={false}
+      pageable
       sample={{
         name: "demo",
         type: "LIABILITY",

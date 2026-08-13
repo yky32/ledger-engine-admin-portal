@@ -6,7 +6,7 @@ import { PageHeader, Card, Badge, Empty, JsonBlock, Alert } from "@/components/u
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, money, shortId } from "@/lib/format";
-import type { FailedIngest, LedgerEntry, MovementView, WalletView } from "@/lib/types";
+import type { FailedIngest, LedgerLeg, MovementView, WalletView } from "@/lib/types";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
@@ -18,7 +18,7 @@ export default function ReviewPage() {
   const [movements, setMovements] = useState<MovementView[]>([]);
   const [fails, setFails] = useState<FailedIngest[]>([]);
   const [asOf, setAsOf] = useState<unknown>(null);
-  const [legs, setLegs] = useState<LedgerEntry[]>([]);
+  const [legs, setLegs] = useState<LedgerLeg[]>([]);
   const [selectedMovementId, setSelectedMovementId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function ReviewPage() {
           <Card title="Wallet" description={`ownerId ${wallet.ownerId || ownerId}`}>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
               <dt className="text-slate-500">walletId</dt>
-              <dd className="font-mono text-xs">{wallet.walletId ?? wallet.id ?? "—"}</dd>
+              <dd className="font-mono text-xs">{wallet.walletId ?? "—"}</dd>
               <dt className="text-slate-500">status</dt>
               <dd>
                 <Badge tone="ok">{wallet.status || "—"}</Badge>
@@ -288,18 +288,18 @@ export default function ReviewPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>id</th>
+                  <th>entryId</th>
+                  <th>accountId</th>
                   <th>dir</th>
                   <th>amount</th>
                   <th>ccy</th>
-                  <th>target</th>
-                  <th>L / A</th>
                 </tr>
               </thead>
               <tbody>
-                {legs.map((e) => (
-                  <tr key={e.id}>
-                    <td className="font-mono text-[10px]">{e.id}</td>
+                {legs.map((e, i) => (
+                  <tr key={e.entryId ?? i}>
+                    <td className="font-mono text-[10px]">{e.entryId}</td>
+                    <td className="font-mono text-[10px]">{e.accountId}</td>
                     <td>
                       <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
                         {e.direction}
@@ -307,10 +307,6 @@ export default function ReviewPage() {
                     </td>
                     <td className="font-mono text-xs">{money(e.amount)}</td>
                     <td>{e.currency}</td>
-                    <td className="font-mono text-[10px]">{e.targetId}</td>
-                    <td className="text-xs text-slate-500">
-                      {String(e.affectsLedger)} / {String(e.affectsAvailable)}
-                    </td>
                   </tr>
                 ))}
               </tbody>

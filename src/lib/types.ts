@@ -1,55 +1,161 @@
-/** Shared domain types (loose — matches engine Result data shapes). */
+/**
+ * LedgeRX Admin — types aligned to ledger-engine DTOs (main).
+ * Source: entity/dto/** + endpoints under com.altech.ledger.endpoint
+ */
 
-export type WalletView = {
-  walletId?: number;
-  id?: number;
-  ownerId?: string;
-  vanityCode?: string | null;
-  name?: string | null;
-  type?: string;
-  walletType?: string;
-  status?: string;
-  settlementCurrency?: string;
-  accountId?: number;
-  accounts?: AccountView[];
-  account?: AccountView;
-  balance?: BalanceView;
+export type CurrencyCode = string; // engine enum JSON as code: HKD, USD, LP, …
+
+/** POST /wallets — CreateWalletOnboardRequestDto */
+export type CreateWalletOnboardBody = {
+  ownerId: string;
+  settlementCurrency: CurrencyCode;
+  name?: string;
+  vanityCode?: string;
+  accounts?: AccountOpenSpec[];
 };
 
-export type AccountView = {
-  id?: number;
-  currency?: string;
-  ledgerBalance?: number | string;
-  availableBalance?: number | string;
+export type AccountOpenSpec = {
+  refCode?: string;
+  name?: string;
+  primary?: boolean;
+  allowNegative?: boolean;
+  currency?: CurrencyCode;
+};
+
+/** GetWalletOnboardResponseDto */
+export type WalletView = {
+  walletId?: number;
+  ownerId?: string;
+  vanityCode?: string | null;
+  settlementCurrency?: CurrencyCode;
   status?: string;
+  type?: string;
+  walletType?: string;
+  name?: string;
+  account?: WalletAccount;
+  balance?: WalletBalance;
+  accounts?: WalletAccount[];
+  createDt?: string;
+  updateDt?: string;
+  isActive?: boolean;
+};
+
+export type WalletAccount = {
+  id?: number;
   fullNumber?: string;
   name?: string;
   primary?: boolean;
   type?: string;
+  currency?: CurrencyCode;
+  status?: string;
+  allowNegative?: boolean;
+  ledgerBalance?: number | string;
+  availableBalance?: number | string;
+  version?: number;
 };
 
-export type BalanceView = {
+export type WalletBalance = {
   accountId?: number;
-  currency?: string;
+  currency?: CurrencyCode;
   ledgerBalance?: number | string;
   availableBalance?: number | string;
 };
 
+/** GetLedgerMovementResponseDto */
 export type MovementView = {
   id?: number;
   movementKey?: string;
   walletId?: number;
+  txnId?: number;
+  alias?: string;
+  originatorId?: string;
+  targetId?: string;
   amount?: number | string;
-  currency?: string;
+  currency?: CurrencyCode;
   orderType?: string;
   status?: string;
   mode?: string;
   type?: string;
-  originatorId?: string;
-  targetId?: string;
+  remarks?: string;
   metadata?: string;
   createDt?: string;
   updateDt?: string;
+};
+
+/** MovementDto.DepositRequest — POST /movements/deposits */
+export type DepositBody = {
+  movementKey: string;
+  ownerId: string;
+  currency: CurrencyCode;
+  amount: number | string;
+  mode?: string;
+  description?: string;
+};
+
+/** MovementDto.WithdrawalRequest */
+export type WithdrawalBody = {
+  movementKey: string;
+  ownerId: string;
+  currency: CurrencyCode;
+  amount: number | string;
+  mode?: string;
+  targetId?: string;
+  description?: string;
+};
+
+/** MovementDto.InWalletTransferRequest */
+export type TransferBody = {
+  movementKey: string;
+  fromOwnerId: string;
+  toOwnerId: string;
+  currency: CurrencyCode;
+  amount: number | string;
+  mode?: string;
+  description?: string;
+};
+
+/** CreateHoldReleaseRequestDto — POST /wallets/holds|releases */
+export type HoldReleaseBody = {
+  ownerId: string;
+  currency: CurrencyCode;
+  amount: number | string;
+  movementKey?: string;
+  description?: string;
+};
+
+/**
+ * TransactionalEvent — POST /integrations/webhooks/transactions
+ * metadata values MUST be strings (Map<String,String>).
+ */
+export type TransactionalEventBody = {
+  eventId: string;
+  ownerId: string;
+  eventType: string;
+  amount: number | string;
+  currency: CurrencyCode;
+  occurredAt?: string;
+  metadata?: Record<string, string>;
+};
+
+/** IngestionResult */
+export type IngestResult = {
+  eventId?: string;
+  status?: "EARNED" | "BURNED" | "PROCESSED" | "SKIPPED" | "DUPLICATE" | "ERROR" | string;
+  operation?: string;
+  reason?: string;
+  points?: number | string;
+  transactionId?: string;
+  walletExternalReference?: string;
+  movementId?: number;
+  legs?: LedgerLeg[];
+};
+
+export type LedgerLeg = {
+  entryId?: number;
+  accountId?: number;
+  direction?: string;
+  amount?: number | string;
+  currency?: CurrencyCode;
 };
 
 export type DigestionRule = {
@@ -61,11 +167,34 @@ export type DigestionRule = {
   isEnabled?: boolean;
   priority?: number;
   minAmount?: number | string;
-  eligibleCurrencies?: string | string[];
+  eligibleCurrencies?: string[];
   maxAgeDays?: number | null;
   pointCurrency?: string;
-  formula?: string;
+  formula?: FormulaConfig | string | Record<string, unknown>;
   processType?: string | null;
+  createDt?: string;
+  updateDt?: string;
+};
+
+export type FormulaConfig =
+  | { type: "AMOUNT" }
+  | { type: "RATE"; rate: number | string }
+  | { type: "FIXED"; value: number | string }
+  | { type: "LINEAR"; rate: number | string; fixed: number | string };
+
+export type CreateDigestionRuleBody = {
+  code: string;
+  name?: string;
+  eventType: string;
+  operation?: string;
+  isEnabled?: boolean;
+  priority?: number;
+  minAmount?: number | string;
+  eligibleCurrencies?: string[];
+  maxAgeDays?: number;
+  pointCurrency?: string;
+  formula: FormulaConfig | Record<string, unknown> | string;
+  processType?: string;
 };
 
 export type IngestPolicy = {
@@ -76,6 +205,8 @@ export type IngestPolicy = {
   autoWalletEnsureCurrency?: string;
   autoWalletAssociatedFrom?: string;
   autoWalletNamePrefix?: string;
+  createDt?: string;
+  updateDt?: string;
 };
 
 export type FailedIngest = {
@@ -91,25 +222,14 @@ export type FailedIngest = {
   status?: string;
   rawPayload?: unknown;
   createDt?: string;
+  updateDt?: string;
 };
 
-export type LedgerEntry = {
-  id?: number;
-  txnId?: number;
-  targetId?: string;
-  amount?: number | string;
-  direction?: string;
-  currency?: string;
-  affectsLedger?: boolean;
-  affectsAvailable?: boolean;
-};
-
-export type IngestResult = {
-  status?: string;
-  eventId?: string;
+export type AsOfBalance = {
   ownerId?: string;
-  points?: number | string;
-  movementId?: number;
-  message?: string;
-  [k: string]: unknown;
+  asOf?: string;
+  currency?: string;
+  ledgerBalance?: number | string;
+  availableBalance?: number | string;
+  accounts?: unknown[];
 };

@@ -18,6 +18,7 @@ import {
   FlaskConical,
   Activity,
   Workflow,
+  Building2,
 } from "lucide-react";
 
 /**
@@ -172,6 +173,12 @@ export const NAV: NavItem[] = [
     href: "/configurations",
     label: "System config JSONB",
     icon: Settings2,
+    group: "Reference",
+  },
+  {
+    href: "/ledger-wallets",
+    label: "Ledger wallets (legacy)",
+    icon: Building2,
     group: "Reference",
   },
   {

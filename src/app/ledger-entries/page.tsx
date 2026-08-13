@@ -5,13 +5,13 @@ import { PageHeader, Card, Badge, Empty } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
-import type { LedgerEntry } from "@/lib/types";
+import type { LedgerLeg } from "@/lib/types";
 import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function LegsPage() {
   const [eventId, setEventId] = useState("");
   const [movementId, setMovementId] = useState("");
-  const [rows, setRows] = useState<LedgerEntry[]>([]);
+  const [rows, setRows] = useState<LedgerLeg[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,20 +72,18 @@ export default function LegsPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>id</th>
-                  <th>txn</th>
+                  <th>entryId</th>
+                  <th>accountId</th>
                   <th>dir</th>
                   <th>amount</th>
                   <th>ccy</th>
-                  <th>target</th>
-                  <th>affects L/A</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((e) => (
-                  <tr key={e.id}>
-                    <td className="font-mono text-[10px]">{e.id}</td>
-                    <td className="font-mono text-[10px]">{e.txnId}</td>
+                {rows.map((e, i) => (
+                  <tr key={e.entryId ?? i}>
+                    <td className="font-mono text-[10px]">{e.entryId}</td>
+                    <td className="font-mono text-[10px]">{e.accountId}</td>
                     <td>
                       <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
                         {e.direction}
@@ -93,10 +91,6 @@ export default function LegsPage() {
                     </td>
                     <td className="font-mono text-xs">{money(e.amount)}</td>
                     <td>{e.currency}</td>
-                    <td className="font-mono text-[10px]">{e.targetId}</td>
-                    <td className="text-xs">
-                      {String(e.affectsLedger)} / {String(e.affectsAvailable)}
-                    </td>
                   </tr>
                 ))}
               </tbody>
