@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
+import { PageHeader, Card, JsonBlock, Badge } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId } from "@/lib/format";
 import { FlowStrip } from "@/components/layout/flow-strip";
+import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
 export default function WebhookPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -13,10 +14,11 @@ export default function WebhookPage() {
   const [eventType, setEventType] = useState("PURCHASE");
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState("HKD");
+  const [mcc, setMcc] = useState("");
   const [occurredAt, setOccurredAt] = useState(nowIso());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<unknown>(null);
+  const [result, setResult] = useState<IngestResult | null>(null);
 
   useEffect(() => {
     try {
@@ -27,20 +29,27 @@ export default function WebhookPage() {
     }
   }, []);
 
-  const fire = async () => {
+  const body = () => ({
+    eventId: eventId.trim(),
+    ownerId: ownerId.trim(),
+    eventType,
+    amount: Number(amount),
+    currency,
+    occurredAt,
+    metadata: {
+      source: "admin-portal",
+      ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
+    },
+  });
+
+  const fire = async (dry: boolean) => {
     setLoading(true);
     setError(null);
     try {
-      const r = await engine.webhookTxn({
-        eventId: eventId.trim(),
-        ownerId: ownerId.trim(),
-        eventType,
-        amount: Number(amount),
-        currency,
-        occurredAt,
-        metadata: { source: "admin-portal" },
-      });
-      setResult(r.data);
+      const r = dry
+        ? await engine.webhookTxnDryRun(body())
+        : await engine.webhookTxn(body());
+      setResult(r.data as IngestResult);
     } catch (e) {
       setError(errMsg(e));
       setResult(null);
@@ -49,12 +58,16 @@ export default function WebhookPage() {
     }
   };
 
+  const trace: EligibilityTraceEntry[] = Array.isArray(result?.eligibilityTrace)
+    ? result!.eligibilityTrace!
+    : [];
+
   return (
     <div>
       <FlowStrip active="shoot" />
       <PageHeader
         title="Fire webhook"
-        description="POST /integrations/webhooks/transactions — ownerId + eventId idempotency."
+        description="Live or dry-run. Response includes matchedRuleCode + eligibilityTrace (Trust B)."
       />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Payload">
@@ -126,6 +139,15 @@ export default function WebhookPage() {
               />
             </label>
             <label className="field">
+              <span className="field-label">mcc (optional)</span>
+              <input
+                className="field-input font-mono"
+                value={mcc}
+                onChange={(e) => setMcc(e.target.value)}
+                placeholder="5411"
+              />
+            </label>
+            <label className="field sm:col-span-2">
               <span className="field-label">occurredAt</span>
               <input
                 className="field-input font-mono text-xs"
@@ -136,15 +158,81 @@ export default function WebhookPage() {
           </div>
           <div className="mt-4">
             <ActionBar loading={loading} error={error}>
-              <button type="button" className="btn-primary" onClick={fire} disabled={loading}>
-                Send
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => fire(true)}
+                disabled={loading}
+              >
+                Dry-run
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => fire(false)}
+                disabled={loading}
+              >
+                Send live
               </button>
             </ActionBar>
           </div>
         </Card>
-        <Card title="Response">
-          {result ? <JsonBlock value={result} /> : <p className="text-sm text-slate-500">—</p>}
-        </Card>
+        <div className="space-y-4">
+          <Card title="Summary">
+            {result ? (
+              <dl className="grid grid-cols-2 gap-2 text-sm">
+                <dt className="text-slate-500">status</dt>
+                <dd>
+                  <Badge tone={result.status === "SKIPPED" ? "warn" : "ok"}>
+                    {result.status}
+                    {result.dryRun ? " · dry-run" : ""}
+                  </Badge>
+                </dd>
+                <dt className="text-slate-500">matchedRule</dt>
+                <dd className="font-mono text-xs">{result.matchedRuleCode || "—"}</dd>
+                <dt className="text-slate-500">points</dt>
+                <dd className="font-mono">{result.points ?? "—"}</dd>
+                <dt className="text-slate-500">reason</dt>
+                <dd className="text-xs">{result.reason || "—"}</dd>
+              </dl>
+            ) : (
+              <p className="text-sm text-slate-500">—</p>
+            )}
+          </Card>
+          <Card title="eligibilityTrace">
+            {trace.length === 0 ? (
+              <p className="text-sm text-slate-500">No candidate rules (or empty)</p>
+            ) : (
+              <div className="table-wrap max-h-48 overflow-auto">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>rule</th>
+                      <th>pri</th>
+                      <th>ok</th>
+                      <th>step</th>
+                      <th>detail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trace.map((row, i) => (
+                      <tr key={i}>
+                        <td className="font-mono text-[10px]">{row.ruleCode}</td>
+                        <td>{row.priority}</td>
+                        <td>{row.matched ? "✓" : "✗"}</td>
+                        <td className="font-mono text-[10px]">{row.failStep || "—"}</td>
+                        <td className="max-w-[180px] truncate text-[10px]" title={row.detail}>
+                          {row.detail}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+          <Card title="Raw JSON">{result ? <JsonBlock value={result} /> : null}</Card>
+        </div>
       </div>
     </div>
   );

@@ -52,6 +52,8 @@ type WebhookCase = {
   amount: number;
   currency: string;
   ageDays: number;
+  /** empty = omit metadata.mcc */
+  mcc: string;
   tag: string;
   enabled: boolean;
 };
@@ -61,6 +63,7 @@ type DimConfig = {
   currencies: { value: string; on: boolean }[];
   amounts: { value: number; label: string; on: boolean }[];
   ages: { days: number; label: string; on: boolean }[];
+  mccs: { value: string; label: string; on: boolean }[];
   repeats: number;
 };
 
@@ -91,6 +94,7 @@ const PRESET_KEYS = [
   "ccy-matrix",
   "amount-gates",
   "age-gates",
+  "mcc-matrix",
   "event-mix",
   "stress",
   "full-cartesian",
@@ -104,6 +108,7 @@ const PRESET_LABEL: Record<PresetKey, string> = {
   "ccy-matrix": "Currency matrix",
   "amount-gates": "Amount gates",
   "age-gates": "Age gates",
+  "mcc-matrix": "MCC matrix (5411 / 5812 / none)",
   "event-mix": "Event mix",
   stress: "Stress 3×",
   "full-cartesian": "Full cartesian",
@@ -141,6 +146,12 @@ function defaultDims(): DimConfig {
       { days: 365, label: "365d", on: false },
       { days: 800, label: "800d", on: false },
     ],
+    mccs: [
+      { value: "", label: "(no mcc)", on: true },
+      { value: "5411", label: "5411 grocery", on: false },
+      { value: "5812", label: "5812 restaurant", on: false },
+      { value: "6011", label: "6011 ATM", on: false },
+    ],
     repeats: 1,
   };
 }
@@ -152,6 +163,7 @@ function applyPreset(key: PresetKey): DimConfig {
     d.currencies.forEach((x) => (x.on = false));
     d.amounts.forEach((x) => (x.on = false));
     d.ages.forEach((x) => (x.on = false));
+    d.mccs.forEach((x) => (x.on = false));
   };
   switch (key) {
     case "smoke":
@@ -160,6 +172,7 @@ function applyPreset(key: PresetKey): DimConfig {
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.find((x) => x.value === 200)!.on = true;
       d.ages.find((x) => x.days === 0)!.on = true;
+      d.mccs.find((x) => x.value === "")!.on = true;
       break;
     case "ccy-matrix":
       offAll();
@@ -185,6 +198,16 @@ function applyPreset(key: PresetKey): DimConfig {
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.find((x) => x.value === 200)!.on = true;
       d.ages.forEach((x) => (x.on = true));
+      break;
+    case "mcc-matrix":
+      offAll();
+      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.currencies.find((x) => x.value === "HKD")!.on = true;
+      d.amounts.find((x) => x.value === 200)!.on = true;
+      d.ages.find((x) => x.days === 0)!.on = true;
+      d.mccs.forEach((x) => {
+        x.on = true;
+      });
       break;
     case "event-mix":
       offAll();
@@ -235,6 +258,10 @@ function applyPreset(key: PresetKey): DimConfig {
     default:
       break;
   }
+  if (!d.mccs.some((x) => x.on)) {
+    const none = d.mccs.find((x) => x.value === "");
+    if (none) none.on = true;
+  }
   return d;
 }
 
@@ -243,6 +270,8 @@ function cartesian(dims: DimConfig): WebhookCase[] {
   const ccy = dims.currencies.filter((x) => x.on).map((x) => x.value);
   const amts = dims.amounts.filter((x) => x.on);
   const ages = dims.ages.filter((x) => x.on);
+  const mccs = dims.mccs.filter((x) => x.on);
+  const mccList = mccs.length ? mccs : [{ value: "", label: "(no mcc)", on: true }];
   const reps = Math.max(1, Math.min(20, dims.repeats || 1));
   const out: WebhookCase[] = [];
   for (let r = 0; r < reps; r++) {
@@ -250,17 +279,21 @@ function cartesian(dims: DimConfig): WebhookCase[] {
       for (const c of ccy) {
         for (const a of amts) {
           for (const age of ages) {
-            const id = `${et}-${c}-${a.value}-${age.days}d-r${r + 1}`;
-            out.push({
-              id,
-              label: `${et} ${a.label} ${c} · ${age.label}${reps > 1 ? ` · #${r + 1}` : ""}`,
-              eventType: et,
-              amount: a.value,
-              currency: c,
-              ageDays: age.days,
-              tag: `r${r + 1}`,
-              enabled: true,
-            });
+            for (const m of mccList) {
+              const mccTag = m.value || "nomcc";
+              const id = `${et}-${c}-${a.value}-${age.days}d-${mccTag}-r${r + 1}`;
+              out.push({
+                id,
+                label: `${et} ${a.label} ${c} · ${age.label}${m.value ? ` · mcc ${m.value}` : ""}${reps > 1 ? ` · #${r + 1}` : ""}`,
+                eventType: et,
+                amount: a.value,
+                currency: c,
+                ageDays: age.days,
+                mcc: m.value || "",
+                tag: `r${r + 1}`,
+                enabled: true,
+              });
+            }
           }
         }
       }
@@ -285,6 +318,7 @@ function guessExpect(c: WebhookCase): string {
   if (c.eventType === "REDEEM" && c.currency !== "LP") return "maybe skip (burn ccy)";
   if (c.ageDays >= 400) return "maybe age-gate";
   if (c.amount === 0) return "maybe min-amount";
+  if (c.mcc) return "earn if mcc/rule matches";
   if (c.eventType === "PURCHASE") return "earn if rule matches";
   if (c.eventType === "CARD_OPEN" || c.eventType === "SIGNUP") return "fixed bonus if rule";
   return "depends on digestion";
@@ -585,15 +619,21 @@ export default function SimulatorPage() {
               tag: wc.tag,
               caseId: wc.id,
               ageDays: String(wc.ageDays),
+              ...(wc.mcc ? { mcc: wc.mcc } : {}),
             },
           };
           if (!firstBody) firstBody = body;
 
           const t = await timed(() => engine.webhookTxn(body));
-          const status =
-            t.ok && t.v.data && typeof t.v.data === "object" && "status" in t.v.data
-              ? String((t.v.data as { status: unknown }).status)
-              : undefined;
+          const data = t.ok && t.v.data && typeof t.v.data === "object" ? (t.v.data as Record<string, unknown>) : undefined;
+          const status = data && "status" in data ? String(data.status) : undefined;
+          const rule = data && data.matchedRuleCode != null ? String(data.matchedRuleCode) : "";
+          const pts = data && data.points != null ? String(data.points) : "";
+          const trace = Array.isArray(data?.eligibilityTrace) ? (data!.eligibilityTrace as { failStep?: string }[]) : [];
+          const failStep = trace.find((x) => x.failStep)?.failStep;
+          const detailOk = [status, rule && `rule=${rule}`, pts && `pts=${pts}`, failStep && `fail=${failStep}`]
+            .filter(Boolean)
+            .join(" · ");
           push({
             kind: "webhook",
             customerId: c.id,
@@ -602,7 +642,7 @@ export default function SimulatorPage() {
             ok: t.ok,
             ms: t.ms,
             expect: guessExpect(wc),
-            detail: t.ok ? status || "ok" : errMsg((t as { e: unknown }).e),
+            detail: t.ok ? detailOk || "ok" : errMsg((t as { e: unknown }).e),
             data: t.ok ? t.v.data : undefined,
           });
 
@@ -1079,6 +1119,21 @@ export default function SimulatorPage() {
                         ...active.dims,
                         ages: active.dims.ages.map((r) =>
                           r.days === x.days ? { ...r, on: !r.on } : r,
+                        ),
+                      }),
+                  }))}
+                />
+                <DimGroup
+                  title="mcc (metadata)"
+                  items={(active.dims.mccs || []).map((x) => ({
+                    key: x.value || "none",
+                    label: x.label,
+                    on: x.on,
+                    toggle: () =>
+                      setActiveDims({
+                        ...active.dims,
+                        mccs: active.dims.mccs.map((r) =>
+                          r.value === x.value ? { ...r, on: !r.on } : r,
                         ),
                       }),
                   }))}
