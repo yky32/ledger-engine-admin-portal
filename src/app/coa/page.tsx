@@ -132,6 +132,22 @@ export default function CoaPage() {
     }
   };
 
+  const seedUaf = async () => {
+    setLoading(true);
+    setError(null);
+    setOk(null);
+    try {
+      const r = await engine.uafDemoSeed();
+      const d = r.data as { note?: string };
+      setOk(d?.note || "UAF seed done");
+      await load();
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const selected = rows.find((r) => r.id === selectedId);
 
   return (
@@ -184,6 +200,15 @@ export default function CoaPage() {
             />
             <button type="button" className="btn-secondary text-xs" onClick={clone} disabled={loading}>
               Clone as new
+            </button>
+            <button
+              type="button"
+              className="btn-primary text-xs"
+              onClick={seedUaf}
+              disabled={loading}
+              title="UAF_CC + UAF_LOAN + demo wallets"
+            >
+              UAF demo seed
             </button>
             <button type="button" className="btn-secondary text-xs" onClick={load} disabled={loading}>
               Reload

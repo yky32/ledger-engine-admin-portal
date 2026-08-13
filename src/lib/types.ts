@@ -49,6 +49,10 @@ export type WalletAccount = {
   fullNumber?: string;
   name?: string;
   primary?: boolean;
+  entity?: string;
+  coaTypeCode?: string;
+  subType?: string;
+  buffer?: string;
   type?: string;
   currency?: CurrencyCode;
   status?: string;
@@ -223,6 +227,7 @@ export type IngestPolicy = {
   autoWalletEnsureCurrency?: string;
   autoWalletAssociatedFrom?: string;
   autoWalletNamePrefix?: string;
+  autoWalletCoaProfileCode?: string | null;
   createDt?: string;
   updateDt?: string;
 };

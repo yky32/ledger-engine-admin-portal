@@ -128,6 +128,20 @@ const TIPS = {
       </>
     ),
   },
+  autoCoa: {
+    title: "autoWalletCoaProfileCode",
+    body: (
+      <>
+        <p>
+          Product-stream COA when Door lazy-creates a wallet (e.g.{" "}
+          <code className="text-emerald-200">UAF_CC</code>). Blank = DEFAULT.
+        </p>
+        <p className="mt-1 text-slate-400">
+          Event can override: metadata.coaProfileCode or productStream=CC|LOAN.
+        </p>
+      </>
+    ),
+  },
 } as const;
 
 export default function IngestPolicyPage() {
@@ -326,6 +340,20 @@ export default function IngestPolicyPage() {
                 />
               </label>
 
+              <label className="field">
+                <FieldLabel tipTitle={TIPS.autoCoa.title} tip={TIPS.autoCoa.body}>
+                  autoWalletCoaProfileCode
+                </FieldLabel>
+                <input
+                  className="field-input font-mono"
+                  value={String(policy.autoWalletCoaProfileCode ?? "")}
+                  onChange={(e) =>
+                    setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })
+                  }
+                  placeholder="DEFAULT | UAF_CC | UAF_LOAN"
+                />
+              </label>
+
               <ActionBar loading={loading} error={error} ok={ok}>
                 <button type="button" className="btn-primary" onClick={save}>
                   Save
@@ -384,6 +412,10 @@ export default function IngestPolicyPage() {
                   <tr>
                     <td className="py-1 pr-2 font-mono text-[11px]">namePrefix</td>
                     <td className="py-1">Display name prefix</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 pr-2 font-mono text-[11px]">coaProfile</td>
+                    <td className="py-1">Lazy onboard product stream</td>
                   </tr>
                 </tbody>
               </table>
