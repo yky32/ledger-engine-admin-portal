@@ -137,7 +137,7 @@ export type TransactionalEventBody = {
   metadata?: Record<string, string>;
 };
 
-/** IngestionResult */
+/** IngestionResult + Trust pack B */
 export type IngestResult = {
   eventId?: string;
   status?: "EARNED" | "BURNED" | "PROCESSED" | "SKIPPED" | "DUPLICATE" | "ERROR" | string;
@@ -148,6 +148,17 @@ export type IngestResult = {
   walletExternalReference?: string;
   movementId?: number;
   legs?: LedgerLeg[];
+  matchedRuleCode?: string;
+  eligibilityTrace?: EligibilityTraceEntry[];
+  dryRun?: boolean;
+};
+
+export type EligibilityTraceEntry = {
+  ruleCode?: string;
+  priority?: number;
+  matched?: boolean;
+  failStep?: string | null;
+  detail?: string;
 };
 
 export type LedgerLeg = {

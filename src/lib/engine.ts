@@ -109,6 +109,21 @@ export const engine = {
     return ledger.post<IngestResult>("/integrations/webhooks/transactions", b);
   },
 
+  /**
+   * POST /integrations/webhooks/transactions/dry-run
+   * Brain preview only — dryRun=true, no wallet/books.
+   */
+  webhookTxnDryRun: (body: TransactionalEventBody | Record<string, unknown>) => {
+    const b = { ...body } as Record<string, unknown>;
+    if (b.metadata && typeof b.metadata === "object") {
+      b.metadata = strMeta(b.metadata as Record<string, unknown>);
+    }
+    if (typeof b.amount === "string" && b.amount !== "") {
+      b.amount = Number(b.amount);
+    }
+    return ledger.post<IngestResult>("/integrations/webhooks/transactions/dry-run", b);
+  },
+
   /** GET /integrations/failed-transactions */
   failedList: (params?: {
     page?: number;

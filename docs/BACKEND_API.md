@@ -17,7 +17,8 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | GET | `/wallets/{ownerId}/balances/as-of` | `at?`(ISO),`currency?` | As-of |
 | POST | `/wallets/holds` | `ownerId`,`currency`,`amount`,`movementKey?`,`description?` | Hold |
 | POST | `/wallets/releases` | same | Release |
-| POST | `/integrations/webhooks/transactions` | `eventId`,`ownerId`,`eventType`,`amount`,`currency`,`occurredAt?`,`metadata?` Map**string→string** | Webhook |
+| POST | `/integrations/webhooks/transactions` |
+| POST | `/integrations/webhooks/transactions/dry-run` | same body · **no books** · `dryRun=true` + `eligibilityTrace` | `eventId`,`ownerId`,`eventType`,`amount`,`currency`,`occurredAt?`,`metadata?` Map**string→string** | Webhook |
 | GET | `/integrations/ledger-entries` | **exactly one of** `eventId` \| `movementId` ; `operation?` | DE legs |
 | GET | `/integrations/failed-transactions` | `page`,`size`,`status?`,`ownerId?`,`failureCode?`,`eventId?` | Fail queue |
 | GET | `/integrations/failed-transactions/{id}` | — | |
@@ -34,6 +35,8 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | POST | `/digestion-rules/{id}/disable` | — | |
 
 ### Webhook result `data` (IngestionResult)
+
++ `matchedRuleCode`, `eligibilityTrace[]` {ruleCode,priority,matched,failStep,detail}, optional `dryRun`
 
 `eventId`, `status` (`EARNED|BURNED|PROCESSED|SKIPPED|DUPLICATE|ERROR`), `operation`, `reason`, `points`, `transactionId`, `walletExternalReference`, `movementId`, `legs[]`
 
