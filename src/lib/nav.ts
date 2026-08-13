@@ -15,6 +15,7 @@ import {
   Activity,
   Workflow,
   Database,
+  BookOpen,
 } from "lucide-react";
 
 /**
@@ -154,6 +155,13 @@ export const NAV: NavItem[] = [
     group: "Money rails",
   },
 
+  {
+    href: "/coa",
+    label: "COA profiles",
+    icon: BookOpen,
+    group: "Reference",
+    blurb: "1-table client COA bindings",
+  },
   {
     href: "/configurations",
     label: "System config JSONB",
