@@ -15,6 +15,7 @@ export default function WalletsPage() {
   const [name, setName] = useState("");
   const [settlement, setSettlement] = useState("HKD");
   const [vanityCode, setVanityCode] = useState("");
+  const [coaProfileCode, setCoaProfileCode] = useState("");
   const [extraLp, setExtraLp] = useState(true);
   const [lookupId, setLookupId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export default function WalletsPage() {
         settlementCurrency: settlement,
         name: name.trim() || undefined,
         vanityCode: vanityCode.trim() || undefined,
+        coaProfileCode: coaProfileCode.trim() || undefined,
         accounts: extraLp ? [{ currency: "LP" }] : undefined,
       });
       setResult(r.data);
@@ -60,21 +62,25 @@ export default function WalletsPage() {
       <EngineStatusBanner />
       <PageHeader
         title="Wallet onboard (CRM path)"
-        description="Explicit 1 ownerId → 1 Wallet. Alternative to Door lazy auto-create."
+        description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode = product stream (UAF_CC / UAF_LOAN)."
       />
       <div className="mb-4 grid gap-3 lg:grid-cols-2">
         <ExplainBox title="When to use explicit onboard" tone="ops">
           <p>
             CRM already knows the member: call onboard before first purchase. Identity is always{" "}
-            <code className="text-xs">ownerId</code> (e.g. 01A########) — never vanity/lucky
-            numbers as PK.
+            <code className="text-xs">ownerId</code>. Product stream COA via{" "}
+            <code className="text-xs">coaProfileCode</code> (see{" "}
+            <Link href="/coa" className="underline">
+              /coa
+            </Link>
+            ).
           </p>
         </ExplainBox>
         <ExplainBox title="vs Door auto-create">
           <p>
             If Ingest policy <code className="text-xs">isAutoCreateWallet=true</code>, first
-            eligible webhook can create the wallet. Explicit onboard is for controlled CRM join
-            flows.
+            eligible webhook can create the wallet (DEFAULT COA). Explicit onboard is for
+            controlled CRM join + product stream.
           </p>
         </ExplainBox>
       </div>
@@ -84,7 +90,7 @@ export default function WalletsPage() {
             <label className="field">
               <FieldLabel
                 tipTitle="ownerId"
-                tip="External CRM / membership id. Unique. All wallet GET APIs use this — not snowflake wallet id."
+                tip="External CRM / membership id. Unique. Card vs loan = two ownerIds for UAF."
               >
                 ownerId
               </FieldLabel>
@@ -108,10 +114,7 @@ export default function WalletsPage() {
               <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} />
             </label>
             <label className="field">
-              <FieldLabel
-                tipTitle="vanityCode"
-                tip="Optional customer-facing lucky/premium display code. Mutable, unique when set. Never used as PK, FK, or webhook identity — that is ownerId."
-              >
+              <FieldLabel tipTitle="vanityCode" tip="Display only — never identity.">
                 vanityCode
               </FieldLabel>
               <input
@@ -123,9 +126,20 @@ export default function WalletsPage() {
             </label>
             <label className="field">
               <FieldLabel
-                tipTitle="settlementCurrency"
-                tip="Primary account currency on the wallet (e.g. HKD). Points usually live on an extra LP book (checkbox below)."
+                tipTitle="coaProfileCode"
+                tip="Product stream: UAF_CC (entity 01) / UAF_LOAN (entity 02). Blank = DEFAULT (entity 10)."
               >
+                coaProfileCode
+              </FieldLabel>
+              <input
+                className="field-input font-mono"
+                placeholder="DEFAULT | UAF_CC | UAF_LOAN"
+                value={coaProfileCode}
+                onChange={(e) => setCoaProfileCode(e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <FieldLabel tipTitle="settlementCurrency" tip="Primary book currency.">
                 settlementCurrency
               </FieldLabel>
               <select
@@ -146,8 +160,7 @@ export default function WalletsPage() {
               />
               Also open LP book
               <HelpTip title="LP book" wide>
-                Loyalty points double-entry posts to the LP account under this wallet. Without
-                LP, earn from Digestion has nowhere to credit.
+                Loyalty points DE posts to LP under this wallet.
               </HelpTip>
             </label>
             <ActionBar loading={loading} error={error}>

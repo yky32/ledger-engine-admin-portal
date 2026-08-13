@@ -11,6 +11,8 @@ export type CreateWalletOnboardBody = {
   settlementCurrency: CurrencyCode;
   name?: string;
   vanityCode?: string;
+  /** Product-stream COA profile, e.g. UAF_CC / UAF_LOAN; omit → DEFAULT */
+  coaProfileCode?: string;
   accounts?: AccountOpenSpec[];
 };
 
@@ -28,6 +30,8 @@ export type WalletView = {
   ownerId?: string;
   vanityCode?: string | null;
   settlementCurrency?: CurrencyCode;
+  /** Product-stream COA profile stamped at onboard */
+  coaProfileCode?: string | null;
   status?: string;
   type?: string;
   walletType?: string;
