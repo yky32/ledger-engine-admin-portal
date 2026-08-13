@@ -7,6 +7,7 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, money, shortId } from "@/lib/format";
 import type { FailedIngest, LedgerEntry, MovementView, WalletView } from "@/lib/types";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function ReviewPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -72,6 +73,7 @@ export default function ReviewPage() {
 
   return (
     <div>
+      <FlowStrip active="engine" />
       <PageHeader
         title="Customer review"
         description="Lookup by ownerId — wallet books, movements, as-of balances, failed ingest, DE legs."

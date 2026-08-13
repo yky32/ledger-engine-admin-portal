@@ -5,6 +5,7 @@ import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function HoldsPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -36,6 +37,7 @@ export default function HoldsPage() {
 
   return (
     <div>
+      <FlowStrip active="engine" />
       <PageHeader
         title="Hold / Release"
         description="Locks available only (ledger unchanged). POST /wallets/holds · /releases"

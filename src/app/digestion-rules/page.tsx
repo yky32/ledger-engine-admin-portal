@@ -6,6 +6,7 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { DigestionRule } from "@/lib/types";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function DigestionRulesPage() {
   const [rows, setRows] = useState<DigestionRule[]>([]);
@@ -71,6 +72,7 @@ export default function DigestionRulesPage() {
 
   return (
     <div>
+      <FlowStrip active="ops" />
       <PageHeader
         title="Digestion rules"
         description="Brain — eventType match + formula. /digestion-rules"

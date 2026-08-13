@@ -6,6 +6,7 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { IngestPolicy } from "@/lib/types";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function IngestPolicyPage() {
   const [policy, setPolicy] = useState<IngestPolicy | null>(null);
@@ -48,6 +49,7 @@ export default function IngestPolicyPage() {
 
   return (
     <div>
+      <FlowStrip active="ops" />
       <PageHeader
         title="Ingest policy"
         description="Webhook door — global on/off + auto-create wallet. PUT /ingest-policy"

@@ -6,6 +6,7 @@ import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, randomOwnerId } from "@/lib/format";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function WalletsPage() {
   const [ownerId, setOwnerId] = useState(randomOwnerId());
@@ -53,6 +54,7 @@ export default function WalletsPage() {
 
   return (
     <div>
+      <FlowStrip active="ops" />
       <PageHeader
         title="Wallets"
         description="POST /wallets onboard · GET /wallets/{ownerId}. Query always ownerId."

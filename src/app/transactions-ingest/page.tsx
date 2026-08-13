@@ -5,6 +5,7 @@ import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId } from "@/lib/format";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function WebhookPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -50,6 +51,7 @@ export default function WebhookPage() {
 
   return (
     <div>
+      <FlowStrip active="shoot" />
       <PageHeader
         title="Fire webhook"
         description="POST /integrations/webhooks/transactions — ownerId + eventId idempotency."

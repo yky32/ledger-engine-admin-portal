@@ -81,4 +81,7 @@ body {
   .data-table tr:hover td {
     @apply bg-slate-50/70;
   }
+  .flow-link {
+    @apply inline-flex items-center gap-1.5 font-medium text-slate-700 underline-offset-2 hover:text-emerald-700 hover:underline;
+  }
 }

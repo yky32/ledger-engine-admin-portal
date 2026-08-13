@@ -6,6 +6,7 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { LedgerEntry } from "@/lib/types";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function LegsPage() {
   const [eventId, setEventId] = useState("");
@@ -33,6 +34,7 @@ export default function LegsPage() {
 
   return (
     <div>
+      <FlowStrip active="books" />
       <PageHeader
         title="Ledger legs"
         description="GET /integrations/ledger-entries?eventId= | movementId="

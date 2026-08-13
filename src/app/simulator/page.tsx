@@ -10,6 +10,7 @@ import Link from "next/link";
 import { PageHeader, Card, Badge, JsonBlock, Alert, Empty } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId, money } from "@/lib/format";
+import { FlowStrip } from "@/components/layout/flow-strip";
 
 /* ───────── types ───────── */
 
@@ -637,6 +638,7 @@ export default function SimulatorPage() {
 
   return (
     <div>
+      <FlowStrip active="shoot" />
       <PageHeader
         title="Txn simulator"
         description="Multi-dimension matrix (eventType × currency × amount × age × repeats) + bootstrap, dupe, hold grid, legs."
