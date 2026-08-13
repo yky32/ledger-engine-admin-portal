@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
+import { FieldLabel, ExplainBox } from "@/components/ui/help";
+import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
-import { FlowStrip } from "@/components/layout/flow-strip";
 
 export default function HoldsPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -39,14 +40,37 @@ export default function HoldsPage() {
     <div>
       <FlowStrip active="engine" />
       <PageHeader
-        title="Hold / Release"
-        description="Locks available only (ledger unchanged). POST /wallets/holds · /releases"
+        title="Hold / Release LP"
+        description="Locks spendable (available) balance only — ledger/total balance unchanged. POST /wallets/holds · /releases"
       />
+
+      <div className="mb-4 grid gap-3 lg:grid-cols-2">
+        <ExplainBox title="What HOLD does" tone="ops">
+          <p>
+            <strong>HOLD</strong> reduces <em>available</em> balance (what customer can spend
+            now) but keeps <em>ledger</em> balance the same. Used when points are reserved
+            (pending order) without burning yet.
+          </p>
+        </ExplainBox>
+        <ExplainBox title="RELEASE + legs">
+          <p>
+            <strong>RELEASE</strong> restores available. Legs for hold-like ops set{" "}
+            <code className="text-xs">affectsLedger=false</code> so as-of ledger rebuilds ignore
+            them; available as-of still sees them.
+          </p>
+        </ExplainBox>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Request">
           <div className="space-y-3">
             <label className="field">
-              <span className="field-label">ownerId</span>
+              <FieldLabel
+                tipTitle="ownerId"
+                tip="Customer wallet key — same id used on webhooks and review."
+              >
+                ownerId
+              </FieldLabel>
               <input
                 className="field-input font-mono"
                 value={ownerId}
@@ -54,7 +78,12 @@ export default function HoldsPage() {
               />
             </label>
             <label className="field">
-              <span className="field-label">currency</span>
+              <FieldLabel
+                tipTitle="currency"
+                tip="Book to lock. Usually LP for loyalty holds."
+              >
+                currency
+              </FieldLabel>
               <select
                 className="field-select"
                 value={currency}
@@ -66,7 +95,9 @@ export default function HoldsPage() {
               </select>
             </label>
             <label className="field">
-              <span className="field-label">amount</span>
+              <FieldLabel tipTitle="amount" tip="Must be ≤ current available balance.">
+                amount
+              </FieldLabel>
               <input
                 className="field-input font-mono"
                 value={amount}
