@@ -1,53 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader, Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { FieldLabel, HelpTip, ExplainBox } from "@/components/ui/help";
+import { FieldLabel, ExplainBox } from "@/components/ui/help";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { DigestionRule } from "@/lib/types";
 
-const FIELD_TIPS: Record<string, { title: string; body: string }> = {
-  code: {
-    title: "code — stable business key",
-    body: "Unique rule id for ops (e.g. PURCHASE_DEFAULT). Used in logs and lookups. Not shown to end customers.",
-  },
-  name: {
-    title: "name — human label",
-    body: "Display name for the rule list. Cosmetic; engine matches on eventType + priority + filters.",
-  },
-  eventType: {
-    title: "eventType — upstream event name",
-    body: "Must match webhook body eventType exactly (case-sensitive as stored), e.g. PURCHASE, REDEEM, SIGNUP. No match → NO_RULE / skip earn.",
-  },
-  operation: {
-    title: "operation — EARN | BURN | PROCESS",
-    body: "EARN credits customer LP (debit PROGRAM). BURN debits customer LP (credit PROGRAM). PROCESS = non-balance side effects / subtype via processType.",
-  },
-  formula: {
-    title: "formula — how many points",
-    body: "AMOUNT = points equal spend amount. RATE:0.01 = 1% of amount. FIXED:100 = flat 100. MUL_ADD:0.01:5 = amount*0.01+5. JSON {\"rate\":0.01,\"fixed\":0} also works.",
-  },
-  pointCurrency: {
-    title: "pointCurrency — book to post",
-    body: "Almost always LP. Earn/burn posts to the customer wallet account in this currency (must exist or be ensured by Door auto-wallet).",
-  },
-  priority: {
-    title: "priority — lower runs first",
-    body: "When multiple rules match the same eventType, lower priority number is evaluated first. Use 10 for default, 100 for fallbacks.",
-  },
-  minAmount: {
-    title: "minAmount — spend floor",
-    body: "Event amount must be ≥ this (in event currency) or rule does not qualify. Use 0.01 to drop zero/noise; 0 to allow everything.",
-  },
-  eligibleCurrencies: {
-    title: "eligibleCurrencies — allow-list",
-    body: "Comma-separated ISO codes, e.g. HKD,USD. Blank/empty = any currency. JPY event with only HKD,USD listed → rule skips (useful for matrix tests).",
-  },
-};
+type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR";
+
+function buildFormula(type: FormulaType, rate: string, fixed: string, value: string): Record<string, unknown> {
+  switch (type) {
+    case "AMOUNT":
+      return { type: "AMOUNT" };
+    case "RATE":
+      return { type: "RATE", rate: Number(rate) };
+    case "FIXED":
+      return { type: "FIXED", value: Number(value) };
+    case "LINEAR":
+      return { type: "LINEAR", rate: Number(rate), fixed: Number(fixed) };
+  }
+}
+
+function formulaLabel(f: unknown): string {
+  if (!f || typeof f !== "object") return String(f ?? "—");
+  const o = f as Record<string, unknown>;
+  const t = String(o.type ?? "").toUpperCase();
+  if (t === "AMOUNT") return "AMOUNT (= spend)";
+  if (t === "RATE") return `RATE × ${o.rate}`;
+  if (t === "FIXED") return `FIXED ${o.value ?? o.fixed}`;
+  if (t === "LINEAR") return `LINEAR ${o.rate}×amt + ${o.fixed}`;
+  return JSON.stringify(f);
+}
 
 export default function DigestionRulesPage() {
   const [rows, setRows] = useState<DigestionRule[]>([]);
@@ -58,13 +45,21 @@ export default function DigestionRulesPage() {
     name: "Default purchase earn",
     eventType: "PURCHASE",
     operation: "EARN",
-    formula: "RATE:0.01",
     pointCurrency: "LP",
-    priority: "100",
-    minAmount: "0",
+    priority: "10",
+    minAmount: "0.01",
     eligibleCurrencies: "HKD,USD",
   });
+  const [formulaType, setFormulaType] = useState<FormulaType>("RATE");
+  const [rate, setRate] = useState("0.01");
+  const [fixed, setFixed] = useState("0");
+  const [value, setValue] = useState("1000");
   const [created, setCreated] = useState<unknown>(null);
+
+  const formulaPreview = useMemo(
+    () => buildFormula(formulaType, rate, fixed, value),
+    [formulaType, rate, fixed, value],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,7 +87,7 @@ export default function DigestionRulesPage() {
         name: form.name.trim(),
         eventType: form.eventType.trim(),
         operation: form.operation,
-        formula: form.formula.trim(),
+        formula: formulaPreview,
         pointCurrency: form.pointCurrency,
         priority: Number(form.priority),
         minAmount: Number(form.minAmount),
@@ -116,43 +111,37 @@ export default function DigestionRulesPage() {
       <FlowStrip active="ops" />
       <PageHeader
         title="1 · Brain — Digestion rules"
-        description="Scoring brain: which events earn/burn and how many points. Runtime DB · no restart · /digestion-rules"
+        description="JSON formula config (not string DSL). Runtime DB · /digestion-rules"
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-3">
-        <ExplainBox title="What is the Brain?" tone="ops">
-          <p>
-            After the Door lets an event in, Digestion decides: match{" "}
-            <code className="text-xs">eventType</code>, pass filters (min amount, currency,
-            age), then compute points via <code className="text-xs">formula</code>.
+        <ExplainBox title="Formula = JSON object" tone="ops">
+          <p className="font-mono text-[11px] leading-relaxed">
+            {`{"type":"RATE","rate":0.01}`}
+            <br />
+            {`{"type":"FIXED","value":1000}`}
+            <br />
+            {`{"type":"LINEAR","rate":0.01,"fixed":50}`}
+            <br />
+            {`{"type":"AMOUNT"}`}
           </p>
         </ExplainBox>
-        <ExplainBox title="Empty table?">
+        <ExplainBox title="What Brain does">
           <p>
-            No rules ⇒ webhooks cannot earn (
-            <code className="text-xs">NO_RULE</code>). Create at least{" "}
-            <code className="text-xs">PURCHASE</code> EARN, or let Simulator seed{" "}
-            <code className="text-xs">SIM_*</code> rules.
+            Match <code className="text-xs">eventType</code> + filters → compute points from
+            formula → Books EARN/BURN to <code className="text-xs">pointCurrency</code> (LP).
           </p>
         </ExplainBox>
-        <ExplainBox title="Then booking" tone="info">
+        <ExplainBox title="Credit-card patterns" tone="info">
           <p>
-            Matched EARN/BURN → movement + double-entry legs (customer LP ↔ PROGRAM pool).
-            Inspect on{" "}
-            <Link href="/ledger-entries" className="underline">
-              DE legs
-            </Link>{" "}
-            /{" "}
-            <Link href="/review" className="underline">
-              customer review
-            </Link>
-            .
+            1% spend → RATE · open bonus → FIXED · redeem → AMOUNT. See engine{" "}
+            <code className="text-xs">docs/CREDIT_CARD_CLIENT_SCENARIOS.md</code>.
           </p>
         </ExplainBox>
       </div>
 
       <div className="mb-4 grid gap-4 lg:grid-cols-5">
-        <Card title="Create rule" className="lg:col-span-2" description="Hover ? for each field">
+        <Card title="Create rule" className="lg:col-span-2" description="Pick formula type — no cryptic strings">
           <div className="grid gap-2.5">
             {(
               [
@@ -160,7 +149,6 @@ export default function DigestionRulesPage() {
                 ["name", "name"],
                 ["eventType", "eventType"],
                 ["operation", "operation"],
-                ["formula", "formula"],
                 ["pointCurrency", "pointCurrency"],
                 ["priority", "priority"],
                 ["minAmount", "minAmount"],
@@ -168,12 +156,7 @@ export default function DigestionRulesPage() {
               ] as const
             ).map(([k, label]) => (
               <label key={k} className="field">
-                <FieldLabel
-                  tipTitle={FIELD_TIPS[k]?.title}
-                  tip={FIELD_TIPS[k]?.body}
-                >
-                  {label}
-                </FieldLabel>
+                <span className="field-label">{label}</span>
                 <input
                   className="field-input font-mono text-xs"
                   value={form[k]}
@@ -181,26 +164,63 @@ export default function DigestionRulesPage() {
                 />
               </label>
             ))}
-            <p className="text-[11px] text-slate-500">
-              Formula cheat:{" "}
-              <HelpTip title="Formula reference" wide>
-                <ul className="list-disc space-y-1 pl-3">
-                  <li>
-                    <code>AMOUNT</code> — points = event amount
-                  </li>
-                  <li>
-                    <code>RATE:0.01</code> — 1% of amount
-                  </li>
-                  <li>
-                    <code>FIXED:100</code> — always 100 LP
-                  </li>
-                  <li>
-                    <code>MUL_ADD:0.01:5</code> — amount×0.01 + 5
-                  </li>
-                </ul>
-              </HelpTip>{" "}
-              click ?
-            </p>
+
+            <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-3">
+              <FieldLabel
+                tipTitle="formula (JSON)"
+                tip="Stored as JSONB. RATE = % of spend. FIXED = flat bonus. LINEAR = rate*amount+fixed. AMOUNT = 1:1 with spend (or burn)."
+              >
+                Formula type
+              </FieldLabel>
+              <select
+                className="field-select mt-1"
+                value={formulaType}
+                onChange={(e) => setFormulaType(e.target.value as FormulaType)}
+              >
+                <option value="RATE">RATE — amount × rate (e.g. 1%)</option>
+                <option value="FIXED">FIXED — constant points (bonus)</option>
+                <option value="LINEAR">LINEAR — amount × rate + fixed</option>
+                <option value="AMOUNT">AMOUNT — points = spend amount</option>
+              </select>
+
+              {formulaType === "RATE" || formulaType === "LINEAR" ? (
+                <label className="field mt-2">
+                  <span className="field-label">rate</span>
+                  <input
+                    className="field-input font-mono"
+                    value={rate}
+                    onChange={(e) => setRate(e.target.value)}
+                    placeholder="0.01"
+                  />
+                </label>
+              ) : null}
+              {formulaType === "LINEAR" ? (
+                <label className="field mt-2">
+                  <span className="field-label">fixed (bonus add)</span>
+                  <input
+                    className="field-input font-mono"
+                    value={fixed}
+                    onChange={(e) => setFixed(e.target.value)}
+                  />
+                </label>
+              ) : null}
+              {formulaType === "FIXED" ? (
+                <label className="field mt-2">
+                  <span className="field-label">value (points)</span>
+                  <input
+                    className="field-input font-mono"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                  />
+                </label>
+              ) : null}
+
+              <div className="mt-2 text-[11px] text-slate-500">Preview payload</div>
+              <pre className="mt-1 overflow-auto rounded-lg bg-slate-900 p-2 font-mono text-[11px] text-emerald-200">
+                {JSON.stringify(formulaPreview, null, 2)}
+              </pre>
+            </div>
+
             <ActionBar loading={loading} error={error}>
               <button type="button" className="btn-primary" onClick={create}>
                 Create
@@ -212,9 +232,10 @@ export default function DigestionRulesPage() {
             {created ? <JsonBlock value={created} maxHeight={160} /> : null}
           </div>
         </Card>
+
         <Card title={`Rules (${rows.length})`} className="lg:col-span-3">
           {rows.length === 0 ? (
-            <Empty>No rules — create PURCHASE_DEFAULT to earn</Empty>
+            <Empty>No rules — create PURCHASE RATE 0.01 to earn</Empty>
           ) : (
             <div className="table-wrap max-h-[560px] overflow-auto">
               <table className="data-table">
@@ -234,7 +255,9 @@ export default function DigestionRulesPage() {
                       <td className="font-mono text-xs font-medium">{r.code}</td>
                       <td>{r.eventType}</td>
                       <td>{r.operation}</td>
-                      <td className="font-mono text-[11px]">{r.formula}</td>
+                      <td className="font-mono text-[11px]" title={JSON.stringify(r.formula)}>
+                        {formulaLabel(r.formula)}
+                      </td>
                       <td>
                         <Badge tone={r.isEnabled ? "ok" : "neutral"}>
                           {r.isEnabled ? "on" : "off"}
@@ -247,6 +270,13 @@ export default function DigestionRulesPage() {
               </table>
             </div>
           )}
+          <p className="mt-2 text-[11px] text-slate-500">
+            Hover formula cell for full JSON. After create,{" "}
+            <Link href="/simulator" className="underline">
+              shoot webhooks
+            </Link>
+            .
+          </p>
         </Card>
       </div>
     </div>
