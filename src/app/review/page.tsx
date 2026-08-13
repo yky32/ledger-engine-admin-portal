@@ -2,240 +2,332 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ledger, ApiError } from "@/lib/api";
-import { asRecord, nowIso } from "@/lib/utils";
-import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
-import { JsonBlock } from "@/components/ui/json-block";
-import { Alert } from "@/components/ui/alert";
+import { PageHeader, Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
+import { ActionBar } from "@/components/ui/action";
+import { engine } from "@/lib/engine";
+import { errMsg, money, shortId } from "@/lib/format";
+import type { FailedIngest, LedgerEntry, MovementView, WalletView } from "@/lib/types";
 
-/**
- * Post-test review desk: paste CUST id from simulator / upstream-sim and inspect wallet, movements, legs, fails.
- */
 export default function ReviewPage() {
-  const [cust, setCust] = useState("");
-  const [eventId, setEventId] = useState("");
+  const [ownerId, setOwnerId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [wallet, setWallet] = useState<unknown>(null);
-  const [movements, setMovements] = useState<unknown>(null);
+  const [wallet, setWallet] = useState<WalletView | null>(null);
+  const [movements, setMovements] = useState<MovementView[]>([]);
+  const [fails, setFails] = useState<FailedIngest[]>([]);
   const [asOf, setAsOf] = useState<unknown>(null);
-  const [legs, setLegs] = useState<unknown>(null);
-  const [fails, setFails] = useState<unknown>(null);
+  const [legs, setLegs] = useState<LedgerEntry[]>([]);
+  const [selectedMovementId, setSelectedMovementId] = useState<number | null>(null);
 
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem("ledger-review-cust");
-      if (saved) setCust(saved);
+      const s = sessionStorage.getItem("review.ownerId");
+      if (s) setOwnerId(s);
     } catch {
       /* ignore */
     }
   }, []);
 
   const load = useCallback(async () => {
-    const id = cust.trim();
+    const id = ownerId.trim();
     if (!id) {
-      setError("Enter ownerId (CUST id)");
+      setError("ownerId required");
       return;
     }
     setLoading(true);
     setError(null);
+    setLegs([]);
+    setSelectedMovementId(null);
     try {
-      const [w, m, a, f] = await Promise.all([
-        ledger.get(`/wallets/${encodeURIComponent(id)}?currencies=LP,HKD`),
-        ledger.get(
-          `/wallets/${encodeURIComponent(id)}/movements?page=1&size=50`,
-        ),
-        ledger.get(`/wallets/${encodeURIComponent(id)}/balances/as-of?currency=LP`),
-        ledger.get(
-          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
-        ),
+      const [w, m, f, a] = await Promise.all([
+        engine.getWallet(id),
+        engine.movements(id),
+        engine.failedList({ ownerId: id, size: 50 }),
+        engine.asOf(id).catch(() => ({ data: null })),
       ]);
-      setWallet(w);
-      setMovements(m);
-      setAsOf(a);
-      setFails(f);
-      if (eventId.trim()) {
-        const L = await ledger.get(
-          `/integrations/ledger-entries?eventId=${encodeURIComponent(eventId.trim())}`,
-        );
-        setLegs(L);
-      } else {
-        setLegs(null);
-      }
+      setWallet(w.data);
+      setMovements(Array.isArray(m.data) ? m.data : []);
+      setFails(Array.isArray(f.data) ? f.data : []);
+      setAsOf(a.data);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
+      setError(errMsg(e));
+      setWallet(null);
+      setMovements([]);
+      setFails([]);
+      setAsOf(null);
     } finally {
       setLoading(false);
     }
-  }, [cust, eventId]);
+  }, [ownerId]);
 
-  const fireQuickPurchase = useCallback(async () => {
-    const id = cust.trim();
-    if (!id) {
-      setError("Enter CUST first");
-      return;
-    }
-    setLoading(true);
-    setError(null);
+  const loadLegs = async (movementId: number) => {
+    setSelectedMovementId(movementId);
     try {
-      const eid = `admin-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
-      const res = await ledger.post("/integrations/webhooks/transactions", {
-        eventId: eid,
-        ownerId: id,
-        eventType: "PURCHASE",
-        amount: 200,
-        currency: "HKD",
-        occurredAt: nowIso(),
-        metadata: { source: "admin-portal-review" },
-      });
-      setEventId(eid);
-      setLegs(res);
-      const [w, m, a, f] = await Promise.all([
-        ledger.get(`/wallets/${encodeURIComponent(id)}?currencies=LP,HKD`),
-        ledger.get(`/wallets/${encodeURIComponent(id)}/movements?page=1&size=50`),
-        ledger.get(`/wallets/${encodeURIComponent(id)}/balances/as-of?currency=LP`),
-        ledger.get(
-          `/integrations/failed-transactions?ownerId=${encodeURIComponent(id)}&page=1&size=50`,
-        ),
-      ]);
-      setWallet(w);
-      setMovements(m);
-      setAsOf(a);
-      setFails(f);
+      const r = await engine.legs({ movementId });
+      setLegs(Array.isArray(r.data) ? r.data : []);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
-    } finally {
-      setLoading(false);
+      setError(errMsg(e));
     }
-  }, [cust]);
-
-  const walletData = asRecord(wallet);
-  const acctList = Array.isArray(walletData?.accounts)
-    ? (walletData!.accounts as Record<string, unknown>[])
-    : [];
+  };
 
   return (
     <div>
       <PageHeader
         title="Customer review"
-        description="After Txn simulator or ./scripts/upstream-sim.sh — paste CUST id and inspect balances, movements, legs, fails."
+        description="Lookup by ownerId — wallet books, movements, as-of balances, failed ingest, DE legs."
+        actions={
+          <Link href="/simulator" className="btn-secondary text-xs">
+            Open simulator
+          </Link>
+        }
       />
 
       <Card className="mb-4">
-        <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Field label="ownerId (CUST)">
-            <Input
-              value={cust}
-              onChange={(e) => setCust(e.target.value)}
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="field min-w-[220px] flex-1">
+            <span className="field-label">ownerId</span>
+            <input
+              className="field-input font-mono"
               placeholder="01A12345678"
-              className="min-w-[200px] font-mono"
+              value={ownerId}
+              onChange={(e) => setOwnerId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && load()}
             />
-          </Field>
-          <Field label="eventId (optional legs)">
-            <Input
-              value={eventId}
-              onChange={(e) => setEventId(e.target.value)}
-              placeholder="up-… or pos-…"
-              className="min-w-[200px] font-mono"
-            />
-          </Field>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => void load()} disabled={loading}>
-              {loading ? "Loading…" : "Load review"}
-            </Button>
-            <Button variant="secondary" onClick={() => void fireQuickPurchase()} disabled={loading}>
-              Fire test PURCHASE 200 HKD
-            </Button>
-            <Link
-              href="/simulator"
-              className="inline-flex items-center rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              Simulator
-            </Link>
-            <Link
-              href="/failed-transactions"
-              className="inline-flex items-center rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              All fails
-            </Link>
-          </div>
-        </CardBody>
+          </label>
+          <ActionBar loading={loading} error={error}>
+            <button type="button" className="btn-primary" onClick={load} disabled={loading}>
+              Load
+            </button>
+          </ActionBar>
+        </div>
       </Card>
 
-      {error ? (
-        <div className="mb-4">
-          <Alert variant="error">{error}</Alert>
+      {wallet ? (
+        <div className="mb-4 grid gap-4 lg:grid-cols-2">
+          <Card title="Wallet" description={`ownerId ${wallet.ownerId || ownerId}`}>
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+              <dt className="text-slate-500">walletId</dt>
+              <dd className="font-mono text-xs">{wallet.walletId ?? wallet.id ?? "—"}</dd>
+              <dt className="text-slate-500">status</dt>
+              <dd>
+                <Badge tone="ok">{wallet.status || "—"}</Badge>
+              </dd>
+              <dt className="text-slate-500">settlement</dt>
+              <dd>{wallet.settlementCurrency || "—"}</dd>
+              <dt className="text-slate-500">type / walletType</dt>
+              <dd>
+                {wallet.type || "—"} · {wallet.walletType || "—"}
+              </dd>
+              <dt className="text-slate-500">vanityCode</dt>
+              <dd className="font-mono text-xs">{wallet.vanityCode || "—"}</dd>
+              <dt className="text-slate-500">name</dt>
+              <dd>{wallet.name || "—"}</dd>
+            </dl>
+            <div className="mt-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Accounts
+              </div>
+              {(wallet.accounts?.length ? wallet.accounts : wallet.account ? [wallet.account] : [])
+                .length === 0 ? (
+                <Empty>No accounts</Empty>
+              ) : (
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>ccy</th>
+                        <th>ledger</th>
+                        <th>available</th>
+                        <th>id</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(wallet.accounts?.length
+                        ? wallet.accounts
+                        : wallet.account
+                          ? [wallet.account]
+                          : []
+                      ).map((a, i) => (
+                        <tr key={a.id ?? i}>
+                          <td className="font-medium">{a.currency}</td>
+                          <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
+                          <td className="font-mono text-xs">{money(a.availableBalance)}</td>
+                          <td className="font-mono text-[10px] text-slate-500">
+                            {shortId(a.id, 6)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card title="As-of balances" description="GET …/balances/as-of">
+            {asOf ? <JsonBlock value={asOf} maxHeight={280} /> : <Empty>No as-of data</Empty>}
+          </Card>
         </div>
       ) : null}
 
-      {acctList.length > 0 ? (
-        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {acctList.map((a, i) => (
-            <Card key={String(a.id ?? i)}>
-              <CardBody>
-                <div className="text-xs text-zinc-500">{String(a.currency ?? "—")}</div>
-                <div className="mt-1 text-sm">
-                  ledger{" "}
-                  <span className="font-semibold tabular-nums">
-                    {String(a.ledgerBalance ?? a.ledger_balance ?? "—")}
-                  </span>
-                </div>
-                <div className="text-sm">
-                  available{" "}
-                  <span className="font-semibold tabular-nums">
-                    {String(a.availableBalance ?? a.available_balance ?? "—")}
-                  </span>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      ) : null}
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
+        <Card
+          title="Movements"
+          description={`${movements.length} row(s)`}
+          right={
+            selectedMovementId ? (
+              <Badge tone="info">legs · {selectedMovementId}</Badge>
+            ) : null
+          }
+        >
+          {movements.length === 0 ? (
+            <Empty>No movements</Empty>
+          ) : (
+            <div className="table-wrap max-h-96 overflow-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>type</th>
+                    <th>amt</th>
+                    <th>status</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {movements.map((m) => (
+                    <tr key={m.id}>
+                      <td className="font-mono text-[10px]">{m.id}</td>
+                      <td>
+                        <span className="font-medium">{m.orderType}</span>
+                        <div className="text-[10px] text-slate-400">{m.currency}</div>
+                      </td>
+                      <td className="font-mono text-xs">{money(m.amount)}</td>
+                      <td>
+                        <Badge
+                          tone={
+                            m.status === "SETTLED"
+                              ? "ok"
+                              : m.status === "ERROR" || m.status === "REJECTED"
+                                ? "error"
+                                : "neutral"
+                          }
+                        >
+                          {m.status}
+                        </Badge>
+                      </td>
+                      <td>
+                        {m.id != null ? (
+                          <button
+                            type="button"
+                            className="btn-ghost text-xs"
+                            onClick={() => loadLegs(m.id!)}
+                          >
+                            Legs
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Wallet" description="GET /wallets/{id}?currencies=LP,HKD" />
-          <CardBody>
-            <JsonBlock value={wallet ?? { hint: "Load a CUST" }} />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader title="As-of LP" description="GET …/balances/as-of?currency=LP" />
-          <CardBody>
-            <JsonBlock value={asOf ?? { hint: "Load a CUST" }} />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader title="Movements" description="GET …/movements?page=1&size=50" />
-          <CardBody>
-            <JsonBlock value={movements ?? { hint: "Load a CUST" }} maxHeight={360} />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader
-            title="Legs (by eventId)"
-            description="GET /integrations/ledger-entries?eventId="
-          />
-          <CardBody>
-            <JsonBlock
-              value={legs ?? { hint: "Set eventId then Load, or Fire test PURCHASE" }}
-              maxHeight={360}
-            />
-          </CardBody>
-        </Card>
-        <Card className="lg:col-span-2">
-          <CardHeader
-            title="Failed ingest for this CUST"
-            description="GET /integrations/failed-transactions?ownerId="
-          />
-          <CardBody>
-            <JsonBlock value={fails ?? { hint: "Load a CUST" }} maxHeight={280} />
-          </CardBody>
+        <Card title="Failed ingest" description={`ownerId filter · ${fails.length}`}>
+          {fails.length === 0 ? (
+            <Empty>No fails for this customer</Empty>
+          ) : (
+            <div className="table-wrap max-h-96 overflow-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>code</th>
+                    <th>status</th>
+                    <th>reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fails.map((f) => (
+                    <tr key={f.id}>
+                      <td className="font-mono text-[10px]">{f.id}</td>
+                      <td className="font-mono text-xs">{f.failureCode}</td>
+                      <td>
+                        <Badge tone={f.status === "OPEN" ? "warn" : "neutral"}>
+                          {f.status}
+                        </Badge>
+                      </td>
+                      <td className="max-w-[180px] truncate text-xs text-slate-600">
+                        {f.reason}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="mt-3">
+            <Link href="/failed-transactions" className="text-xs text-emerald-700 underline">
+              Open failed-ingest desk →
+            </Link>
+          </div>
         </Card>
       </div>
+
+      <Card title="Ledger legs" description="from selected movement">
+        {legs.length === 0 ? (
+          <Empty>Select a movement → Legs</Empty>
+        ) : (
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>id</th>
+                  <th>dir</th>
+                  <th>amount</th>
+                  <th>ccy</th>
+                  <th>target</th>
+                  <th>L / A</th>
+                </tr>
+              </thead>
+              <tbody>
+                {legs.map((e) => (
+                  <tr key={e.id}>
+                    <td className="font-mono text-[10px]">{e.id}</td>
+                    <td>
+                      <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
+                        {e.direction}
+                      </Badge>
+                    </td>
+                    <td className="font-mono text-xs">{money(e.amount)}</td>
+                    <td>{e.currency}</td>
+                    <td className="font-mono text-[10px]">{e.targetId}</td>
+                    <td className="text-xs text-slate-500">
+                      {String(e.affectsLedger)} / {String(e.affectsAvailable)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {wallet ? (
+        <div className="mt-4">
+          <Alert tone="info">
+            Raw wallet JSON collapsed — use browser network or legs JSON if needed.
+          </Alert>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-slate-500">wallet payload</summary>
+            <div className="mt-2">
+              <JsonBlock value={wallet} />
+            </div>
+          </details>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -9,9 +9,7 @@ import {
   Globe2,
   Settings2,
   Webhook,
-  FileStack,
   CreditCard,
-  Layers,
   Brain,
   DoorOpen,
   AlertTriangle,
@@ -19,46 +17,48 @@ import {
   Lock,
   ListTree,
   FlaskConical,
+  Activity,
 } from "lucide-react";
 
 export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  group?: string;
+  group: string;
+  blurb?: string;
 };
 
 export const NAV: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard, group: "Overview" },
-  { href: "/simulator", label: "Txn simulator", icon: FlaskConical, group: "Loyalty review" },
-  { href: "/review", label: "Customer review", icon: Search, group: "Loyalty review" },
-  { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, group: "Loyalty review" },
-  { href: "/failed-transactions", label: "Failed ingest", icon: AlertTriangle, group: "Loyalty review" },
-  { href: "/ledger-entries", label: "Ledger legs", icon: ListTree, group: "Loyalty review" },
-  { href: "/digestion-rules", label: "Digestion rules", icon: Brain, group: "Loyalty config" },
-  { href: "/ingest-policy", label: "Ingest policy", icon: DoorOpen, group: "Loyalty config" },
-  { href: "/holds", label: "Hold / Release", icon: Lock, group: "Loyalty config" },
-  { href: "/wallets", label: "Wallets (onboard)", icon: Wallet, group: "Core" },
-  { href: "/ledger-wallets", label: "Ledger wallets", icon: Layers, group: "Core" },
-  { href: "/ledger-accounts", label: "Ledger accounts", icon: BookOpen, group: "Core" },
-  { href: "/accounts", label: "COA accounts", icon: Scale, group: "Core" },
-  { href: "/movements", label: "Movements", icon: ArrowLeftRight, group: "Money" },
+  { href: "/", label: "Home", icon: LayoutDashboard, group: "Overview", blurb: "Status & shortcuts" },
+  { href: "/simulator", label: "Simulator", icon: FlaskConical, group: "Loyalty", blurb: "Multi-txn matrix" },
+  { href: "/review", label: "Customer review", icon: Search, group: "Loyalty", blurb: "Wallet · mv · legs · fails" },
+  { href: "/transactions-ingest", label: "Fire webhook", icon: Webhook, group: "Loyalty", blurb: "POST /integrations/webhooks" },
+  { href: "/failed-transactions", label: "Failed ingest", icon: AlertTriangle, group: "Loyalty", blurb: "Review · Replay" },
+  { href: "/ledger-entries", label: "Ledger legs", icon: ListTree, group: "Loyalty", blurb: "DE by event / movement" },
+  { href: "/digestion-rules", label: "Digestion rules", icon: Brain, group: "Config", blurb: "Scoring brain" },
+  { href: "/ingest-policy", label: "Ingest policy", icon: DoorOpen, group: "Config", blurb: "Webhook door" },
+  { href: "/holds", label: "Hold / Release", icon: Lock, group: "Config", blurb: "Available lock" },
+  { href: "/wallets", label: "Wallets", icon: Wallet, group: "Core", blurb: "Onboard by ownerId" },
+  { href: "/movements", label: "Movements", icon: ArrowLeftRight, group: "Core", blurb: "GET /movements" },
   { href: "/deposits", label: "Deposits", icon: CreditCard, group: "Money" },
   { href: "/withdrawals", label: "Withdrawals", icon: CreditCard, group: "Money" },
-  { href: "/transfers", label: "In-wallet transfers", icon: ArrowLeftRight, group: "Money" },
-  { href: "/journal", label: "Journal post", icon: FileStack, group: "Money" },
-  { href: "/rules", label: "Rules (legacy)", icon: Scale, group: "Accounting" },
-  { href: "/rule-executions", label: "Rule executions", icon: PlayCircle, group: "Accounting" },
-  { href: "/fx-rates", label: "FX rates", icon: Globe2, group: "Config" },
-  { href: "/configurations", label: "Configurations", icon: Settings2, group: "Config" },
+  { href: "/transfers", label: "Transfers", icon: ArrowLeftRight, group: "Money" },
+  { href: "/ledger-accounts", label: "Accounts", icon: BookOpen, group: "Money" },
+  { href: "/fx-rates", label: "FX rates", icon: Globe2, group: "Reference" },
+  { href: "/rules", label: "Rules", icon: Scale, group: "Reference" },
+  { href: "/rule-executions", label: "Rule executions", icon: PlayCircle, group: "Reference" },
+  { href: "/configurations", label: "System config", icon: Settings2, group: "Reference" },
+  { href: "/health", label: "Engine health", icon: Activity, group: "Overview" },
 ];
 
 export function navGroups(): { name: string; items: NavItem[] }[] {
   const map = new Map<string, NavItem[]>();
   for (const item of NAV) {
-    const g = item.group || "Other";
-    if (!map.has(g)) map.set(g, []);
-    map.get(g)!.push(item);
+    if (!map.has(item.group)) map.set(item.group, []);
+    map.get(item.group)!.push(item);
   }
-  return [...map.entries()].map(([name, items]) => ({ name, items }));
+  const order = ["Overview", "Loyalty", "Config", "Core", "Money", "Reference"];
+  return order
+    .filter((n) => map.has(n))
+    .map((name) => ({ name, items: map.get(name)! }));
 }
