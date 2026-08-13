@@ -7,6 +7,7 @@ import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { FailedIngest } from "@/lib/types";
 import { FlowStrip } from "@/components/layout/flow-strip";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 export default function FailedPage() {
   const [status, setStatus] = useState("OPEN");
@@ -63,6 +64,7 @@ export default function FailedPage() {
   return (
     <div>
       <FlowStrip active="engine" />
+      <EngineStatusBanner />
       <PageHeader
         title="Failed ingest"
         description="GET/POST /integrations/failed-transactions — review ack or replay pipeline."

@@ -5,6 +5,7 @@ import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 export default function ConfigurationsPage() {
   const [target, setTarget] = useState("uaa");
@@ -50,6 +51,7 @@ export default function ConfigurationsPage() {
         title="System configuration"
         description="JSONB value — e.g. name user-register.otp. GET/PUT /configurations"
       />
+      <EngineStatusBanner />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Upsert">
           <div className="space-y-3">

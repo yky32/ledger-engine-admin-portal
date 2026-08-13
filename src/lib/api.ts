@@ -13,6 +13,18 @@ export class ApiError extends Error {
     super(message || `HTTP ${status}`);
     this.name = "ApiError";
   }
+
+  get isNetwork(): boolean {
+    return this.status === 0 || this.message.toLowerCase().includes("fetch");
+  }
+
+  get isNotFound(): boolean {
+    return this.status === 404;
+  }
+
+  get isConflict(): boolean {
+    return this.status === 409 || this.code?.endsWith("409") === true;
+  }
 }
 
 export type Pagination = {
@@ -41,7 +53,26 @@ async function parseBody(res: Response): Promise<unknown> {
 }
 
 function isEnvelope(v: unknown): v is ResultEnvelope<unknown> {
-  return !!v && typeof v === "object" && ("data" in v || "code" in v);
+  return !!v && typeof v === "object" && ("data" in v || "code" in v || "httpStatus" in v);
+}
+
+function messageFromBody(body: unknown, fallback: string): { message: string; code?: string } {
+  if (!body) return { message: fallback };
+  if (typeof body === "string") return { message: body.slice(0, 500) };
+  if (isEnvelope(body)) {
+    const data = body.data as Record<string, unknown> | null | undefined;
+    const detail =
+      data && typeof data === "object"
+        ? (data.detail as string) || (data.message as string) || ""
+        : "";
+    const msg = [body.message, detail].filter(Boolean).join(" — ") || body.code || fallback;
+    return { message: msg, code: body.code };
+  }
+  try {
+    return { message: JSON.stringify(body).slice(0, 500) };
+  } catch {
+    return { message: fallback };
+  }
 }
 
 export async function apiRaw(
@@ -60,7 +91,17 @@ export async function apiRaw(
   }
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
-  const res = await fetch(url, { ...init, headers, body, cache: "no-store" });
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, headers, body, cache: "no-store" });
+  } catch (e) {
+    const msg =
+      e instanceof Error
+        ? `Engine unreachable (${e.message}). Start ledger-engine on LEDGER_ENGINE_URL.`
+        : "Engine unreachable. Start ledger-engine.";
+    throw new ApiError(0, null, msg);
+  }
+
   const parsed = await parseBody(res);
   return { status: res.status, body: parsed };
 }
@@ -68,30 +109,30 @@ export async function apiRaw(
 export async function api<T = unknown>(
   path: string,
   init?: RequestInit & { json?: unknown },
-): Promise<{ data: T; pagination?: Pagination | null; raw: unknown }> {
+): Promise<{ data: T; pagination?: Pagination | null; raw: unknown; status: number }> {
   const { status, body } = await apiRaw(path, init);
 
   if (status < 200 || status >= 300) {
-    const env = isEnvelope(body) ? body : null;
-    const msg =
-      env?.message ||
-      (typeof body === "string" ? body : JSON.stringify(body)?.slice(0, 400));
-    throw new ApiError(status, body, msg, env?.code);
+    const { message, code } = messageFromBody(body, `HTTP ${status}`);
+    throw new ApiError(status, body, message, code);
   }
 
   if (isEnvelope(body)) {
-    // business fail sometimes 200 with non-SYS0000 — still surface
-    if (body.code && body.code !== "SYS0000" && body.data === undefined) {
+    // business fail sometimes 200 with non-SYS0000 and no data
+    // Non-success business codes without payload
+    if (body.code && body.code !== "SYS0000" && body.data == null) {
       throw new ApiError(status, body, body.message || body.code, body.code);
     }
     return {
       data: body.data as T,
       pagination: body.pagination ?? null,
       raw: body,
+      status,
     };
   }
 
-  return { data: body as T, pagination: null, raw: body };
+  // actuator / plain JSON
+  return { data: body as T, pagination: null, raw: body, status };
 }
 
 export const ledger = {
@@ -106,7 +147,9 @@ export const ledger = {
 };
 
 /** Build query string; skips null/undefined/''. */
-export function qs(params: Record<string, string | number | boolean | undefined | null>): string {
+export function qs(
+  params: Record<string, string | number | boolean | undefined | null>,
+): string {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null || v === "") continue;

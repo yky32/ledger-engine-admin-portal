@@ -9,6 +9,7 @@ import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { DigestionRule } from "@/lib/types";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR";
 
@@ -109,6 +110,7 @@ export default function DigestionRulesPage() {
   return (
     <div>
       <FlowStrip active="ops" />
+      <EngineStatusBanner />
       <PageHeader
         title="1 · Brain — Digestion rules"
         description="JSON formula config (not string DSL). Runtime DB · /digestion-rules"

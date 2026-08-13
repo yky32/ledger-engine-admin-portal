@@ -18,12 +18,11 @@ import {
   FlaskConical,
   Activity,
   Workflow,
-  Building2,
 } from "lucide-react";
 
 /**
- * Nav mirrors docs/SYSTEM_BUSINESS_FLOW.md end-to-end picture:
- *   Ops config → Upstream shoot → Engine (Door/Brain/Books/Audit) → Outcomes
+ * Nav mirrors docs/SYSTEM_BUSINESS_FLOW.md.
+ * Only routes that map to real engine APIs (no auto-404 stubs).
  */
 export type NavItem = {
   href: string;
@@ -35,7 +34,6 @@ export type NavItem = {
 };
 
 export const NAV: NavItem[] = [
-  // Overview
   {
     href: "/",
     label: "Business flow",
@@ -50,7 +48,6 @@ export const NAV: NavItem[] = [
     group: "Overview",
   },
 
-  // 1) Ops configures once
   {
     href: "/ingest-policy",
     label: "1 · Door — Ingest policy",
@@ -76,13 +73,12 @@ export const NAV: NavItem[] = [
     step: "ops",
   },
 
-  // 2) Upstream shoots events
   {
     href: "/simulator",
     label: "2 · Shoot — Simulator",
     icon: FlaskConical,
     group: "② Upstream shoot",
-    blurb: "Matrix as POS / OMS",
+    blurb: "Multi-customer matrix",
     step: "shoot",
   },
   {
@@ -94,7 +90,6 @@ export const NAV: NavItem[] = [
     step: "shoot",
   },
 
-  // 3) Engine digest outcomes
   {
     href: "/review",
     label: "3 · Customer LP books",
@@ -132,11 +127,10 @@ export const NAV: NavItem[] = [
     label: "4 · Audit — Movements",
     icon: ArrowLeftRight,
     group: "③ Engine outcomes",
-    blurb: "Movement history",
+    blurb: "GET /movements",
     step: "engine",
   },
 
-  // Money rails (secondary)
   {
     href: "/deposits",
     label: "Deposits",
@@ -151,24 +145,11 @@ export const NAV: NavItem[] = [
   },
   {
     href: "/transfers",
-    label: "Transfers",
+    label: "In-wallet transfers",
     icon: ArrowLeftRight,
     group: "Money rails",
   },
-  {
-    href: "/ledger-accounts",
-    label: "Ledger accounts",
-    icon: BookOpen,
-    group: "Money rails",
-  },
-  {
-    href: "/ledger-wallets",
-    label: "Ledger wallets",
-    icon: Building2,
-    group: "Money rails",
-  },
 
-  // Reference
   {
     href: "/fx-rates",
     label: "FX rates",
@@ -194,15 +175,9 @@ export const NAV: NavItem[] = [
     group: "Reference",
   },
   {
-    href: "/accounts",
-    label: "COA accounts",
+    href: "/ledger-accounts",
+    label: "Ledger accounts",
     icon: BookOpen,
-    group: "Reference",
-  },
-  {
-    href: "/journal",
-    label: "Journal",
-    icon: ListTree,
     group: "Reference",
   },
 ];

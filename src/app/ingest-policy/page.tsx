@@ -9,6 +9,7 @@ import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { IngestPolicy } from "@/lib/types";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 /**
  * Field copy aligned with ledger-engine/docs/INGEST_POLICY.md
@@ -171,6 +172,7 @@ export default function IngestPolicyPage() {
   return (
     <div>
       <FlowStrip active="ops" />
+      <EngineStatusBanner />
       <PageHeader
         title="1 · Door — Ingest policy"
         description="Webhook admission + lazy wallet. Not scoring. API GET/PUT /ingest-policy · docs/INGEST_POLICY.md"

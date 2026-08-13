@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PageHeader, Card, JsonBlock, Alert } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 export default function HealthPage() {
   const [data, setData] = useState<unknown>(null);
@@ -26,6 +27,7 @@ export default function HealthPage() {
         title="Engine health"
         description="Best-effort /actuator/health or /dashboards via rewrite."
       />
+      <EngineStatusBanner />
       {error ? <Alert tone="error">{error}</Alert> : null}
       <Card title="Response">{data ? <JsonBlock value={data} /> : null}</Card>
     </div>

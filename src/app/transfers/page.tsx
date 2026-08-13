@@ -8,6 +8,7 @@ export default function Page() {
       description="POST /movements/transfers/in-wallet"
       listPath="/movements"
       createPath="/movements/transfers/in-wallet"
+      pageable
       sample={{
         walletId: 0,
         fromCurrency: "HKD",

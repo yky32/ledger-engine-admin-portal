@@ -7,6 +7,7 @@ import { FieldLabel, ExplainBox } from "@/components/ui/help";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 export default function HoldsPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -39,6 +40,7 @@ export default function HoldsPage() {
   return (
     <div>
       <FlowStrip active="engine" />
+      <EngineStatusBanner />
       <PageHeader
         title="Hold / Release LP"
         description="Locks spendable (available) balance only — ledger/total balance unchanged. POST /wallets/holds · /releases"

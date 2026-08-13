@@ -11,10 +11,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader, Card, Badge, JsonBlock, Alert, Empty } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
-import { errMsg, nowIso, randomEventId, randomOwnerId, clsx } from "@/lib/format";
+import { errMsg, nowIso, randomEventId, randomOwnerId, clsx, isConflictError } from "@/lib/format";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { ExplainBox } from "@/components/ui/help";
 import { Plus, Copy, Trash2, Users } from "lucide-react";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 /* ───────── types ───────── */
 
@@ -449,12 +450,7 @@ export default function SimulatorPage() {
             isEnabled: true,
           }),
         );
-        const ok =
-          t.ok ||
-          errMsg((t as { e: unknown }).e).includes("0409") ||
-          errMsg((t as { e?: unknown }).e || "")
-            .toLowerCase()
-            .includes("exist");
+        const ok = t.ok || isConflictError((t as { e: unknown }).e) || errMsg((t as { e?: unknown }).e || "").toLowerCase().includes("exist");
         push({
           kind: "bootstrap-rule",
           name: "seed digestion SIM_PURCHASE_DEFAULT (+ REDEEM/CARD_OPEN try)",
@@ -554,9 +550,7 @@ export default function SimulatorPage() {
             }),
           );
           const msg = t.ok ? "created" : errMsg((t as { e: unknown }).e);
-          const exists =
-            !t.ok &&
-            (msg.includes("0409") || msg.toLowerCase().includes("already") || msg.includes("409"));
+          const exists = !t.ok && isConflictError((t as { e: unknown }).e);
           const ok = t.ok || (globalOpts.skipOnboardIfExists && exists);
           push({
             kind: "onboard",
@@ -754,6 +748,7 @@ export default function SimulatorPage() {
   return (
     <div>
       <FlowStrip active="shoot" />
+      <EngineStatusBanner />
       <PageHeader
         title="Txn simulator"
         description="Multi-customer upstream · each customer has its own transaction matrix (eventType × ccy × amount × age × repeats)."
