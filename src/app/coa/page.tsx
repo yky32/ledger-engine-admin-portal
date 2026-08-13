@@ -117,9 +117,9 @@ export default function CoaPage() {
     try {
       const r = await engine.coaProfileCreate({
         code: newCode.trim().toUpperCase(),
-        name: newCode.trim() || "Clone",
         isDefault: false,
         ...form,
+        name: newCode.trim() || form.name || "Clone",
       });
       const created = r.data as CoaRow;
       setOk(`Created ${created.code}`);
