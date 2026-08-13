@@ -11,6 +11,7 @@ import { PageHeader, Card, Badge, JsonBlock, Alert, Empty } from "@/components/u
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId, money } from "@/lib/format";
 import { FlowStrip } from "@/components/layout/flow-strip";
+import { ExplainBox } from "@/components/ui/help";
 
 /* ───────── types ───────── */
 
@@ -648,6 +649,27 @@ export default function SimulatorPage() {
           </Link>
         }
       />
+
+      <div className="mb-4 grid gap-3 lg:grid-cols-3">
+        <ExplainBox title="You are Upstream (POS/OMS)" tone="ops">
+          <p>
+            Simulator fires the same webhook JSON a real store would. Engine still runs full
+            Door → Brain → Books → Audit. Not a mock ledger.
+          </p>
+        </ExplainBox>
+        <ExplainBox title="Seed options">
+          <p>
+            Optionally writes Digestion PURCHASE/REDEEM rules + turns Door auto-wallet on so a
+            greenfield DB can earn on first run.
+          </p>
+        </ExplainBox>
+        <ExplainBox title="After the run" tone="info">
+          <p>
+            Open Customer review for LP balances, Fail queue for skips, DE legs for PROGRAM
+            counterparty booking.
+          </p>
+        </ExplainBox>
+      </div>
 
       <div className="mb-4 grid gap-4 xl:grid-cols-3">
         {/* subject */}

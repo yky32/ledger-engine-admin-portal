@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
+import { FieldLabel, ExplainBox, HelpTip } from "@/components/ui/help";
 import { engine } from "@/lib/engine";
 import { errMsg, randomOwnerId } from "@/lib/format";
 import { FlowStrip } from "@/components/layout/flow-strip";
@@ -56,14 +57,35 @@ export default function WalletsPage() {
     <div>
       <FlowStrip active="ops" />
       <PageHeader
-        title="Wallets"
-        description="POST /wallets onboard · GET /wallets/{ownerId}. Query always ownerId."
+        title="Wallet onboard (CRM path)"
+        description="Explicit 1 ownerId → 1 Wallet. Alternative to Door lazy auto-create."
       />
+      <div className="mb-4 grid gap-3 lg:grid-cols-2">
+        <ExplainBox title="When to use explicit onboard" tone="ops">
+          <p>
+            CRM already knows the member: call onboard before first purchase. Identity is always{" "}
+            <code className="text-xs">ownerId</code> (e.g. 01A########) — never vanity/lucky
+            numbers as PK.
+          </p>
+        </ExplainBox>
+        <ExplainBox title="vs Door auto-create">
+          <p>
+            If Ingest policy <code className="text-xs">isAutoCreateWallet=true</code>, first
+            eligible webhook can create the wallet. Explicit onboard is for controlled CRM join
+            flows.
+          </p>
+        </ExplainBox>
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Onboard">
           <div className="space-y-3">
             <label className="field">
-              <span className="field-label">ownerId</span>
+              <FieldLabel
+                tipTitle="ownerId"
+                tip="External CRM / membership id. Unique. All wallet GET APIs use this — not snowflake wallet id."
+              >
+                ownerId
+              </FieldLabel>
               <div className="flex gap-2">
                 <input
                   className="field-input font-mono"
@@ -84,7 +106,12 @@ export default function WalletsPage() {
               <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} />
             </label>
             <label className="field">
-              <span className="field-label">vanityCode</span>
+              <FieldLabel
+                tipTitle="vanityCode"
+                tip="Optional customer-facing lucky/premium display code. Mutable, unique when set. Never used as PK, FK, or webhook identity — that is ownerId."
+              >
+                vanityCode
+              </FieldLabel>
               <input
                 className="field-input font-mono"
                 value={vanityCode}
@@ -93,7 +120,12 @@ export default function WalletsPage() {
               />
             </label>
             <label className="field">
-              <span className="field-label">settlementCurrency</span>
+              <FieldLabel
+                tipTitle="settlementCurrency"
+                tip="Primary account currency on the wallet (e.g. HKD). Points usually live on an extra LP book (checkbox below)."
+              >
+                settlementCurrency
+              </FieldLabel>
               <select
                 className="field-select"
                 value={settlement}
@@ -111,6 +143,10 @@ export default function WalletsPage() {
                 onChange={(e) => setExtraLp(e.target.checked)}
               />
               Also open LP book
+              <HelpTip title="LP book" wide>
+                Loyalty points double-entry posts to the LP account under this wallet. Without
+                LP, earn from Digestion has nowhere to credit.
+              </HelpTip>
             </label>
             <ActionBar loading={loading} error={error}>
               <button type="button" className="btn-primary" onClick={create}>
