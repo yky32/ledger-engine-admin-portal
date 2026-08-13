@@ -1,11 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Wallet,
-  BookOpen,
   ArrowLeftRight,
-  Scale,
-  PlayCircle,
-  Globe2,
   Settings2,
   Webhook,
   CreditCard,
@@ -18,12 +14,12 @@ import {
   FlaskConical,
   Activity,
   Workflow,
-  Building2,
+  Database,
 } from "lucide-react";
 
 /**
  * Nav mirrors docs/SYSTEM_BUSINESS_FLOW.md.
- * Only routes that map to real engine APIs (no auto-404 stubs).
+ * Product surfaces only — no legacy catalog routes.
  */
 export type NavItem = {
   href: string;
@@ -47,6 +43,13 @@ export const NAV: NavItem[] = [
     label: "Engine health",
     icon: Activity,
     group: "Overview",
+  },
+  {
+    href: "/records",
+    label: "DB records",
+    icon: Database,
+    group: "Overview",
+    blurb: "What is saved in PG via APIs",
   },
 
   {
@@ -152,39 +155,9 @@ export const NAV: NavItem[] = [
   },
 
   {
-    href: "/fx-rates",
-    label: "FX rates",
-    icon: Globe2,
-    group: "Reference",
-  },
-  {
-    href: "/rules",
-    label: "Rules (legacy catalog)",
-    icon: Scale,
-    group: "Reference",
-  },
-  {
-    href: "/rule-executions",
-    label: "Rule executions",
-    icon: PlayCircle,
-    group: "Reference",
-  },
-  {
     href: "/configurations",
     label: "System config JSONB",
     icon: Settings2,
-    group: "Reference",
-  },
-  {
-    href: "/ledger-wallets",
-    label: "Ledger wallets (legacy)",
-    icon: Building2,
-    group: "Reference",
-  },
-  {
-    href: "/ledger-accounts",
-    label: "Ledger accounts",
-    icon: BookOpen,
     group: "Reference",
   },
 ];
