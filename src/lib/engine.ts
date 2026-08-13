@@ -189,12 +189,12 @@ export const engine = {
     ledger.post<DigestionRule>(`/digestion-rules/${id}/disable`),
 
   /* ─── Door ─── */
-  /** GET /ingest-policy */
-  ingestPolicyGet: () => ledger.get<IngestPolicy>("/ingest-policy"),
+  /** GET /ingest-policies */
+  ingestPolicyGet: () => ledger.get<IngestPolicy>("/ingest-policies"),
 
-  /** PUT /ingest-policy */
+  /** PUT /ingest-policies */
   ingestPolicyPut: (body: Partial<IngestPolicy>) =>
-    ledger.put<IngestPolicy>("/ingest-policy", body),
+    ledger.put<IngestPolicy>("/ingest-policies", body),
 
   /* ─── Product movements (/movements) — require ownerId, NOT walletId on write ─── */
   /** GET /movements?walletId= (required) */

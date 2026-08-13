@@ -25,8 +25,8 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | POST | `/integrations/failed-transactions/{id}/review` | — | |
 | POST | `/integrations/failed-transactions/{id}/replay` | — | |
 | POST | `/integrations/failed-transactions/replay` | `{ "ids": [long…] }` max 50 | Bulk |
-| GET | `/ingest-policy` | — | Door |
-| PUT | `/ingest-policy` | partial flags/ccy/prefix | |
+| GET | `/ingest-policies` | — | Door |
+| PUT | `/ingest-policies` | partial flags/ccy/prefix | |
 | GET | `/digestion-rules` | `enabledOnly?`,`code?` | **no page** |
 | GET | `/digestion-rules/{id}` | — | |
 | POST | `/digestion-rules` | CreateDigestionRule · filters + `eligibleMccs` + `formula` JSON | Brain |

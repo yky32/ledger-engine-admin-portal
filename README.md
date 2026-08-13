@@ -8,7 +8,7 @@ UX follows LedgeRX **`docs/SYSTEM_BUSINESS_FLOW.md`**. Brand: engine `docs/BRAND
 ## Mental model (sidebar + home)
 
 ```text
-① Ops configures     Door (ingest-policy) + Brain (digestion-rules)
+① Ops configures     Door (ingest-policies) + Brain (digestion-rules)
 ② Upstream shoot     Simulator / single webhook  (= POS/OMS)
 ③ Engine outcomes    Customer LP · DE legs · Fail queue · Movements
 ```
@@ -30,7 +30,7 @@ http://localhost:3000 → **LedgeRX** business flow → steps 1→4.
 
 | Step | Route | Engine API idea |
 |------|-------|-----------------|
-| 1 Door | `/ingest-policy` | GET/PUT `/ingest-policy` |
+| 1 Door | `/ingest-policies` | GET/PUT `/ingest-policies` |
 | 1 Brain | `/digestion-rules` | `/digestion-rules` |
 | 2 Shoot | `/simulator` | webhook matrix |
 | 2 Shoot | `/transactions-ingest` | POST webhook |

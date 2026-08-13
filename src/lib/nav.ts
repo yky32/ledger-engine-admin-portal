@@ -50,7 +50,7 @@ export const NAV: NavItem[] = [
   },
 
   {
-    href: "/ingest-policy",
+    href: "/ingest-policies",
     label: "1 · Door — Ingest policy",
     icon: DoorOpen,
     group: "① Ops configures",
