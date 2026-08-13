@@ -90,11 +90,11 @@ export default function HomePage() {
             tone="ops"
             title="Ops configures once"
             subtitle="runtime DB · no restart"
-            href="/ingest-policy"
+            href="/ingest-policies"
           >
             <ul className="mt-2 space-y-1.5 text-sm">
               <li>
-                <Link className="flow-link" href="/ingest-policy">
+                <Link className="flow-link" href="/ingest-policies">
                   <DoorOpen className="h-3.5 w-3.5" />
                   Ingest policy <span className="text-slate-400">(door)</span>
                 </Link>
@@ -169,7 +169,7 @@ export default function HomePage() {
                 n="1"
                 icon={DoorOpen}
                 title="Door — accept event? auto-wallet?"
-                href="/ingest-policy"
+                href="/ingest-policies"
                 note="Ingest policy"
               />
               <EngineStep
@@ -240,9 +240,9 @@ export default function HomePage() {
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
             <li>~1 global policy</li>
             <li>Kill-switch + auto-wallet settlement/LP</li>
-            <li>API <code>GET/PUT /ingest-policy</code></li>
+            <li>API <code>GET/PUT /ingest-policies</code></li>
           </ul>
-          <Link href="/ingest-policy" className="btn-secondary mt-3 text-xs">
+          <Link href="/ingest-policies" className="btn-secondary mt-3 text-xs">
             Open door config
           </Link>
         </Card>
@@ -269,7 +269,7 @@ export default function HomePage() {
               n: "1",
               t: "Ops configures",
               d: "Turn door on + seed PURCHASE earn rule (or let simulator seed).",
-              href: "/ingest-policy",
+              href: "/ingest-policies",
               cta: "Door + Brain",
             },
             {

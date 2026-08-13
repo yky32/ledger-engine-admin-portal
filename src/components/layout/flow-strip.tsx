@@ -11,7 +11,7 @@ export function FlowStrip({ active }: { active?: "ops" | "shoot" | "engine" | "b
     title: string;
     href: string;
   }[] = [
-    { id: "ops", n: "1", title: "Ops config", href: "/ingest-policy" },
+    { id: "ops", n: "1", title: "Ops config", href: "/ingest-policies" },
     { id: "shoot", n: "2", title: "Shoot txn", href: "/simulator" },
     { id: "engine", n: "3", title: "Engine digest", href: "/review" },
     { id: "books", n: "4", title: "Books / audit", href: "/ledger-entries" },
