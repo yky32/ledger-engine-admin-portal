@@ -28,7 +28,7 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | PUT | `/ingest-policy` | partial flags/ccy/prefix | |
 | GET | `/digestion-rules` | `enabledOnly?`,`code?` | **no page** |
 | GET | `/digestion-rules/{id}` | — | |
-| POST | `/digestion-rules` | see CreateDigestionRule · `formula` **JSON object** | Brain |
+| POST | `/digestion-rules` | CreateDigestionRule · filters + `eligibleMccs` + `formula` JSON | Brain |
 | PUT | `/digestion-rules/{id}` | partial | |
 | POST | `/digestion-rules/{id}/enable` | — | |
 | POST | `/digestion-rules/{id}/disable` | — | |
@@ -36,6 +36,12 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 ### Webhook result `data` (IngestionResult)
 
 `eventId`, `status` (`EARNED|BURNED|PROCESSED|SKIPPED|DUPLICATE|ERROR`), `operation`, `reason`, `points`, `transactionId`, `walletExternalReference`, `movementId`, `legs[]`
+
+### Eligibility (Brain)
+
+`eventType`, `minAmount`, `eligibleCurrencies[]`, **`eligibleMccs[]`**, `maxAgeDays` then formula.
+
+Webhook MCC: `metadata.mcc` | `mccCode` | `merchantCategoryCode`.
 
 ### Formula JSON
 

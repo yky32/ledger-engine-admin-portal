@@ -168,6 +168,8 @@ export type DigestionRule = {
   priority?: number;
   minAmount?: number | string;
   eligibleCurrencies?: string[];
+  /** MCC allow-list; empty = any. Webhook metadata.mcc */
+  eligibleMccs?: string[];
   maxAgeDays?: number | null;
   pointCurrency?: string;
   formula?: FormulaConfig | string | Record<string, unknown>;
@@ -191,6 +193,7 @@ export type CreateDigestionRuleBody = {
   priority?: number;
   minAmount?: number | string;
   eligibleCurrencies?: string[];
+  eligibleMccs?: string[];
   maxAgeDays?: number;
   pointCurrency?: string;
   formula: FormulaConfig | Record<string, unknown> | string;

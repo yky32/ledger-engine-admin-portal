@@ -50,6 +50,7 @@ export default function DigestionRulesPage() {
     priority: "10",
     minAmount: "0.01",
     eligibleCurrencies: "HKD,USD",
+    eligibleMccs: "",
   });
   const [formulaType, setFormulaType] = useState<FormulaType>("RATE");
   const [rate, setRate] = useState("0.01");
@@ -97,6 +98,10 @@ export default function DigestionRulesPage() {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
+        eligibleMccs: form.eligibleMccs
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
         isEnabled: true,
       });
       setCreated(r.data);
@@ -129,6 +134,13 @@ export default function DigestionRulesPage() {
             {`{"type":"AMOUNT"}`}
           </p>
         </ExplainBox>
+        <ExplainBox title="Brain = eligibility + formula" tone="ops">
+          <p className="text-[12px] leading-relaxed">
+            Filters first: eventType · minAmount · currencies · <strong>MCCs</strong> · maxAgeDays.
+            Then formula JSON. MCC from webhook <code className="text-[10px]">metadata.mcc</code>.
+            Door does not run these checks.
+          </p>
+        </ExplainBox>
         <ExplainBox title="What Brain does">
           <p>
             Match <code className="text-xs">eventType</code> + filters → compute points from
@@ -155,7 +167,8 @@ export default function DigestionRulesPage() {
                 ["pointCurrency", "pointCurrency"],
                 ["priority", "priority"],
                 ["minAmount", "minAmount"],
-                ["eligibleCurrencies", "eligibleCurrencies"],
+                ["eligibleCurrencies", "eligibleCurrencies (csv)"],
+                ["eligibleMccs", "eligibleMccs (csv, blank=any)"],
               ] as const
             ).map(([k, label]) => (
               <label key={k} className="field">
@@ -247,6 +260,7 @@ export default function DigestionRulesPage() {
                     <th>code</th>
                     <th>event</th>
                     <th>op</th>
+                    <th>mcc</th>
                     <th>formula</th>
                     <th>on</th>
                     <th>pri</th>
@@ -258,6 +272,9 @@ export default function DigestionRulesPage() {
                       <td className="font-mono text-xs font-medium">{r.code}</td>
                       <td>{r.eventType}</td>
                       <td>{r.operation}</td>
+                      <td className="font-mono text-[10px] text-slate-500">
+                        {r.eligibleMccs?.length ? r.eligibleMccs.join(",") : "—"}
+                      </td>
                       <td className="font-mono text-[11px]" title={JSON.stringify(r.formula)}>
                         {formulaLabel(r.formula)}
                       </td>
