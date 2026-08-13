@@ -188,6 +188,14 @@ export const engine = {
   digestionDisable: (id: string | number) =>
     ledger.post<DigestionRule>(`/digestion-rules/${id}/disable`),
 
+  /* ─── COA profiles (1 table) ─── */
+  coaProfiles: () => ledger.get("/coa-profiles"),
+  coaProfileDefault: () => ledger.get("/coa-profiles/default"),
+  coaProfileGet: (id: string | number) => ledger.get(`/coa-profiles/${id}`),
+  coaProfileCreate: (body: Record<string, unknown>) => ledger.post("/coa-profiles", body),
+  coaProfileUpdate: (id: string | number, body: Record<string, unknown>) =>
+    ledger.put(`/coa-profiles/${id}`, body),
+
   /* ─── Door ─── */
   /** GET /ingest-policies */
   ingestPolicyGet: () => ledger.get<IngestPolicy>("/ingest-policies"),
