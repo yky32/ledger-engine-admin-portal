@@ -4,12 +4,81 @@
 
 :root {
   color-scheme: light;
+  --sidebar: 15 23 42;
+  --accent: 16 185 129;
+  --ring: 16 185 129;
 }
 
 body {
-  @apply bg-zinc-100 text-zinc-900 antialiased;
+  @apply bg-slate-100 text-slate-900 antialiased;
+  font-feature-settings: "ss01" on, "cv11" on;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* thin scrollbars */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+@layer components {
+  .field {
+    @apply flex flex-col gap-1.5;
+  }
+  .field-label {
+    @apply text-xs font-medium uppercase tracking-wide text-slate-500;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm
+      outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20;
+  }
+  .field-select {
+    @apply field-input appearance-none;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium
+      transition disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm shadow-emerald-600/20;
+  }
+  .btn-secondary {
+    @apply btn border border-slate-200 bg-white text-slate-800 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-500;
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm;
+  }
+  .table-wrap {
+    @apply overflow-x-auto rounded-xl border border-slate-200;
+  }
+  .data-table {
+    @apply w-full text-left text-sm;
+  }
+  .data-table th {
+    @apply bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .data-table td {
+    @apply border-t border-slate-100 px-3 py-2.5 align-top text-slate-800;
+  }
+  .data-table tr:hover td {
+    @apply bg-slate-50/70;
+  }
 }

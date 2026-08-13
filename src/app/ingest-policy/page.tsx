@@ -1,130 +1,124 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { ledger, ApiError } from "@/lib/api";
-import { asRecord } from "@/lib/utils";
-import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
-import { JsonBlock } from "@/components/ui/json-block";
-import { Alert } from "@/components/ui/alert";
+import { useEffect, useState } from "react";
+import { PageHeader, Card, JsonBlock, Alert } from "@/components/ui/kit";
+import { ActionBar } from "@/components/ui/action";
+import { engine } from "@/lib/engine";
+import { errMsg } from "@/lib/format";
+import type { IngestPolicy } from "@/lib/types";
 
 export default function IngestPolicyPage() {
-  const [raw, setRaw] = useState<unknown>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [policy, setPolicy] = useState<IngestPolicy | null>(null);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    isEnabled: "true",
-    isAutoCreateWallet: "true",
-    autoWalletSettlementCurrency: "HKD",
-    autoWalletEnsureCurrency: "LP",
-    autoWalletAssociatedFrom: "CRM",
-    autoWalletNamePrefix: "Auto ",
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await ledger.get("/ingest-policy");
-      setRaw(data);
-      const d = asRecord(data);
-      if (d) {
-        setForm({
-          isEnabled: String(d.isEnabled ?? true),
-          isAutoCreateWallet: String(d.isAutoCreateWallet ?? true),
-          autoWalletSettlementCurrency: String(d.autoWalletSettlementCurrency ?? "HKD"),
-          autoWalletEnsureCurrency: String(d.autoWalletEnsureCurrency ?? "LP"),
-          autoWalletAssociatedFrom: String(d.autoWalletAssociatedFrom ?? "CRM"),
-          autoWalletNamePrefix: String(d.autoWalletNamePrefix ?? "Auto "),
-        });
-      }
+      const r = await engine.ingestPolicyGet();
+      setPolicy(r.data);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
+      setError(errMsg(e));
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    load();
+  }, []);
 
-  async function save() {
+  const save = async () => {
+    if (!policy) return;
     setLoading(true);
     setError(null);
+    setOk(null);
     try {
-      const body = {
-        isEnabled: form.isEnabled === "true",
-        isAutoCreateWallet: form.isAutoCreateWallet === "true",
-        autoWalletSettlementCurrency: form.autoWalletSettlementCurrency,
-        autoWalletEnsureCurrency: form.autoWalletEnsureCurrency,
-        autoWalletAssociatedFrom: form.autoWalletAssociatedFrom,
-        autoWalletNamePrefix: form.autoWalletNamePrefix,
-      };
-      const data = await ledger.put("/ingest-policy", body);
-      setRaw(data);
+      const r = await engine.ingestPolicyPut(policy);
+      setPolicy(r.data);
+      setOk("Saved");
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
+      setError(errMsg(e));
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div>
       <PageHeader
         title="Ingest policy"
-        description="Door — kill-switch + auto-wallet. GET/PUT /ingest-policy (not digestion formulas)."
+        description="Webhook door — global on/off + auto-create wallet. PUT /ingest-policy"
       />
-      {error ? (
-        <div className="mb-4">
-          <Alert variant="error">{error}</Alert>
-        </div>
-      ) : null}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader
-            title="Edit"
-            actions={
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => void load()} disabled={loading}>
-                  Reload
-                </Button>
-                <Button onClick={() => void save()} disabled={loading}>
-                  Save PUT
-                </Button>
-              </div>
-            }
-          />
-          <CardBody className="grid gap-3">
-            {(
-              [
-                ["isEnabled", "isEnabled (true/false)"],
-                ["isAutoCreateWallet", "isAutoCreateWallet"],
-                ["autoWalletSettlementCurrency", "settlement ccy"],
-                ["autoWalletEnsureCurrency", "ensure ccy (LP)"],
-                ["autoWalletAssociatedFrom", "associatedFrom"],
-                ["autoWalletNamePrefix", "name prefix"],
-              ] as const
-            ).map(([k, label]) => (
-              <Field key={k} label={label}>
-                <Input
-                  value={form[k]}
-                  onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
+      {!policy ? (
+        <ActionBar loading={loading} error={error}>
+          <button type="button" className="btn-secondary" onClick={load}>
+            Load
+          </button>
+        </ActionBar>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card title="Edit">
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={!!policy.isEnabled}
+                  onChange={(e) =>
+                    setPolicy({ ...policy, isEnabled: e.target.checked })
+                  }
                 />
-              </Field>
-            ))}
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader title="Raw" />
-          <CardBody>
-            <JsonBlock value={raw} />
-          </CardBody>
-        </Card>
-      </div>
+                isEnabled (master switch)
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={!!policy.isAutoCreateWallet}
+                  onChange={(e) =>
+                    setPolicy({ ...policy, isAutoCreateWallet: e.target.checked })
+                  }
+                />
+                isAutoCreateWallet
+              </label>
+              {(
+                [
+                  ["autoWalletSettlementCurrency", "settlement ccy"],
+                  ["autoWalletEnsureCurrency", "ensure ccy"],
+                  ["autoWalletAssociatedFrom", "associatedFrom label"],
+                  ["autoWalletNamePrefix", "name prefix"],
+                ] as const
+              ).map(([k, label]) => (
+                <label key={k} className="field">
+                  <span className="field-label">{label}</span>
+                  <input
+                    className="field-input"
+                    value={String(policy[k] ?? "")}
+                    onChange={(e) =>
+                      setPolicy({ ...policy, [k]: e.target.value })
+                    }
+                  />
+                </label>
+              ))}
+              <ActionBar loading={loading} error={error} ok={ok}>
+                <button type="button" className="btn-primary" onClick={save}>
+                  Save
+                </button>
+                <button type="button" className="btn-secondary" onClick={load}>
+                  Reload
+                </button>
+              </ActionBar>
+              <Alert tone="info">
+                Digestion rules decide scoring. This only gates admission + auto wallet.
+              </Alert>
+            </div>
+          </Card>
+          <Card title="Raw">
+            <JsonBlock value={policy} />
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

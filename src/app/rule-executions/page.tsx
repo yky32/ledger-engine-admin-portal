@@ -1,22 +1,19 @@
 "use client";
+import SimpleResourcePage from "@/components/resource/simple-resource";
 
-import { ResourceCrud } from "@/components/resource/resource-crud";
-
-export default function RuleExecutionsPage() {
+export default function Page() {
   return (
-    <ResourceCrud
+    <SimpleResourcePage
       title="Rule executions"
-      description="POST/GET /rule-executions"
+      description="GET/POST /rule-executions"
       listPath="/rule-executions"
       createPath="/rule-executions"
-      createFields={[
-        { name: "name", label: "Name", required: true },
-        { name: "description", label: "Description" },
-        { name: "orderType", label: "Order type", required: true, placeholder: "PURCHASE / REDEEM / …" },
-        { name: "metadata", label: "Metadata (JSON string)", type: "textarea" },
-      ]}
-      detailPathTemplate="/rule-executions/{id}"
-      columns={["id", "name", "orderType", "createDt"]}
+      sample={{
+        name: "DEPOSIT_DEFAULT",
+        description: "demo",
+        orderType: "DEPOSIT",
+        metadata: "[]",
+      }}
     />
   );
 }

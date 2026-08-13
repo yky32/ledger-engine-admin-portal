@@ -1,66 +1,42 @@
 # ledger-engine-admin-portal
 
-Next.js admin UI for **[ledger-engine](https://github.com/yky32/ledger-engine)**.
+Next.js **ops / QA console** for [ledger-engine](https://github.com/yky32/ledger-engine).
 
-Internal tool to **review local test results** after `upstream-sim` / smoke: wallets, digestion rules, ingest policy, webhook fire, failed-ingest replay, DE legs. **No auth.**
+No auth. Browser → `/api/ledger/*` rewrite → `LEDGER_ENGINE_URL`.
 
-## Quick start (review flow)
+## Quick start
 
 ```bash
-# terminal 1 — engine (greenfield create)
-cd ../ledger-engine
-mvn spring-boot:run
+# terminal 1 — engine
+cd ../ledger-engine && mvn spring-boot:run
 
-# terminal 2 — seed + pretend upstream
-cd ../ledger-engine
-./scripts/upstream-sim.sh
-# note the CUST=01A… printed at the end
-
-# terminal 3 — portal
+# terminal 2 — portal
 cd ../ledger-engine-admin-portal
-cp .env.example .env.local   # LEDGER_ENGINE_URL=http://localhost:8080
+# .env.local: LEDGER_ENGINE_URL=http://localhost:8080
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → **Customer review** → paste `CUST` id.
+Open http://localhost:3000
 
-## Loyalty review modules
+## Loyalty desk (primary)
 
-| Page | Use |
-|------|-----|
-| **`/simulator`** ⭐ | Configurable multi-txn matrix (HKD/USD/JPY/age/amount/signup/redeem/dupe) |
-| `/review` | Wallet + movements + as-of + legs + fails for one CUST |
-| `/transactions-ingest` | Fire single webhook |
-| `/failed-transactions` | List OPEN fails · Review · Replay |
-| `/ledger-entries` | Legs by `eventId` / `movementId` |
-| `/digestion-rules` | Runtime formulas |
-| `/ingest-policy` | Door / auto-wallet |
-| `/holds` | Hold / release available |
-
-### Suggested local loop
-
-```bash
-# terminal 1 — engine (ddl=create default)
-cd ledger-engine && mvn spring-boot:run
-
-# terminal 2 — portal
-cd ledger-engine-admin-portal && npm run dev
-# open http://localhost:3000/simulator → Run suite → Customer review
-```
-
-For full process restart + same matrix from CLI: `ledger-engine/./scripts/upstream-sim.sh`
-
-## Config
-
-| Env | Default |
-|-----|---------|
-| `LEDGER_ENGINE_URL` | `http://localhost:8080` |
-
-Browser → `/api/ledger/*` → Next rewrite → engine (no CORS pain).
+| Route | Backend |
+|-------|---------|
+| `/simulator` | onboard + webhook matrix + hold/release |
+| `/review` | `GET /wallets/{ownerId}`, movements, as-of, fails, legs |
+| `/transactions-ingest` | `POST /integrations/webhooks/transactions` |
+| `/failed-transactions` | list / review / replay |
+| `/ledger-entries` | `GET /integrations/ledger-entries` |
+| `/digestion-rules` | brain CRUD list/create |
+| `/ingest-policy` | door GET/PUT |
+| `/holds` | hold/release available |
+| `/wallets` | onboard + lookup by **ownerId** |
 
 ## Notes
 
-- Not production-hardened (no auth/RBAC).
-- Engine `Result` envelope `{ data, pagination }` is unwrapped in the UI.
-- List APIs use **1-based** `page` (aligned with ledger-engine).
+- API client unwraps `Result{ data, pagination }` (`src/lib/api.ts`)
+- Typed helpers in `src/lib/engine.ts`
+- UI kit: dark sidebar, emerald accent, tables + JSON panels
+- Pageable lists use **page=1** (engine profile style)
+- Query wallets **only** with `ownerId`

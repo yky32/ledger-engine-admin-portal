@@ -1,89 +1,97 @@
 "use client";
 
 import { useState } from "react";
-import { ledger, ApiError } from "@/lib/api";
-import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Field, Input, Textarea } from "@/components/ui/input";
-import { JsonBlock } from "@/components/ui/json-block";
-import { Alert } from "@/components/ui/alert";
+import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
+import { ActionBar } from "@/components/ui/action";
+import { engine } from "@/lib/engine";
+import { errMsg } from "@/lib/format";
 
 export default function ConfigurationsPage() {
-  const [target, setTarget] = useState("program");
+  const [target, setTarget] = useState("uaa");
   const [scope, setScope] = useState("global");
-  const [name, setName] = useState("");
-  const [value, setValue] = useState("");
-  const [result, setResult] = useState<unknown>(null);
+  const [name, setName] = useState("user-register.otp");
+  const [valueJson, setValueJson] = useState(
+    '{\n  "ttlSec": 300,\n  "resendSec": 60\n}\n',
+  );
+  const [data, setData] = useState<unknown>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = async () => {
+    setLoading(true);
     setError(null);
     try {
-      const q = new URLSearchParams({ target, scope });
-      const data = await ledger.get(`/configurations?${q}`);
-      setResult(data);
+      const r = await engine.configGet(target, scope);
+      setData(r.data);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  async function upsert() {
+  const save = async () => {
+    setLoading(true);
     setError(null);
     try {
-      const data = await ledger.put("/configurations", {
-        name: name || target,
-        target,
-        scope,
-        value,
-      });
-      setResult(data);
+      const value = JSON.parse(valueJson);
+      const r = await engine.configPut({ name, target, scope, value });
+      setData(r.data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div>
       <PageHeader
-        title="System configurations"
-        description="GET/PUT /configurations"
+        title="System configuration"
+        description="JSONB value — e.g. name user-register.otp. GET/PUT /configurations"
       />
-      {error ? (
-        <div className="mb-4">
-          <Alert variant="error">{error}</Alert>
-        </div>
-      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Get / Upsert" />
-          <CardBody className="space-y-3">
-            <Field label="Target">
-              <Input value={target} onChange={(e) => setTarget(e.target.value)} />
-            </Field>
-            <Field label="Scope">
-              <Input value={scope} onChange={(e) => setScope(e.target.value)} />
-            </Field>
-            <Field label="Name (upsert)">
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="defaults to target" />
-            </Field>
-            <Field label="Value (upsert)">
-              <Textarea rows={4} value={value} onChange={(e) => setValue(e.target.value)} />
-            </Field>
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => void load()}>
+        <Card title="Upsert">
+          <div className="space-y-3">
+            <label className="field">
+              <span className="field-label">name</span>
+              <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">target</span>
+              <input
+                className="field-input"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">scope</span>
+              <input
+                className="field-input"
+                value={scope}
+                onChange={(e) => setScope(e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">value (JSON)</span>
+              <textarea
+                className="field-input min-h-[160px] font-mono text-xs"
+                value={valueJson}
+                onChange={(e) => setValueJson(e.target.value)}
+              />
+            </label>
+            <ActionBar loading={loading} error={error}>
+              <button type="button" className="btn-primary" onClick={save}>
+                PUT
+              </button>
+              <button type="button" className="btn-secondary" onClick={load}>
                 GET
-              </Button>
-              <Button onClick={() => void upsert()}>PUT upsert</Button>
-            </div>
-          </CardBody>
+              </button>
+            </ActionBar>
+          </div>
         </Card>
-        <Card>
-          <CardHeader title="Response" />
-          <CardBody>
-            <JsonBlock value={result ?? {}} />
-          </CardBody>
-        </Card>
+        <Card title="Response">{data ? <JsonBlock value={data} /> : null}</Card>
       </div>
     </div>
   );

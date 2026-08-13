@@ -1,18 +1,34 @@
 /**
- * Browser client → Next rewrite `/api/ledger/*` → ledger-engine.
- * No auth (dev admin). Configure LEDGER_ENGINE_URL on the Next server.
+ * Browser → Next rewrite `/api/ledger/*` → ledger-engine.
+ * Unwraps Result envelope { code, message, data, pagination }.
  */
 
 export class ApiError extends Error {
   constructor(
     public status: number,
-    public body: string,
+    public body: unknown,
     message?: string,
+    public code?: string,
   ) {
-    super(message || `HTTP ${status}: ${body.slice(0, 300)}`);
+    super(message || `HTTP ${status}`);
     this.name = "ApiError";
   }
 }
+
+export type Pagination = {
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+};
+
+export type ResultEnvelope<T> = {
+  code?: string;
+  message?: string;
+  httpStatus?: string;
+  data?: T;
+  pagination?: Pagination | null;
+};
 
 async function parseBody(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -24,10 +40,14 @@ async function parseBody(res: Response): Promise<unknown> {
   }
 }
 
-export async function api<T = unknown>(
+function isEnvelope(v: unknown): v is ResultEnvelope<unknown> {
+  return !!v && typeof v === "object" && ("data" in v || "code" in v);
+}
+
+export async function apiRaw(
   path: string,
   init?: RequestInit & { json?: unknown },
-): Promise<T> {
+): Promise<{ status: number; body: unknown }> {
   const url = path.startsWith("/api/ledger")
     ? path
     : `/api/ledger${path.startsWith("/") ? path : `/${path}`}`;
@@ -38,22 +58,40 @@ export async function api<T = unknown>(
     headers.set("Content-Type", "application/json");
     body = JSON.stringify(init.json);
   }
-  if (!headers.has("Accept")) {
-    headers.set("Accept", "application/json");
+  if (!headers.has("Accept")) headers.set("Accept", "application/json");
+
+  const res = await fetch(url, { ...init, headers, body, cache: "no-store" });
+  const parsed = await parseBody(res);
+  return { status: res.status, body: parsed };
+}
+
+export async function api<T = unknown>(
+  path: string,
+  init?: RequestInit & { json?: unknown },
+): Promise<{ data: T; pagination?: Pagination | null; raw: unknown }> {
+  const { status, body } = await apiRaw(path, init);
+
+  if (status < 200 || status >= 300) {
+    const env = isEnvelope(body) ? body : null;
+    const msg =
+      env?.message ||
+      (typeof body === "string" ? body : JSON.stringify(body)?.slice(0, 400));
+    throw new ApiError(status, body, msg, env?.code);
   }
 
-  const res = await fetch(url, { ...init, headers, body });
-  const data = await parseBody(res);
-  if (!res.ok) {
-    const msg =
-      data && typeof data === "object" && "message" in data
-        ? String((data as { message: unknown }).message)
-        : typeof data === "string"
-          ? data
-          : JSON.stringify(data);
-    throw new ApiError(res.status, typeof data === "string" ? data : JSON.stringify(data), msg);
+  if (isEnvelope(body)) {
+    // business fail sometimes 200 with non-SYS0000 — still surface
+    if (body.code && body.code !== "SYS0000" && body.data === undefined) {
+      throw new ApiError(status, body, body.message || body.code, body.code);
+    }
+    return {
+      data: body.data as T,
+      pagination: body.pagination ?? null,
+      raw: body,
+    };
   }
-  return data as T;
+
+  return { data: body as T, pagination: null, raw: body };
 }
 
 export const ledger = {
@@ -66,3 +104,14 @@ export const ledger = {
     api<T>(path, { method: "PATCH", json }),
   delete: <T = unknown>(path: string) => api<T>(path, { method: "DELETE" }),
 };
+
+/** Build query string; skips null/undefined/''. */
+export function qs(params: Record<string, string | number | boolean | undefined | null>): string {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === "") continue;
+    sp.set(k, String(v));
+  }
+  const s = sp.toString();
+  return s ? `?${s}` : "";
+}

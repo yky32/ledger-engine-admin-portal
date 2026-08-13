@@ -1,25 +1,20 @@
 "use client";
+import SimpleResourcePage from "@/components/resource/simple-resource";
 
-import { ResourceCrud } from "@/components/resource/resource-crud";
-
-export default function TransfersPage() {
+export default function Page() {
   return (
-    <ResourceCrud
+    <SimpleResourcePage
       title="In-wallet transfers"
       description="POST /movements/transfers/in-wallet"
-      listPath="/ledger-accounts/movements"
+      listPath="/movements"
       createPath="/movements/transfers/in-wallet"
-      createFields={[
-        { name: "fromWalletId", label: "From wallet ID", required: true },
-        { name: "toWalletId", label: "To wallet ID", required: true },
-        { name: "currency", label: "Currency", required: true, defaultValue: "LP" },
-        { name: "amount", label: "Amount", type: "number", required: true },
-        { name: "mode", label: "Mode", defaultValue: "AUTO" },
-        { name: "movementKey", label: "Movement key" },
-        { name: "description", label: "Description" },
-      ]}
-      detailPathTemplate="/ledger-accounts/movements/{id}"
-      columns={["id", "status", "currency", "amount", "type"]}
+      sample={{
+        walletId: 0,
+        fromCurrency: "HKD",
+        toCurrency: "LP",
+        amount: 1,
+        movementKey: "xfer-demo-1",
+      }}
     />
   );
 }
