@@ -5,7 +5,7 @@ export default function Page() {
   return (
     <SimpleResourcePage
       title="FX rates"
-      description="GET/POST /fx-rates"
+      description="GET/POST /fx-rates — body { base, target, rate } Currency enums"
       listPath="/fx-rates"
       createPath="/fx-rates"
       pageable

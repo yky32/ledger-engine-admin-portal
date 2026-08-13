@@ -4,9 +4,10 @@ import SimpleResourcePage from "@/components/resource/simple-resource";
 export default function Page() {
   return (
     <SimpleResourcePage
-      title="Ledger wallets"
-      description="GET /ledger-wallets"
+      title="Ledger wallets (legacy path)"
+      description="GET /ledger-wallets · Prefer product /wallets + ownerId for LedgeRX loyalty"
       listPath="/ledger-wallets"
+      pageable
     />
   );
 }
