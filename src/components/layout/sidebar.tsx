@@ -18,9 +18,9 @@ export function Sidebar() {
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold tracking-tight text-white">
-            Ledger Engine
+            LedgeRX
           </div>
-          <div className="truncate text-[11px] text-slate-400">Admin · no auth</div>
+          <div className="truncate text-[11px] text-slate-400">Admin · ledger core</div>
         </div>
       </div>
 

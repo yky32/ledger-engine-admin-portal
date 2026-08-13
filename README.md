@@ -1,8 +1,9 @@
-# ledger-engine-admin-portal
+# LedgeRX Admin
 
-Next.js ops console for [ledger-engine](https://github.com/yky32/ledger-engine).
+Ops console for **[LedgeRX](https://github.com/yky32/ledger-engine)** (`ledger-engine` service).
 
-UX follows **`docs/SYSTEM_BUSINESS_FLOW.md`** end-to-end picture.
+UX follows LedgeRX **`docs/SYSTEM_BUSINESS_FLOW.md`** end-to-end picture.  
+Brand: engine `docs/BRAND.md`.
 
 ## Mental model (sidebar + home)
 
@@ -23,7 +24,7 @@ cd ../ledger-engine-admin-portal
 npm run dev
 ```
 
-http://localhost:3000 → **Business flow** → follow steps 1→4.
+http://localhost:3000 → **LedgeRX** business flow → steps 1→4.
 
 ## Key routes
 

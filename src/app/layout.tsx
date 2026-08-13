@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ledger Engine Admin",
-  description: "Admin portal for ledger-engine APIs (no auth)",
+  title: "LedgeRX Admin",
+  description: "LedgeRX ops console — simulator, Door/Brain config, customer review",
 };
 
 export default function RootLayout({
