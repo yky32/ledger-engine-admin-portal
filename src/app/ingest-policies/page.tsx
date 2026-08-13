@@ -161,7 +161,7 @@ export default function IngestPolicyPage() {
     try {
       const r = await engine.ingestPolicyPut(policy);
       setPolicy(r.data);
-      setOk("Saved — effective immediately (no restart)");
+      setOk("Saved to DB — effective immediately (no restart)");
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -350,8 +350,13 @@ export default function IngestPolicyPage() {
           </Card>
 
           <div className="space-y-4">
-            <Card title="Raw JSON" description="Live row from engine">
+            <Card title="Saved in DB (GET /ingest-policies)" description="Persisted row — not only form draft">
               <JsonBlock value={policy} />
+              <p className="mt-2 text-[11px] text-slate-500">
+                <Link href="/records" className="underline">
+                  All DB records →
+                </Link>
+              </p>
             </Card>
             <ExplainBox title="Field cheat-sheet" tone="info">
               <table className="w-full text-left text-[12px]">

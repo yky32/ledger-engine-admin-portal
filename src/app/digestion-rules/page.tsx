@@ -245,11 +245,25 @@ export default function DigestionRulesPage() {
                 Refresh
               </button>
             </ActionBar>
-            {created ? <JsonBlock value={created} maxHeight={160} /> : null}
+            {created ? (
+              <>
+                <p className="mb-1 text-[11px] font-semibold text-emerald-800">Created row (DB response)</p>
+                <JsonBlock value={created} maxHeight={160} />
+              </>
+            ) : null}
           </div>
         </Card>
 
-        <Card title={`Rules (${rows.length})`} className="lg:col-span-3">
+        <Card
+          title={`Saved in DB · digestion_rule (${rows.length})`}
+          description="GET /digestion-rules — reload after create"
+          className="lg:col-span-3"
+          right={
+            <Link href="/records" className="text-xs text-emerald-700 hover:underline">
+              DB records →
+            </Link>
+          }
+        >
           {rows.length === 0 ? (
             <Empty>No rules — create PURCHASE RATE 0.01 to earn</Empty>
           ) : (

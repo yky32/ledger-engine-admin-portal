@@ -16,6 +16,7 @@ import { FlowStrip } from "@/components/layout/flow-strip";
 import { ExplainBox } from "@/components/ui/help";
 import { Plus, Copy, Trash2, Users } from "lucide-react";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
+import { rememberOwnerId } from "@/lib/owner-memory";
 
 /* ───────── types ───────── */
 
@@ -561,6 +562,7 @@ export default function SimulatorPage() {
 
       for (const { c, cases } of plans) {
         const oid = c.ownerId.trim();
+        rememberOwnerId(oid);
         lastOid = oid;
         push({
           kind: "customer-start",
@@ -789,6 +791,13 @@ export default function SimulatorPage() {
     <div>
       <FlowStrip active="shoot" />
       <EngineStatusBanner />
+      <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-900">
+        After run, open{" "}
+        <a className="font-semibold underline" href="/records">
+          DB records
+        </a>{" "}
+        to see wallets / movements / Door / Brain rows actually stored in PG.
+      </div>
       <PageHeader
         title="Txn simulator"
         description="Multi-customer upstream · each customer has its own transaction matrix (eventType × ccy × amount × age × repeats)."
