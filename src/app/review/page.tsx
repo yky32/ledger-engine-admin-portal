@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageHeader, Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
-import { errMsg, money, shortId } from "@/lib/format";
+import { errMsg, money } from "@/lib/format";
 import type { FailedIngest, LedgerLeg, MovementView, WalletView } from "@/lib/types";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
