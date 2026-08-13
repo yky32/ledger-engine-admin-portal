@@ -179,7 +179,7 @@ export default function IngestPolicyPage() {
       <div className="mb-4 grid gap-3 lg:grid-cols-3">
         <ExplainBox title="What is the Door?" tone="ops">
           <p>
-            First gate inside Ledger Engine after upstream POS/OMS posts a webhook. Answers:{" "}
+            First gate inside LedgeRX after upstream POS/OMS posts a webhook. Answers:{" "}
             <em>“Do we accept traffic at all?”</em> and{" "}
             <em>“If this customer has no wallet yet, may we create one?”</em>
           </p>

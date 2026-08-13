@@ -159,7 +159,7 @@ export default function HomePage() {
 
           <FlowBox
             tone="engine"
-            title="LEDGER ENGINE"
+            title="LedgeRX"
             subtitle="Door → Brain → Books → Audit"
             href="/review"
             wide
