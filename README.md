@@ -1,42 +1,41 @@
 # ledger-engine-admin-portal
 
-Next.js **ops / QA console** for [ledger-engine](https://github.com/yky32/ledger-engine).
+Next.js ops console for [ledger-engine](https://github.com/yky32/ledger-engine).
 
-No auth. Browser → `/api/ledger/*` rewrite → `LEDGER_ENGINE_URL`.
+UX follows **`docs/SYSTEM_BUSINESS_FLOW.md`** end-to-end picture.
+
+## Mental model (sidebar + home)
+
+```text
+① Ops configures     Door (ingest-policy) + Brain (digestion-rules)
+② Upstream shoot     Simulator / single webhook  (= POS/OMS)
+③ Engine outcomes    Customer LP · DE legs · Fail queue · Movements
+```
+
+Home (`/`) is an interactive flow map of that diagram.
 
 ## Quick start
 
 ```bash
-# terminal 1 — engine
 cd ../ledger-engine && mvn spring-boot:run
-
-# terminal 2 — portal
 cd ../ledger-engine-admin-portal
 # .env.local: LEDGER_ENGINE_URL=http://localhost:8080
-npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+http://localhost:3000 → **Business flow** → follow steps 1→4.
 
-## Loyalty desk (primary)
+## Key routes
 
-| Route | Backend |
-|-------|---------|
-| `/simulator` | onboard + webhook matrix + hold/release |
-| `/review` | `GET /wallets/{ownerId}`, movements, as-of, fails, legs |
-| `/transactions-ingest` | `POST /integrations/webhooks/transactions` |
-| `/failed-transactions` | list / review / replay |
-| `/ledger-entries` | `GET /integrations/ledger-entries` |
-| `/digestion-rules` | brain CRUD list/create |
-| `/ingest-policy` | door GET/PUT |
-| `/holds` | hold/release available |
-| `/wallets` | onboard + lookup by **ownerId** |
+| Step | Route | Engine API idea |
+|------|-------|-----------------|
+| 1 Door | `/ingest-policy` | GET/PUT `/ingest-policy` |
+| 1 Brain | `/digestion-rules` | `/digestion-rules` |
+| 2 Shoot | `/simulator` | webhook matrix |
+| 2 Shoot | `/transactions-ingest` | POST webhook |
+| 3 Books | `/review` | wallet + movements by ownerId |
+| 3 Legs | `/ledger-entries` | DE legs |
+| 3 Fail | `/failed-transactions` | review/replay |
+| 4 Audit | `/movements` | history |
 
-## Notes
-
-- API client unwraps `Result{ data, pagination }` (`src/lib/api.ts`)
-- Typed helpers in `src/lib/engine.ts`
-- UI kit: dark sidebar, emerald accent, tables + JSON panels
-- Pageable lists use **page=1** (engine profile style)
-- Query wallets **only** with `ownerId`
+Each main screen shows a **Flow strip** (1 Ops → 2 Shoot → 3 Digest → 4 Books).
