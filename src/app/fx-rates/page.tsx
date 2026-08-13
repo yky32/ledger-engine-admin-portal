@@ -8,6 +8,7 @@ export default function Page() {
       description="GET/POST /fx-rates"
       listPath="/fx-rates"
       createPath="/fx-rates"
+      pageable
       sample={{ base: "HKD", target: "USD", rate: 0.13 }}
     />
   );

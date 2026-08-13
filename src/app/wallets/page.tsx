@@ -8,6 +8,7 @@ import { FieldLabel, ExplainBox, HelpTip } from "@/components/ui/help";
 import { engine } from "@/lib/engine";
 import { errMsg, randomOwnerId } from "@/lib/format";
 import { FlowStrip } from "@/components/layout/flow-strip";
+import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 export default function WalletsPage() {
   const [ownerId, setOwnerId] = useState(randomOwnerId());
@@ -56,6 +57,7 @@ export default function WalletsPage() {
   return (
     <div>
       <FlowStrip active="ops" />
+      <EngineStatusBanner />
       <PageHeader
         title="Wallet onboard (CRM path)"
         description="Explicit 1 ownerId → 1 Wallet. Alternative to Door lazy auto-create."

@@ -8,12 +8,8 @@ export default function Page() {
       description="GET/POST /rule-executions"
       listPath="/rule-executions"
       createPath="/rule-executions"
-      sample={{
-        name: "DEPOSIT_DEFAULT",
-        description: "demo",
-        orderType: "DEPOSIT",
-        metadata: "[]",
-      }}
+      pageable
+      sample={{ name: "demo", orderType: "DEPOSIT", metadata: "{}" }}
     />
   );
 }

@@ -1,3 +1,5 @@
+import { ApiError } from "@/lib/api";
+
 export function money(v: unknown): string {
   if (v === null || v === undefined || v === "") return "—";
   const n = typeof v === "number" ? v : Number(v);
@@ -14,8 +16,25 @@ export function shortId(v: unknown, keep = 8): string {
 }
 
 export function errMsg(e: unknown): string {
-  if (e instanceof Error) return e.message;
+  if (e instanceof ApiError) {
+    const bits = [e.message];
+    if (e.code && !e.message.includes(e.code)) bits.push(`(${e.code})`);
+    if (e.status && e.status > 0) bits.push(`[HTTP ${e.status}]`);
+    return bits.join(" ");
+  }
+  if (e instanceof Error) {
+    if (e.message === "Failed to fetch" || e.name === "TypeError") {
+      return "Engine unreachable — start ledger-engine (mvn spring-boot:run) and check LEDGER_ENGINE_URL";
+    }
+    return e.message;
+  }
   return String(e);
+}
+
+export function isConflictError(e: unknown): boolean {
+  if (e instanceof ApiError) return e.isConflict;
+  const m = errMsg(e).toLowerCase();
+  return m.includes("0409") || m.includes("already") || m.includes("409") || m.includes("conflict");
 }
 
 export function nowIso(): string {

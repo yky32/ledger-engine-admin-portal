@@ -8,6 +8,7 @@ export default function Page() {
       description="POST /movements/withdrawals"
       listPath="/movements"
       createPath="/movements/withdrawals"
+      pageable
       sample={{
         walletId: 0,
         amount: 10,
