@@ -49,10 +49,6 @@ export type WalletAccount = {
   fullNumber?: string;
   name?: string;
   primary?: boolean;
-  entity?: string;
-  coaTypeCode?: string;
-  subType?: string;
-  buffer?: string;
   type?: string;
   currency?: CurrencyCode;
   status?: string;

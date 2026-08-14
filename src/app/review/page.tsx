@@ -141,7 +141,6 @@ export default function ReviewPage() {
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>entity</th>
                         <th>ccy</th>
                         <th>fullNumber</th>
                         <th>ledger</th>
@@ -156,7 +155,6 @@ export default function ReviewPage() {
                           : []
                       ).map((a, i) => (
                         <tr key={a.id ?? i}>
-                          <td className="font-mono text-xs">{a.entity ?? "—"}</td>
                           <td className="font-medium">{a.currency}</td>
                           <td className="font-mono text-[10px] text-slate-600">{a.fullNumber}</td>
                           <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>

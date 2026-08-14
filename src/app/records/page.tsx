@@ -390,7 +390,6 @@ export default function DbRecordsPage() {
                         <table className="data-table">
                           <thead>
                             <tr>
-                              <th>entity</th>
                               <th>ccy</th>
                               <th>fullNumber</th>
                               <th>ledger</th>
@@ -401,7 +400,6 @@ export default function DbRecordsPage() {
                             {(w.accounts?.length ? w.accounts : w.account ? [w.account] : []).map(
                               (a, i) => (
                                 <tr key={a.id ?? i}>
-                                  <td className="font-mono text-xs">{a.entity ?? "—"}</td>
                                   <td>{a.currency}</td>
                                   <td className="font-mono text-[10px]">{a.fullNumber}</td>
                                   <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
