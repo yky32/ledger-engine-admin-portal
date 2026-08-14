@@ -160,7 +160,7 @@ export const NAV: NavItem[] = [
     label: "COA profiles",
     icon: BookOpen,
     group: "Reference",
-    blurb: "1-table client COA bindings",
+    blurb: "1-table COA profiles (internal)",
   },
   {
     href: "/configurations",
