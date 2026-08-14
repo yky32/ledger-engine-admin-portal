@@ -62,7 +62,7 @@ export default function WalletsPage() {
       <EngineStatusBanner />
       <PageHeader
         title="Wallet onboard (CRM path)"
-        description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode = product stream (UAF_CC / UAF_LOAN)."
+        description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode selects COA profile."
       />
       <div className="mb-4 grid gap-3 lg:grid-cols-2">
         <ExplainBox title="When to use explicit onboard" tone="ops">
@@ -90,7 +90,7 @@ export default function WalletsPage() {
             <label className="field">
               <FieldLabel
                 tipTitle="ownerId"
-                tip="External CRM / membership id. Unique. Card vs loan = two ownerIds for UAF."
+                tip="External CRM / membership id. Unique. 1 ownerId → 1 wallet."
               >
                 ownerId
               </FieldLabel>
@@ -127,13 +127,13 @@ export default function WalletsPage() {
             <label className="field">
               <FieldLabel
                 tipTitle="coaProfileCode"
-                tip="Product stream: UAF_CC (entity 01) / UAF_LOAN (entity 02). Blank = DEFAULT (entity 10)."
+                tip="COA profile code from /coa. Blank = DEFAULT."
               >
                 coaProfileCode
               </FieldLabel>
               <input
                 className="field-input font-mono"
-                placeholder="DEFAULT | UAF_CC | UAF_LOAN"
+                placeholder="DEFAULT or profile code"
                 value={coaProfileCode}
                 onChange={(e) => setCoaProfileCode(e.target.value)}
               />

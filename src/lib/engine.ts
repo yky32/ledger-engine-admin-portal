@@ -195,7 +195,6 @@ export const engine = {
   coaProfileCreate: (body: Record<string, unknown>) => ledger.post("/coa-profiles", body),
   coaProfileUpdate: (id: string | number, body: Record<string, unknown>) =>
     ledger.put(`/coa-profiles/${id}`, body),
-  uafDemoSeed: () => ledger.post("/coa-profiles/uaf-demo-seed", {}),
 
   /* ─── Door ─── */
   /** GET /ingest-policies */

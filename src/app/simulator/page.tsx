@@ -76,7 +76,7 @@ type SimCustomer = {
   displayName: string;
   settlement: string;
   vanityCode: string;
-  /** product stream COA — DEFAULT | UAF_CC | UAF_LOAN */
+  /** optional COA profile code */
   coaProfileCode: string;
   extraLp: boolean;
   preset: PresetKey;
@@ -1018,15 +1018,12 @@ export default function SimulatorPage() {
                                     </label>
                                     <label className="field">
                                       <span className="field-label">coaProfileCode</span>
-                                      <select
-                                        className="field-select text-xs"
+                                      <input
+                                        className="field-input font-mono text-xs"
+                                        placeholder="blank = DEFAULT"
                                         value={active.coaProfileCode}
                                         onChange={(e) => updateActive({ coaProfileCode: e.target.value })}
-                                      >
-                                        <option value="">DEFAULT</option>
-                                        <option value="UAF_CC">UAF_CC (entity 01)</option>
-                                        <option value="UAF_LOAN">UAF_LOAN (entity 02)</option>
-                                      </select>
+                                      />
                                     </label>
                                     <label className="flex items-center gap-2 text-xs">
                                       <input

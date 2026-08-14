@@ -133,11 +133,10 @@ const TIPS = {
     body: (
       <>
         <p>
-          Product-stream COA when Door lazy-creates a wallet (e.g.{" "}
-          <code className="text-emerald-200">UAF_CC</code>). Blank = DEFAULT.
+          COA profile code when Door lazy-creates a wallet. Blank = DEFAULT.
         </p>
         <p className="mt-1 text-slate-400">
-          Event can override: metadata.coaProfileCode or productStream=CC|LOAN.
+          Event can override with metadata.coaProfileCode.
         </p>
       </>
     ),
@@ -350,7 +349,7 @@ export default function IngestPolicyPage() {
                   onChange={(e) =>
                     setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })
                   }
-                  placeholder="DEFAULT | UAF_CC | UAF_LOAN"
+                  placeholder="DEFAULT or profile code"
                 />
               </label>
 
