@@ -76,6 +76,8 @@ type SimCustomer = {
   displayName: string;
   settlement: string;
   vanityCode: string;
+  /** optional COA profile code */
+  coaProfileCode: string;
   extraLp: boolean;
   preset: PresetKey;
   dims: DimConfig;
@@ -335,6 +337,7 @@ function newCustomer(n: number, preset: PresetKey = "smoke"): SimCustomer {
     displayName: `Sim C${n}`,
     settlement: "HKD",
     vanityCode: "",
+    coaProfileCode: "",
     extraLp: true,
     preset,
     dims: applyPreset(preset),
@@ -582,6 +585,7 @@ export default function SimulatorPage() {
               settlementCurrency: c.settlement,
               name: c.displayName,
               vanityCode: c.vanityCode.trim() || undefined,
+              coaProfileCode: c.coaProfileCode.trim() || undefined,
               accounts: c.extraLp ? [{ currency: "LP" }] : undefined,
             }),
           );
@@ -1005,21 +1009,30 @@ export default function SimulatorPage() {
                     </select>
                   </label>
                   <label className="field">
-                    <span className="field-label">vanityCode</span>
-                    <input
-                      className="field-input font-mono text-xs"
-                      value={active.vanityCode}
-                      onChange={(e) => updateActive({ vanityCode: e.target.value })}
-                    />
-                  </label>
-                  <label className="flex items-center gap-2 text-sm sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      checked={active.extraLp}
-                      onChange={(e) => updateActive({ extraLp: e.target.checked })}
-                    />
-                    Open LP book on onboard
-                  </label>
+                                      <span className="field-label">vanityCode</span>
+                                      <input
+                                        className="field-input font-mono text-xs"
+                                        value={active.vanityCode}
+                                        onChange={(e) => updateActive({ vanityCode: e.target.value })}
+                                      />
+                                    </label>
+                                    <label className="field">
+                                      <span className="field-label">coaProfileCode</span>
+                                      <input
+                                        className="field-input font-mono text-xs"
+                                        placeholder="blank = DEFAULT"
+                                        value={active.coaProfileCode}
+                                        onChange={(e) => updateActive({ coaProfileCode: e.target.value })}
+                                      />
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs">
+                                      <input
+                                        type="checkbox"
+                                        checked={active.extraLp}
+                                        onChange={(e) => updateActive({ extraLp: e.target.checked })}
+                                      />
+                                      Open LP book on onboard
+                                    </label>
                 </div>
               </Card>
 

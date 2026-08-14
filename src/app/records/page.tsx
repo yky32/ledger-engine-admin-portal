@@ -381,6 +381,8 @@ export default function DbRecordsPage() {
                         <dd>{w.status}</dd>
                         <dt className="text-slate-500">settlement</dt>
                         <dd>{w.settlementCurrency}</dd>
+                        <dt className="text-slate-500">COA profile</dt>
+                        <dd className="font-mono text-xs">{w.coaProfileCode || "DEFAULT"}</dd>
                         <dt className="text-slate-500">vanity</dt>
                         <dd className="font-mono text-xs">{w.vanityCode || "—"}</dd>
                       </dl>
@@ -389,9 +391,9 @@ export default function DbRecordsPage() {
                           <thead>
                             <tr>
                               <th>ccy</th>
+                              <th>fullNumber</th>
                               <th>ledger</th>
                               <th>available</th>
-                              <th>account id</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -399,9 +401,9 @@ export default function DbRecordsPage() {
                               (a, i) => (
                                 <tr key={a.id ?? i}>
                                   <td>{a.currency}</td>
+                                  <td className="font-mono text-[10px]">{a.fullNumber}</td>
                                   <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
                                   <td className="font-mono text-xs">{money(a.availableBalance)}</td>
-                                  <td className="font-mono text-[10px]">{a.id}</td>
                                 </tr>
                               ),
                             )}

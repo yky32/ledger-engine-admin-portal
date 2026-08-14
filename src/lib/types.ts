@@ -11,7 +11,7 @@ export type CreateWalletOnboardBody = {
   settlementCurrency: CurrencyCode;
   name?: string;
   vanityCode?: string;
-  /** Product-stream COA profile, e.g. UAF_CC / UAF_LOAN; omit → DEFAULT */
+  /** Product-stream COA profile, omit → DEFAULT */
   coaProfileCode?: string;
   accounts?: AccountOpenSpec[];
 };
@@ -223,6 +223,7 @@ export type IngestPolicy = {
   autoWalletEnsureCurrency?: string;
   autoWalletAssociatedFrom?: string;
   autoWalletNamePrefix?: string;
+  autoWalletCoaProfileCode?: string | null;
   createDt?: string;
   updateDt?: string;
 };

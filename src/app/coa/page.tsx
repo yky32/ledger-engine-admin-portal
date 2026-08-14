@@ -132,6 +132,7 @@ export default function CoaPage() {
     }
   };
 
+
   const selected = rows.find((r) => r.id === selectedId);
 
   return (
@@ -140,7 +141,7 @@ export default function CoaPage() {
       <EngineStatusBanner />
       <PageHeader
         title="COA profiles"
-        description="Flat table — entity / type / subType / buffer. No JSON. Onboard uses default profile."
+        description="Flat COA table — entity / type / subType / buffer. Optional coaProfileCode on onboard."
       />
       <Alert tone="info">
         One row per client. Same segments for settlement + LP books.{" "}
