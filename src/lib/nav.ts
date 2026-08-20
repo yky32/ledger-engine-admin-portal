@@ -48,6 +48,13 @@ export const NAV: NavItem[] = [
     blurb: "HKD 500 · MCC 5411 walkthrough",
   },
   {
+    href: "/recipes",
+    label: "Posting recipes",
+    icon: ListTree,
+    group: "Overview",
+    blurb: "eventType → atoms (CC_TXN_*)",
+  },
+  {
     href: "/health",
     label: "Engine health",
     icon: Activity,
@@ -82,7 +89,7 @@ export const NAV: NavItem[] = [
     label: "1 · COA profiles",
     icon: BookOpen,
     group: "① Ops configures",
-    blurb: "Product-stream books (CC / Loan…)",
+    blurb: "code ≡ eventType → books",
     step: "ops",
   },
   {
@@ -107,7 +114,7 @@ export const NAV: NavItem[] = [
     label: "2 · Shoot — Single webhook",
     icon: Webhook,
     group: "② Upstream shoot",
-    blurb: "Live / dry-run · earn & burn",
+    blurb: "eventType · recipe · matchedPath",
     step: "shoot",
   },
 

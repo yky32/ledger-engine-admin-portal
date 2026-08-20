@@ -6,6 +6,7 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId } from "@/lib/format";
 import { formatMatchedPath } from "@/lib/factors";
+import { WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
@@ -40,6 +41,7 @@ export default function WebhookPage() {
     occurredAt,
     metadata: {
       source: "admin-portal",
+      useCase: eventType,
       ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
       ...(coaProfileCode.trim()
         ? { coaProfileCode: coaProfileCode.trim().toUpperCase() }
@@ -47,7 +49,7 @@ export default function WebhookPage() {
     },
   });
 
-  const applyPreset = (kind: "earn" | "burn") => {
+  const applyPreset = (kind: "earn" | "burn" | "cc_lp") => {
     setEventId(randomEventId());
     setOccurredAt(nowIso());
     if (kind === "earn") {
@@ -55,6 +57,12 @@ export default function WebhookPage() {
       setAmount("500");
       setCurrency("HKD");
       setMcc("5411");
+    } else if (kind === "cc_lp") {
+      setEventType("CC_TXN_LP");
+      setAmount("500");
+      setCurrency("HKD");
+      setMcc("5411");
+      setCoaProfileCode("");
     } else {
       setEventType("REDEEM");
       setAmount("5");
@@ -96,17 +104,41 @@ export default function WebhookPage() {
           className="btn-secondary text-xs"
           onClick={() => applyPreset("earn")}
         >
-          Preset · Earn grocery 500 HKD / MCC 5411
+          Preset · Grocery PURCHASE 500
+        </button>
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={() => applyPreset("cc_lp")}
+        >
+          Preset · CC_TXN_LP (recipe)
         </button>
         <button
           type="button"
           className="btn-secondary text-xs"
           onClick={() => applyPreset("burn")}
         >
-          Preset · Burn / REDEEM 5 LP
+          Preset · REDEEM burn
         </button>
+        {WEBHOOK_EVENT_PRESETS.map((p) => (
+          <button
+            key={p.eventType}
+            type="button"
+            className="rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-[10px] text-slate-700 hover:border-emerald-300"
+            onClick={() => {
+              setEventType(p.eventType);
+              setEventId(randomEventId());
+            }}
+            title={p.label}
+          >
+            {p.eventType}
+          </button>
+        ))}
         <a href="/demo" className="btn-secondary text-xs">
           Open guided Demo page
+        </a>
+        <a href="/recipes" className="btn-secondary text-xs">
+          Recipes
         </a>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">

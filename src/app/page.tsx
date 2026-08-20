@@ -52,11 +52,17 @@ export default function HomePage() {
     <div>
       <PageHeader
         title="End-to-end business picture"
-        description="LedgeRX — configure → shoot → digest → books. Demo path: grocery 500 HKD → 5 LP."
+        description="LedgeRX — Door → Brain → COA/recipe → books. Demo: grocery 500 HKD → 5 LP · or CC_TXN_LP."
         actions={
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <Link href="/demo" className="btn-primary text-xs">
               Demo · Earn 5 LP
+            </Link>
+            <Link href="/coa" className="btn-secondary text-xs">
+              COA map
+            </Link>
+            <Link href="/recipes" className="btn-secondary text-xs">
+              Recipes
             </Link>
             {engineOk === null ? (
               <Badge>engine…</Badge>
@@ -111,7 +117,13 @@ export default function HomePage() {
               <li>
                 <Link className="flow-link" href="/coa">
                   <BookOpen className="h-3.5 w-3.5" />
-                  COA profiles <span className="text-slate-400">(books scheme)</span>
+                  COA profiles <span className="text-slate-400">(code ≡ eventType)</span>
+                </Link>
+              </li>
+              <li>
+                <Link className="flow-link" href="/recipes">
+                  <ListTree className="h-3.5 w-3.5" />
+                  Posting recipes <span className="text-slate-400">(CC_TXN_* atoms)</span>
                 </Link>
               </li>
               <li>
