@@ -49,7 +49,7 @@ export default function WebhookPage() {
     },
   });
 
-  const applyPreset = (kind: "earn" | "burn" | "cc_lp") => {
+  const applyPreset = (kind: "earn" | "burn" | "cc_lp" | "like_fb") => {
     setEventId(randomEventId());
     setOccurredAt(nowIso());
     if (kind === "earn") {
@@ -62,6 +62,12 @@ export default function WebhookPage() {
       setAmount("500");
       setCurrency("HKD");
       setMcc("5411");
+      setCoaProfileCode("");
+    } else if (kind === "like_fb") {
+      setEventType("LIKE_FB_PAGE");
+      setAmount("0");
+      setCurrency("HKD");
+      setMcc("");
       setCoaProfileCode("");
     } else {
       setEventType("REDEEM");
@@ -112,6 +118,13 @@ export default function WebhookPage() {
           onClick={() => applyPreset("cc_lp")}
         >
           Preset · CC_TXN_LP (recipe)
+        </button>
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={() => applyPreset("like_fb")}
+        >
+          Preset · Like FB page (+5 LP)
         </button>
         <button
           type="button"
