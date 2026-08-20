@@ -8,6 +8,7 @@ import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { COA_PRESETS } from "@/lib/recipes";
 
 type CoaRow = {
   id?: number;
@@ -35,12 +36,24 @@ const emptyForm = {
   poolAllowNegative: true,
 };
 
-/** Flat COA profile — no JSON editor. */
+function formFromRow(r: CoaRow) {
+  return {
+    name: r.name || "",
+    transactionCode: r.transactionCode || "",
+    entity: r.entity || "10",
+    type: r.type || "20",
+    subType: r.subType || "00",
+    buffer: r.buffer || "00",
+    currency: r.currency || (r as { lpCurrency?: string }).lpCurrency || "LP",
+    poolAllowNegative: r.poolAllowNegative !== false,
+  };
+}
+
 export default function CoaPage() {
   const [rows, setRows] = useState<CoaRow[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [newCode, setNewCode] = useState("BANK_A");
+  const [newCode, setNewCode] = useState("CC_TXN_LP");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -59,16 +72,7 @@ export default function CoaPage() {
         list[0];
       if (pick?.id) {
         setSelectedId(pick.id);
-        setForm({
-          name: pick.name || "",
-          transactionCode: pick.transactionCode || "",
-          entity: pick.entity || "10",
-          type: pick.type || "20",
-          subType: pick.subType || "00",
-          buffer: pick.buffer || "00",
-          currency: pick.currency || "LP",
-          poolAllowNegative: pick.poolAllowNegative !== false,
-        });
+        setForm(formFromRow(pick));
       }
     } catch (e) {
       setError(errMsg(e));
@@ -86,16 +90,8 @@ export default function CoaPage() {
     if (!r.id) return;
     setSelectedId(r.id);
     setOk(null);
-    setForm({
-      name: r.name || "",
-      transactionCode: r.transactionCode || "",
-      entity: r.entity || "10",
-      type: r.type || "20",
-      subType: r.subType || "00",
-      buffer: r.buffer || "00",
-      currency: r.currency || "LP",
-      poolAllowNegative: r.poolAllowNegative !== false,
-    });
+    setForm(formFromRow(r));
+    setNewCode(r.code || "CC_TXN_LP");
   };
 
   const save = async () => {
@@ -104,7 +100,11 @@ export default function CoaPage() {
     setError(null);
     setOk(null);
     try {
-      await engine.coaProfileUpdate(selectedId, { ...form });
+      const body = {
+        ...form,
+        transactionCode: form.transactionCode.trim() || undefined,
+      };
+      await engine.coaProfileUpdate(selectedId, body);
       setOk("Saved to DB");
       await load();
     } catch (e) {
@@ -114,20 +114,35 @@ export default function CoaPage() {
     }
   };
 
-  const clone = async () => {
+  const createWithCode = async (code: string, preset?: (typeof COA_PRESETS)[number]) => {
     setLoading(true);
     setError(null);
     setOk(null);
     try {
-      const r = await engine.coaProfileCreate({
-        code: newCode.trim().toUpperCase(),
-        isDefault: false,
-        ...form,
-        name: newCode.trim() || form.name || "Clone",
-      });
+      const c = code.trim().toUpperCase();
+      const body = preset
+        ? {
+            code: c,
+            name: preset.name,
+            entity: preset.entity,
+            type: preset.type,
+            subType: preset.subType,
+            buffer: preset.buffer,
+            currency: preset.currency,
+            isDefault: c === "DEFAULT",
+            poolAllowNegative: true,
+          }
+        : {
+            code: c,
+            isDefault: false,
+            ...form,
+            name: form.name || c,
+          };
+      const r = await engine.coaProfileCreate(body);
       const created = r.data as CoaRow;
-      setOk(`Created ${created.code}`);
+      setOk(`Created ${created.code} (transactionCode defaults = code)`);
       setSelectedId(created.id ?? null);
+      setNewCode(c);
       await load();
     } catch (e) {
       setError(errMsg(e));
@@ -136,8 +151,9 @@ export default function CoaPage() {
     }
   };
 
-
   const selected = rows.find((r) => r.id === selectedId);
+  const effectiveTxn =
+    form.transactionCode.trim() || selected?.code || newCode || "(same as code)";
 
   return (
     <div>
@@ -145,19 +161,43 @@ export default function CoaPage() {
       <EngineStatusBanner />
       <PageHeader
         title="COA profiles"
-        description="code = profile id (= eventType by default). currency = points book. Segments entity/type/sub/buffer."
+        description="code ≡ eventType by default. Upstream event maps here → books segments + currency."
       />
       <Alert tone="info">
-        One row per client. Same segments for settlement + LP books.{" "}
+        <strong>code = transactionCode = webhook eventType</strong> unless you override. See{" "}
+        <Link href="/recipes" className="underline">
+          recipes
+        </Link>{" "}
+        for atom chains.{" "}
         <Link href="/records" className="underline">
           DB records
         </Link>
       </Alert>
 
+      <Card title="Quick create (UA presets)" className="mt-4">
+        <div className="flex flex-wrap gap-2">
+          {COA_PRESETS.filter((p) => p.code !== "DEFAULT").map((p) => (
+            <button
+              key={p.code}
+              type="button"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-mono text-[11px] font-semibold text-emerald-900 hover:bg-emerald-100"
+              disabled={loading || rows.some((r) => r.code === p.code)}
+              onClick={() => void createWithCode(p.code, p)}
+              title={rows.some((r) => r.code === p.code) ? "Already exists" : p.name}
+            >
+              + {p.code}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] text-slate-500">
+          Creates profile with code=eventType (e.g. CC_TXN_LP). Disabled if already present.
+        </p>
+      </Card>
+
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <Card title={`Profiles (${rows.length})`} className="lg:col-span-2">
           {rows.length === 0 ? (
-            <Empty>Empty</Empty>
+            <Empty>Empty — use preset or clone</Empty>
           ) : (
             <ul className="space-y-1">
               {rows.map((r) => (
@@ -173,6 +213,9 @@ export default function CoaPage() {
                   >
                     <span className="font-mono font-semibold">{r.code}</span>{" "}
                     {r.isDefault ? <Badge tone="ok">default</Badge> : null}
+                    <span className="mt-0.5 block font-mono text-[10px] text-emerald-700">
+                      txn: {r.transactionCode || r.code || "—"} · {r.currency || "LP"}
+                    </span>
                     <span className="mt-0.5 block font-mono text-[10px] text-slate-500">
                       {r.entity}-{r.type}-{r.subType}-{r.buffer}
                     </span>
@@ -183,14 +226,20 @@ export default function CoaPage() {
           )}
           <div className="mt-3 flex flex-wrap gap-2">
             <input
-              className="field-input max-w-[120px] font-mono text-xs"
+              className="field-input max-w-[140px] font-mono text-xs"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
+              placeholder="CC_TXN_LP"
             />
-            <button type="button" className="btn-secondary text-xs" onClick={clone} disabled={loading}>
-              Clone as new
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => void createWithCode(newCode)}
+              disabled={loading}
+            >
+              Create / clone
             </button>
-            <button type="button" className="btn-secondary text-xs" onClick={load} disabled={loading}>
+            <button type="button" className="btn-secondary text-xs" onClick={() => void load()} disabled={loading}>
               Reload
             </button>
           </div>
@@ -199,7 +248,7 @@ export default function CoaPage() {
         <Card
           title={selected ? `Edit · ${selected.code}` : "Edit"}
           className="lg:col-span-3"
-          description="Digits only for entity/type/subType/buffer"
+          description={`Effective eventType map → ${effectiveTxn}`}
         >
           {!selectedId ? (
             <Empty>Select profile</Empty>
@@ -215,12 +264,12 @@ export default function CoaPage() {
               </label>
               {(
                 [
-                  ["transactionCode", "transactionCode (optional; blank = same as code)"],
+                  ["transactionCode", "transactionCode (blank = same as code)"],
                   ["entity", "entity"],
                   ["type", "type"],
                   ["subType", "subType"],
                   ["buffer", "buffer"],
-                  ["currency", "currency (points)"],
+                  ["currency", "currency (points book)"],
                 ] as const
               ).map(([k, label]) => (
                 <label key={k} className="field">
@@ -242,7 +291,7 @@ export default function CoaPage() {
               </label>
               <div className="sm:col-span-2">
                 <ActionBar loading={loading} error={error} ok={ok}>
-                  <button type="button" className="btn-primary" onClick={save} disabled={loading}>
+                  <button type="button" className="btn-primary" onClick={() => void save()} disabled={loading}>
                     Save to DB
                   </button>
                 </ActionBar>
