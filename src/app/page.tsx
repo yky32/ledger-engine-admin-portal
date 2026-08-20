@@ -52,9 +52,12 @@ export default function HomePage() {
     <div>
       <PageHeader
         title="End-to-end business picture"
-        description="Layout follows ledger-engine docs/SYSTEM_BUSINESS_FLOW.md — configure → shoot → digest → books."
+        description="LedgeRX — configure → shoot → digest → books. Demo path: grocery 500 HKD → 5 LP."
         actions={
           <div className="flex items-center gap-2 text-xs">
+            <Link href="/demo" className="btn-primary text-xs">
+              Demo · Earn 5 LP
+            </Link>
             {engineOk === null ? (
               <Badge>engine…</Badge>
             ) : engineOk ? (
@@ -103,6 +106,12 @@ export default function HomePage() {
                 <Link className="flow-link" href="/digestion-rules">
                   <Brain className="h-3.5 w-3.5" />
                   Digestion rules <span className="text-slate-400">(brain)</span>
+                </Link>
+              </li>
+              <li>
+                <Link className="flow-link" href="/coa">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  COA profiles <span className="text-slate-400">(books scheme)</span>
                 </Link>
               </li>
               <li>

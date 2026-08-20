@@ -20,7 +20,9 @@ export function Sidebar() {
           <div className="truncate text-sm font-semibold tracking-tight text-white">
             LedgeRX
           </div>
-          <div className="truncate text-[11px] text-slate-400">Admin · ledger core</div>
+          <div className="truncate text-[11px] text-slate-400">
+            Admin · Door · Brain · Books
+          </div>
         </div>
       </div>
 

@@ -214,7 +214,7 @@ export const engine = {
   transferInWallet: (body: TransferBody) =>
     ledger.post("/movements/transfers/in-wallet", body),
 
-  /* ─── Config / FX / rules ─── */
+  /* ─── Config ─── */
   /** GET /configurations?target&scope=global */
   configGet: (target: string, scope = "global") =>
     ledger.get(`/configurations${qs({ target, scope })}`),
@@ -227,19 +227,10 @@ export const engine = {
     value: unknown;
   }) => ledger.put("/configurations", body),
 
-  fxList: (page = 1, size = 100) => ledger.get(`/fx-rates${qs({ page, size })}`),
-  fxCreate: (body: { base: string; target: string; rate: number | string }) =>
-    ledger.post("/fx-rates", body),
-
-  rulesList: (page = 1, size = 50) => ledger.get(`/rules${qs({ page, size })}`),
-  ruleCreate: (body: Record<string, unknown>) => ledger.post("/rules", body),
-
-  ruleExecutionsList: (page = 1, size = 50) =>
-    ledger.get(`/rule-executions${qs({ page, size })}`),
-
-  /* ─── Legacy ledger-wallets / ledger-accounts (exist on backend) ─── */
+  /**
+   * @deprecated catalog — only used by /records optional tab.
+   * Prefer product GET /wallets/{ownerId}.
+   */
   ledgerWalletsList: (page = 1, size = 50) =>
     ledger.get(`/ledger-wallets${qs({ page, size })}`),
-  ledgerAccountsList: (page = 1, size = 50) =>
-    ledger.get(`/ledger-accounts${qs({ page, size })}`),
 };

@@ -16,10 +16,11 @@ import {
   Workflow,
   Database,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 
 /**
- * Nav mirrors docs/SYSTEM_BUSINESS_FLOW.md.
+ * Nav mirrors Door → Brain → Books product flow.
  * Product surfaces only — no legacy catalog routes.
  */
 export type NavItem = {
@@ -37,7 +38,14 @@ export const NAV: NavItem[] = [
     label: "Business flow",
     icon: Workflow,
     group: "Overview",
-    blurb: "E2E map · how pieces connect",
+    blurb: "E2E map · demo path",
+  },
+  {
+    href: "/demo",
+    label: "Demo · Earn 5 LP",
+    icon: Sparkles,
+    group: "Overview",
+    blurb: "HKD 500 · MCC 5411 walkthrough",
   },
   {
     href: "/health",
@@ -58,7 +66,7 @@ export const NAV: NavItem[] = [
     label: "1 · Door — Ingest policy",
     icon: DoorOpen,
     group: "① Ops configures",
-    blurb: "Accept webhooks? Auto-wallet?",
+    blurb: "Accept webhooks? Auto-wallet? COA default?",
     step: "ops",
   },
   {
@@ -70,11 +78,19 @@ export const NAV: NavItem[] = [
     step: "ops",
   },
   {
+    href: "/coa",
+    label: "1 · COA profiles",
+    icon: BookOpen,
+    group: "① Ops configures",
+    blurb: "Product-stream books (CC / Loan…)",
+    step: "ops",
+  },
+  {
     href: "/wallets",
     label: "Wallet onboard (CRM)",
     icon: Wallet,
     group: "① Ops configures",
-    blurb: "Explicit 1 ownerId → 1 wallet",
+    blurb: "1 ownerId → 1 wallet · coaProfileCode",
     step: "ops",
   },
 
@@ -91,7 +107,7 @@ export const NAV: NavItem[] = [
     label: "2 · Shoot — Single webhook",
     icon: Webhook,
     group: "② Upstream shoot",
-    blurb: "One event JSON",
+    blurb: "Live / dry-run · earn & burn",
     step: "shoot",
   },
 
@@ -100,7 +116,7 @@ export const NAV: NavItem[] = [
     label: "3 · Customer LP books",
     icon: Search,
     group: "③ Engine outcomes",
-    blurb: "Balance ↑↓ · movements",
+    blurb: "Balance ↑↓ · movements · coaProfile",
     step: "engine",
   },
   {
@@ -156,15 +172,8 @@ export const NAV: NavItem[] = [
   },
 
   {
-    href: "/coa",
-    label: "COA profiles",
-    icon: BookOpen,
-    group: "Reference",
-    blurb: "1-table COA profiles (internal)",
-  },
-  {
     href: "/configurations",
-    label: "System config JSONB",
+    label: "System config",
     icon: Settings2,
     group: "Reference",
   },
