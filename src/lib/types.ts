@@ -189,7 +189,7 @@ export type DigestionRule = {
   pointCurrency?: string;
   formula?: FormulaConfig | string | Record<string, unknown>;
   processType?: string | null;
-  whenFactors?: FactorSpec[] | null;
+  whenFactors?: FactorSpec[] | FactorSet | Record<string, unknown> | null;
   createDt?: string;
   updateDt?: string;
 };
@@ -219,7 +219,7 @@ export type CreateDigestionRuleBody = {
   pointCurrency?: string;
   formula: FormulaConfig | Record<string, unknown> | string;
   processType?: string;
-  whenFactors?: FactorSpec[];
+  whenFactors?: FactorSpec[] | FactorSet | Record<string, unknown>;
 };
 
 export type IngestPolicy = {
@@ -232,16 +232,27 @@ export type IngestPolicy = {
   autoWalletNamePrefix?: string;
   autoWalletCoaProfileCode?: string | null;
   /** Door entry factors — docs/FACTORS.md */
-  entryFactors?: FactorSpec[] | null;
+  entryFactors?: FactorSpec[] | FactorSet | null;
   createDt?: string;
   updateDt?: string;
 };
 
 /** Shared Door/Brain factor predicate */
 export type FactorSpec = {
-  field: string;
-  op: string;
+  field?: string;
+  op?: string;
   value?: unknown;
+  id?: string;
+};
+
+/** UAF boolean composition — array means AND all leaves */
+export type FactorSet = {
+  match?: "all" | "any" | "atLeast" | "anyGroup" | "allGroups" | string;
+  count?: number;
+  min?: number;
+  factors?: Array<FactorSpec | FactorSet>;
+  groups?: Array<FactorSpec | (FactorSet & { id?: string })>;
+  items?: Array<FactorSpec | FactorSet>;
 };
 
 export type FailedIngest = {
