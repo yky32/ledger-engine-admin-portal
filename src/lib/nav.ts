@@ -66,7 +66,7 @@ export const NAV: NavItem[] = [
     label: "1 · Door — Ingest policy",
     icon: DoorOpen,
     group: "① Ops configures",
-    blurb: "Accept webhooks? Auto-wallet? COA default?",
+    blurb: "Admit + entryFactors FactorSet",
     step: "ops",
   },
   {
@@ -74,7 +74,7 @@ export const NAV: NavItem[] = [
     label: "1 · Brain — Digestion rules",
     icon: Brain,
     group: "① Ops configures",
-    blurb: "Match event + score points",
+    blurb: "whenFactors + formula / tier / table",
     step: "ops",
   },
   {

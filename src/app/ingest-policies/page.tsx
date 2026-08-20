@@ -6,6 +6,8 @@ import { PageHeader, Card, JsonBlock, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel, HelpTip, ExplainBox } from "@/components/ui/help";
 import { FlowStrip } from "@/components/layout/flow-strip";
+import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
+import { DOOR_FACTOR_PRESETS, parseFactorJson } from "@/lib/factors";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { IngestPolicy } from "@/lib/types";
@@ -176,11 +178,7 @@ export default function IngestPolicyPage() {
     try {
       let entryFactors: IngestPolicy["entryFactors"] = [];
       try {
-        const parsed = JSON.parse(entryFactorsText || "[]");
-        if (!Array.isArray(parsed) && (typeof parsed !== "object" || parsed === null)) {
-          throw new Error("entryFactors must be a JSON array or FactorSet object");
-        }
-        entryFactors = parsed as IngestPolicy["entryFactors"];
+        entryFactors = parseFactorJson(entryFactorsText) as IngestPolicy["entryFactors"];
       } catch (pe) {
         setError(errMsg(pe));
         setLoading(false);
@@ -203,7 +201,7 @@ export default function IngestPolicyPage() {
       <EngineStatusBanner />
       <PageHeader
         title="1 · Door — Ingest policy"
-        description="Webhook admission + lazy wallet. Not scoring. API GET/PUT /ingest-policies · docs/INGEST_POLICY.md"
+        description="Webhook admission + lazy wallet + entryFactors (FactorSet). Not scoring. GET/PUT /ingest-policies"
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-3">
@@ -369,19 +367,14 @@ export default function IngestPolicyPage() {
               </label>
 
               <label className="field sm:col-span-2">
-                <span className="field-label">
-                  entryFactors (JSON array) — Door isEntered
-                </span>
-                <textarea
-                  className="field-input font-mono text-xs min-h-[120px]"
+                <FactorJsonEditor
+                  label="entryFactors — Door isEntered"
+                  hint="Empty [] = only isEnabled. FactorSet: any / atLeast / not / anyGroup…"
                   value={entryFactorsText}
-                  onChange={(e) => setEntryFactorsText(e.target.value)}
-                  placeholder='[{"field":"currency","op":"in","value":["HKD"]}]'
+                  onChange={setEntryFactorsText}
+                  presets={DOOR_FACTOR_PRESETS}
+                  rows={11}
                 />
-                <span className="mt-1 block text-[11px] text-slate-500">
-                  Array = AND all. Or FactorSet object: match any / atLeast / anyGroup.
-                  See engine docs/FACTORS.md
-                </span>
               </label>
 
               <ActionBar loading={loading} error={error} ok={ok}>

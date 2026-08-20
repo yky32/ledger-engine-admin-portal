@@ -6,35 +6,90 @@ import { PageHeader, Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel, ExplainBox } from "@/components/ui/help";
 import { FlowStrip } from "@/components/layout/flow-strip";
+import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
 import { engine } from "@/lib/engine";
+import { BRAIN_FACTOR_PRESETS, parseFactorJson } from "@/lib/factors";
 import { errMsg } from "@/lib/format";
 import type { CreateDigestionRuleBody, DigestionRule } from "@/lib/types";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
-type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR";
+type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR" | "TIERED_RATE" | "TABLE";
 
-function buildFormula(type: FormulaType, rate: string, fixed: string, value: string): Record<string, unknown> {
+function buildFormula(
+  type: FormulaType,
+  rate: string,
+  fixed: string,
+  value: string,
+  extras: { multiplier: string; cap: string; floor: string; tierJson: string; tableJson: string },
+): Record<string, unknown> {
+  let base: Record<string, unknown>;
   switch (type) {
     case "AMOUNT":
-      return { type: "AMOUNT" };
+      base = { type: "AMOUNT" };
+      break;
     case "RATE":
-      return { type: "RATE", rate: Number(rate) };
+      base = { type: "RATE", rate: Number(rate) };
+      break;
     case "FIXED":
-      return { type: "FIXED", value: Number(value) };
+      base = { type: "FIXED", value: Number(value) };
+      break;
     case "LINEAR":
-      return { type: "LINEAR", rate: Number(rate), fixed: Number(fixed) };
+      base = { type: "LINEAR", rate: Number(rate), fixed: Number(fixed) };
+      break;
+    case "TIERED_RATE": {
+      let brackets: unknown = [
+        { upTo: 5000, rate: 0.01 },
+        { upTo: null, rate: 0.02 },
+      ];
+      if (extras.tierJson.trim()) brackets = JSON.parse(extras.tierJson);
+      base = { type: "TIERED_RATE", brackets };
+      break;
+    }
+    case "TABLE": {
+      let table: Record<string, unknown> = {
+        by: "tier",
+        map: {
+          GOLD: { type: "RATE", rate: 0.02 },
+          DEFAULT: { type: "RATE", rate: 0.01 },
+        },
+      };
+      if (extras.tableJson.trim()) table = JSON.parse(extras.tableJson) as Record<string, unknown>;
+      base = { type: "TABLE", ...table };
+      break;
+    }
   }
+  if (extras.multiplier.trim()) base.multiplier = Number(extras.multiplier);
+  if (extras.cap.trim()) base.cap = Number(extras.cap);
+  if (extras.floor.trim()) base.floor = Number(extras.floor);
+  return base;
 }
 
 function formulaLabel(f: unknown): string {
   if (!f || typeof f !== "object") return String(f ?? "—");
   const o = f as Record<string, unknown>;
   const t = String(o.type ?? "").toUpperCase();
-  if (t === "AMOUNT") return "AMOUNT (= spend)";
-  if (t === "RATE") return `RATE × ${o.rate}`;
-  if (t === "FIXED") return `FIXED ${o.value ?? o.fixed}`;
-  if (t === "LINEAR") return `LINEAR ${o.rate}×amt + ${o.fixed}`;
+  const extras: string[] = [];
+  if (o.multiplier != null) extras.push(`×${o.multiplier}`);
+  if (o.cap != null) extras.push(`cap ${o.cap}`);
+  if (o.floor != null) extras.push(`floor ${o.floor}`);
+  const suf = extras.length ? ` (${extras.join(", ")})` : "";
+  if (t === "AMOUNT") return `AMOUNT${suf}`;
+  if (t === "RATE") return `RATE × ${o.rate}${suf}`;
+  if (t === "FIXED") return `FIXED ${o.value ?? o.fixed}${suf}`;
+  if (t === "LINEAR") return `LINEAR ${o.rate}× + ${o.fixed}${suf}`;
+  if (t === "TIERED_RATE") return `TIERED_RATE${suf}`;
+  if (t === "TABLE") return `TABLE by ${o.by}${suf}`;
   return JSON.stringify(f);
+}
+
+function whenLabel(w: unknown): string {
+  if (w == null) return "—";
+  if (Array.isArray(w)) return w.length ? `AND[${w.length}]` : "—";
+  if (typeof w === "object" && w && "match" in w) {
+    const m = String((w as { match?: string }).match ?? "all");
+    return m;
+  }
+  return "set";
 }
 
 export default function DigestionRulesPage() {
@@ -53,6 +108,11 @@ export default function DigestionRulesPage() {
     eligibleMccs: "",
     whenFactors: "[]",
     multiplier: "",
+    cap: "",
+    floor: "",
+    tierJson: '[\n  { "upTo": 5000, "rate": 0.01 },\n  { "upTo": null, "rate": 0.02 }\n]',
+    tableJson:
+      '{\n  "by": "tier",\n  "map": {\n    "GOLD": { "type": "RATE", "rate": 0.02 },\n    "DEFAULT": { "type": "RATE", "rate": 0.01 }\n  }\n}',
   });
   const [formulaType, setFormulaType] = useState<FormulaType>("RATE");
   const [rate, setRate] = useState("0.01");
@@ -61,12 +121,28 @@ export default function DigestionRulesPage() {
   const [created, setCreated] = useState<unknown>(null);
 
   const formulaPreview = useMemo(() => {
-    const base = buildFormula(formulaType, rate, fixed, value) as Record<string, unknown>;
-    if (form.multiplier.trim()) {
-      base.multiplier = Number(form.multiplier);
+    try {
+      return buildFormula(formulaType, rate, fixed, value, {
+        multiplier: form.multiplier,
+        cap: form.cap,
+        floor: form.floor,
+        tierJson: form.tierJson,
+        tableJson: form.tableJson,
+      });
+    } catch {
+      return { type: "RATE", rate: 0.01, _error: "invalid tier/table JSON" };
     }
-    return base;
-  }, [formulaType, rate, fixed, value, form.multiplier]);
+  }, [
+    formulaType,
+    rate,
+    fixed,
+    value,
+    form.multiplier,
+    form.cap,
+    form.floor,
+    form.tierJson,
+    form.tableJson,
+  ]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,10 +168,7 @@ export default function DigestionRulesPage() {
     try {
       let whenFactors: CreateDigestionRuleBody["whenFactors"];
       try {
-        const parsed = JSON.parse(form.whenFactors || "[]");
-        if (!Array.isArray(parsed) && (typeof parsed !== "object" || parsed === null)) {
-          throw new Error("whenFactors must be JSON array or FactorSet object");
-        }
+        const parsed = parseFactorJson(form.whenFactors);
         whenFactors =
           Array.isArray(parsed) && parsed.length === 0
             ? undefined
@@ -105,12 +178,19 @@ export default function DigestionRulesPage() {
         setLoading(false);
         return;
       }
+      if ((formulaPreview as { _error?: string })._error) {
+        setError("Invalid TIERED/TABLE JSON");
+        setLoading(false);
+        return;
+      }
+      const formula = { ...formulaPreview };
+      delete (formula as { _error?: string })._error;
       const r = await engine.digestionCreate({
         code: form.code.trim(),
         name: form.name.trim(),
         eventType: form.eventType.trim(),
         operation: form.operation,
-        formula: formulaPreview,
+        formula,
         pointCurrency: form.pointCurrency,
         priority: Number(form.priority),
         minAmount: Number(form.minAmount),
@@ -140,44 +220,35 @@ export default function DigestionRulesPage() {
       <EngineStatusBanner />
       <PageHeader
         title="1 · Brain — Digestion rules"
-        description="JSON formula config (not string DSL). Runtime DB · /digestion-rules"
+        description="whenFactors (FactorSet) + formula (RATE / TIERED / TABLE + cap). · /digestion-rules"
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-3">
-        <ExplainBox title="Formula = JSON object" tone="ops">
-          <p className="font-mono text-[11px] leading-relaxed">
-            {`{"type":"RATE","rate":0.01}`}
-            <br />
-            {`{"type":"FIXED","value":1000}`}
-            <br />
-            {`{"type":"LINEAR","rate":0.01,"fixed":50}`}
-            <br />
-            {`{"type":"AMOUNT"}`}
-          </p>
-        </ExplainBox>
-        <ExplainBox title="Brain = eligibility + formula" tone="ops">
+        <ExplainBox title="Formula types" tone="ops">
           <p className="text-[12px] leading-relaxed">
-            Filters first: eventType · minAmount · currencies · <strong>MCCs</strong> · maxAgeDays.
-            Then formula JSON. MCC from webhook <code className="text-[10px]">metadata.mcc</code>.
-            Door does not run these checks.
+            RATE · FIXED · LINEAR · AMOUNT · <strong>TIERED_RATE</strong> ·{" "}
+            <strong>TABLE</strong>. Optional cap / floor / multiplier.
           </p>
         </ExplainBox>
-        <ExplainBox title="What Brain does">
-          <p>
-            Match <code className="text-xs">eventType</code> + filters → compute points from
-            formula → Books EARN/BURN to <code className="text-xs">pointCurrency</code> (LP).
+        <ExplainBox title="whenFactors" tone="ops">
+          <p className="text-[12px] leading-relaxed">
+            FactorSet: any · atLeast · exactly · not · oneOf · anyGroup. Legacy columns still AND.
           </p>
         </ExplainBox>
-        <ExplainBox title="Credit-card patterns" tone="info">
-          <p>
-            1% spend → RATE · open bonus → FIXED · redeem → AMOUNT. See engine{" "}
-            <code className="text-xs">docs/CREDIT_CARD_CLIENT_SCENARIOS.md</code>.
+        <ExplainBox title="Explain" tone="info">
+          <p className="text-[12px] leading-relaxed">
+            Webhook dry-run returns <code className="text-xs">matchedPath</code> on
+            eligibilityTrace.
           </p>
         </ExplainBox>
       </div>
 
       <div className="mb-4 grid gap-4 lg:grid-cols-5">
-        <Card title="Create rule" className="lg:col-span-2" description="Pick formula type — no cryptic strings">
+        <Card
+          title="Create rule"
+          className="lg:col-span-2"
+          description="FactorSet presets + equation builder"
+        >
           <div className="grid gap-2.5">
             {(
               [
@@ -187,9 +258,9 @@ export default function DigestionRulesPage() {
                 ["operation", "operation"],
                 ["pointCurrency", "pointCurrency"],
                 ["priority", "priority"],
-                ["minAmount", "minAmount"],
-                ["eligibleCurrencies", "eligibleCurrencies (csv)"],
-                ["eligibleMccs", "eligibleMccs (csv, blank=any)"],
+                ["minAmount", "minAmount (legacy)"],
+                ["eligibleCurrencies", "eligibleCurrencies csv"],
+                ["eligibleMccs", "eligibleMccs csv"],
               ] as const
             ).map(([k, label]) => (
               <label key={k} className="field">
@@ -201,30 +272,18 @@ export default function DigestionRulesPage() {
                 />
               </label>
             ))}
-            <label className="field">
-              <span className="field-label">whenFactors (JSON array|FactorSet)</span>
-              <textarea
-                className="field-input font-mono text-xs min-h-[80px]"
-                value={form.whenFactors}
-                onChange={(e) => setForm((f) => ({ ...f, whenFactors: e.target.value }))}
-                placeholder='{"match":"anyGroup","groups":[...]} or [{field,op,value}]'
-              />
-            </label>
-            <label className="field">
-              <span className="field-label">formula.multiplier (optional)</span>
-              <input
-                className="field-input font-mono"
-                value={form.multiplier}
-                onChange={(e) => setForm((f) => ({ ...f, multiplier: e.target.value }))}
-                placeholder="e.g. 2"
-              />
-            </label>
+
+            <FactorJsonEditor
+              label="whenFactors"
+              hint="Brain gates — array AND or FactorSet object"
+              value={form.whenFactors}
+              onChange={(whenFactors) => setForm((f) => ({ ...f, whenFactors }))}
+              presets={BRAIN_FACTOR_PRESETS}
+              rows={9}
+            />
 
             <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-3">
-              <FieldLabel
-                tipTitle="formula (JSON)"
-                tip="Stored as JSONB. RATE = % of spend. FIXED = flat bonus. LINEAR = rate*amount+fixed. AMOUNT = 1:1 with spend (or burn)."
-              >
+              <FieldLabel tipTitle="formula" tip="JSONB on digestion_rule.formula">
                 Formula type
               </FieldLabel>
               <select
@@ -232,10 +291,12 @@ export default function DigestionRulesPage() {
                 value={formulaType}
                 onChange={(e) => setFormulaType(e.target.value as FormulaType)}
               >
-                <option value="RATE">RATE — amount × rate (e.g. 1%)</option>
-                <option value="FIXED">FIXED — constant points (bonus)</option>
-                <option value="LINEAR">LINEAR — amount × rate + fixed</option>
-                <option value="AMOUNT">AMOUNT — points = spend amount</option>
+                <option value="RATE">RATE — amount × rate</option>
+                <option value="FIXED">FIXED — constant points</option>
+                <option value="LINEAR">LINEAR — rate×amt + fixed</option>
+                <option value="AMOUNT">AMOUNT — points = amount</option>
+                <option value="TIERED_RATE">TIERED_RATE — marginal brackets</option>
+                <option value="TABLE">TABLE — by metadata key</option>
               </select>
 
               {formulaType === "RATE" || formulaType === "LINEAR" ? (
@@ -245,13 +306,12 @@ export default function DigestionRulesPage() {
                     className="field-input font-mono"
                     value={rate}
                     onChange={(e) => setRate(e.target.value)}
-                    placeholder="0.01"
                   />
                 </label>
               ) : null}
               {formulaType === "LINEAR" ? (
                 <label className="field mt-2">
-                  <span className="field-label">fixed (bonus add)</span>
+                  <span className="field-label">fixed</span>
                   <input
                     className="field-input font-mono"
                     value={fixed}
@@ -261,7 +321,7 @@ export default function DigestionRulesPage() {
               ) : null}
               {formulaType === "FIXED" ? (
                 <label className="field mt-2">
-                  <span className="field-label">value (points)</span>
+                  <span className="field-label">value</span>
                   <input
                     className="field-input font-mono"
                     value={value}
@@ -269,6 +329,56 @@ export default function DigestionRulesPage() {
                   />
                 </label>
               ) : null}
+              {formulaType === "TIERED_RATE" ? (
+                <label className="field mt-2">
+                  <span className="field-label">brackets JSON</span>
+                  <textarea
+                    className="field-input min-h-[100px] font-mono text-xs"
+                    value={form.tierJson}
+                    onChange={(e) => setForm((f) => ({ ...f, tierJson: e.target.value }))}
+                  />
+                </label>
+              ) : null}
+              {formulaType === "TABLE" ? (
+                <label className="field mt-2">
+                  <span className="field-label">table JSON (by + map)</span>
+                  <textarea
+                    className="field-input min-h-[120px] font-mono text-xs"
+                    value={form.tableJson}
+                    onChange={(e) => setForm((f) => ({ ...f, tableJson: e.target.value }))}
+                  />
+                </label>
+              ) : null}
+
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <label className="field">
+                  <span className="field-label">multiplier</span>
+                  <input
+                    className="field-input font-mono text-xs"
+                    value={form.multiplier}
+                    onChange={(e) => setForm((f) => ({ ...f, multiplier: e.target.value }))}
+                    placeholder="2"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">cap</span>
+                  <input
+                    className="field-input font-mono text-xs"
+                    value={form.cap}
+                    onChange={(e) => setForm((f) => ({ ...f, cap: e.target.value }))}
+                    placeholder="50"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">floor</span>
+                  <input
+                    className="field-input font-mono text-xs"
+                    value={form.floor}
+                    onChange={(e) => setForm((f) => ({ ...f, floor: e.target.value }))}
+                    placeholder="1"
+                  />
+                </label>
+              </div>
 
               <div className="mt-2 text-[11px] text-slate-500">Preview payload</div>
               <pre className="mt-1 overflow-auto rounded-lg bg-slate-900 p-2 font-mono text-[11px] text-emerald-200">
@@ -277,16 +387,16 @@ export default function DigestionRulesPage() {
             </div>
 
             <ActionBar loading={loading} error={error}>
-              <button type="button" className="btn-primary" onClick={create}>
+              <button type="button" className="btn-primary" onClick={() => void create()}>
                 Create
               </button>
-              <button type="button" className="btn-secondary" onClick={load}>
+              <button type="button" className="btn-secondary" onClick={() => void load()}>
                 Refresh
               </button>
             </ActionBar>
             {created ? (
               <>
-                <p className="mb-1 text-[11px] font-semibold text-emerald-800">Created row (DB response)</p>
+                <p className="mb-1 text-[11px] font-semibold text-emerald-800">Created</p>
                 <JsonBlock value={created} maxHeight={160} />
               </>
             ) : null}
@@ -294,26 +404,25 @@ export default function DigestionRulesPage() {
         </Card>
 
         <Card
-          title={`Saved in DB · digestion_rule (${rows.length})`}
-          description="GET /digestion-rules — reload after create"
+          title={`Saved · digestion_rule (${rows.length})`}
+          description="GET /digestion-rules"
           className="lg:col-span-3"
           right={
-            <Link href="/records" className="text-xs text-emerald-700 hover:underline">
-              DB records →
+            <Link href="/transactions-ingest" className="text-xs text-emerald-700 hover:underline">
+              Dry-run explain →
             </Link>
           }
         >
           {rows.length === 0 ? (
-            <Empty>No rules — create PURCHASE RATE 0.01 to earn</Empty>
+            <Empty>No rules yet</Empty>
           ) : (
-            <div className="table-wrap max-h-[560px] overflow-auto">
+            <div className="table-wrap max-h-[640px] overflow-auto">
               <table className="data-table">
                 <thead>
                   <tr>
                     <th>code</th>
                     <th>event</th>
-                    <th>op</th>
-                    <th>mcc</th>
+                    <th>when</th>
                     <th>formula</th>
                     <th>on</th>
                     <th>pri</th>
@@ -324,9 +433,11 @@ export default function DigestionRulesPage() {
                     <tr key={r.id ?? r.code}>
                       <td className="font-mono text-xs font-medium">{r.code}</td>
                       <td>{r.eventType}</td>
-                      <td>{r.operation}</td>
-                      <td className="font-mono text-[10px] text-slate-500">
-                        {r.eligibleMccs?.length ? r.eligibleMccs.join(",") : "—"}
+                      <td
+                        className="font-mono text-[10px] text-slate-600"
+                        title={JSON.stringify(r.whenFactors)}
+                      >
+                        {whenLabel(r.whenFactors)}
                       </td>
                       <td className="font-mono text-[11px]" title={JSON.stringify(r.formula)}>
                         {formulaLabel(r.formula)}
@@ -343,13 +454,6 @@ export default function DigestionRulesPage() {
               </table>
             </div>
           )}
-          <p className="mt-2 text-[11px] text-slate-500">
-            Hover formula cell for full JSON. After create,{" "}
-            <Link href="/simulator" className="underline">
-              shoot webhooks
-            </Link>
-            .
-          </p>
         </Card>
       </div>
     </div>

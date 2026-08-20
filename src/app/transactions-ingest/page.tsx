@@ -5,6 +5,7 @@ import { PageHeader, Card, JsonBlock, Badge } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId } from "@/lib/format";
+import { formatMatchedPath } from "@/lib/factors";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
@@ -87,7 +88,7 @@ export default function WebhookPage() {
       <FlowStrip active="shoot" />
       <PageHeader
         title="Fire webhook"
-        description="Live or dry-run. Response includes matchedRuleCode + eligibilityTrace (Trust B)."
+        description="Live or dry-run. eligibilityTrace includes matchedPath (Factor explain)."
       />
       <div className="mb-3 flex flex-wrap gap-2">
         <button
@@ -261,6 +262,7 @@ export default function WebhookPage() {
                       <th>pri</th>
                       <th>ok</th>
                       <th>step</th>
+                      <th>path</th>
                       <th>detail</th>
                     </tr>
                   </thead>
@@ -271,7 +273,13 @@ export default function WebhookPage() {
                         <td>{row.priority}</td>
                         <td>{row.matched ? "✓" : "✗"}</td>
                         <td className="font-mono text-[10px]">{row.failStep || "—"}</td>
-                        <td className="max-w-[180px] truncate text-[10px]" title={row.detail}>
+                        <td
+                          className="max-w-[140px] truncate font-mono text-[10px] text-emerald-800"
+                          title={formatMatchedPath(row.matchedPath)}
+                        >
+                          {formatMatchedPath(row.matchedPath)}
+                        </td>
+                        <td className="max-w-[160px] truncate text-[10px]" title={row.detail}>
                           {row.detail}
                         </td>
                       </tr>
