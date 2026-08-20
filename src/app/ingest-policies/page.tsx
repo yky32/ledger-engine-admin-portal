@@ -145,6 +145,7 @@ const TIPS = {
 
 export default function IngestPolicyPage() {
   const [policy, setPolicy] = useState<IngestPolicy | null>(null);
+  const [entryFactorsText, setEntryFactorsText] = useState("[]");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -155,6 +156,7 @@ export default function IngestPolicyPage() {
     try {
       const r = await engine.ingestPolicyGet();
       setPolicy(r.data);
+      setEntryFactorsText(JSON.stringify(r.data?.entryFactors ?? [], null, 2));
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -172,8 +174,19 @@ export default function IngestPolicyPage() {
     setError(null);
     setOk(null);
     try {
-      const r = await engine.ingestPolicyPut(policy);
+      let entryFactors: IngestPolicy["entryFactors"] = [];
+      try {
+        const parsed = JSON.parse(entryFactorsText || "[]");
+        if (!Array.isArray(parsed)) throw new Error("entryFactors must be a JSON array");
+        entryFactors = parsed;
+      } catch (pe) {
+        setError(errMsg(pe));
+        setLoading(false);
+        return;
+      }
+      const r = await engine.ingestPolicyPut({ ...policy, entryFactors });
       setPolicy(r.data);
+      setEntryFactorsText(JSON.stringify(r.data?.entryFactors ?? [], null, 2));
       setOk("Saved to DB — effective immediately (no restart)");
     } catch (e) {
       setError(errMsg(e));
@@ -351,6 +364,21 @@ export default function IngestPolicyPage() {
                   }
                   placeholder="DEFAULT or profile code"
                 />
+              </label>
+
+              <label className="field sm:col-span-2">
+                <span className="field-label">
+                  entryFactors (JSON array) — Door isEntered
+                </span>
+                <textarea
+                  className="field-input font-mono text-xs min-h-[120px]"
+                  value={entryFactorsText}
+                  onChange={(e) => setEntryFactorsText(e.target.value)}
+                  placeholder='[{"field":"currency","op":"in","value":["HKD"]}]'
+                />
+                <span className="mt-1 block text-[11px] text-slate-500">
+                  Empty [] = only isEnabled. Ops: eq/in/nin/gt/gte/lt/lte/between. See FACTORS.md
+                </span>
               </label>
 
               <ActionBar loading={loading} error={error} ok={ok}>

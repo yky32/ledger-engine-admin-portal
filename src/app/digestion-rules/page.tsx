@@ -51,6 +51,8 @@ export default function DigestionRulesPage() {
     minAmount: "0.01",
     eligibleCurrencies: "HKD,USD",
     eligibleMccs: "",
+    whenFactors: "[]",
+    multiplier: "",
   });
   const [formulaType, setFormulaType] = useState<FormulaType>("RATE");
   const [rate, setRate] = useState("0.01");
@@ -58,10 +60,13 @@ export default function DigestionRulesPage() {
   const [value, setValue] = useState("1000");
   const [created, setCreated] = useState<unknown>(null);
 
-  const formulaPreview = useMemo(
-    () => buildFormula(formulaType, rate, fixed, value),
-    [formulaType, rate, fixed, value],
-  );
+  const formulaPreview = useMemo(() => {
+    const base = buildFormula(formulaType, rate, fixed, value) as Record<string, unknown>;
+    if (form.multiplier.trim()) {
+      base.multiplier = Number(form.multiplier);
+    }
+    return base;
+  }, [formulaType, rate, fixed, value, form.multiplier]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,6 +90,16 @@ export default function DigestionRulesPage() {
     setLoading(true);
     setError(null);
     try {
+      let whenFactors: unknown[] | undefined;
+      try {
+        const parsed = JSON.parse(form.whenFactors || "[]");
+        if (!Array.isArray(parsed)) throw new Error("whenFactors must be JSON array");
+        whenFactors = parsed.length ? parsed : undefined;
+      } catch (pe) {
+        setError(errMsg(pe));
+        setLoading(false);
+        return;
+      }
       const r = await engine.digestionCreate({
         code: form.code.trim(),
         name: form.name.trim(),
@@ -102,6 +117,7 @@ export default function DigestionRulesPage() {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
+        whenFactors: whenFactors as never,
         isEnabled: true,
       });
       setCreated(r.data);
@@ -180,6 +196,24 @@ export default function DigestionRulesPage() {
                 />
               </label>
             ))}
+            <label className="field">
+              <span className="field-label">whenFactors (JSON array, optional)</span>
+              <textarea
+                className="field-input font-mono text-xs min-h-[80px]"
+                value={form.whenFactors}
+                onChange={(e) => setForm((f) => ({ ...f, whenFactors: e.target.value }))}
+                placeholder='[{"field":"amount","op":"between","value":{"min":100,"max":9999}}]'
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">formula.multiplier (optional)</span>
+              <input
+                className="field-input font-mono"
+                value={form.multiplier}
+                onChange={(e) => setForm((f) => ({ ...f, multiplier: e.target.value }))}
+                placeholder="e.g. 2"
+              />
+            </label>
 
             <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-3">
               <FieldLabel

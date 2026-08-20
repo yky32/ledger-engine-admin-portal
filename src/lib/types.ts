@@ -189,15 +189,21 @@ export type DigestionRule = {
   pointCurrency?: string;
   formula?: FormulaConfig | string | Record<string, unknown>;
   processType?: string | null;
+  whenFactors?: FactorSpec[] | null;
   createDt?: string;
   updateDt?: string;
 };
 
 export type FormulaConfig =
-  | { type: "AMOUNT" }
-  | { type: "RATE"; rate: number | string }
-  | { type: "FIXED"; value: number | string }
-  | { type: "LINEAR"; rate: number | string; fixed: number | string };
+  | { type: "AMOUNT"; multiplier?: number | string }
+  | { type: "RATE"; rate: number | string; multiplier?: number | string }
+  | { type: "FIXED"; value: number | string; multiplier?: number | string }
+  | {
+      type: "LINEAR";
+      rate: number | string;
+      fixed: number | string;
+      multiplier?: number | string;
+    };
 
 export type CreateDigestionRuleBody = {
   code: string;
@@ -213,6 +219,7 @@ export type CreateDigestionRuleBody = {
   pointCurrency?: string;
   formula: FormulaConfig | Record<string, unknown> | string;
   processType?: string;
+  whenFactors?: FactorSpec[];
 };
 
 export type IngestPolicy = {
@@ -224,8 +231,17 @@ export type IngestPolicy = {
   autoWalletAssociatedFrom?: string;
   autoWalletNamePrefix?: string;
   autoWalletCoaProfileCode?: string | null;
+  /** Door entry factors — docs/FACTORS.md */
+  entryFactors?: FactorSpec[] | null;
   createDt?: string;
   updateDt?: string;
+};
+
+/** Shared Door/Brain factor predicate */
+export type FactorSpec = {
+  field: string;
+  op: string;
+  value?: unknown;
 };
 
 export type FailedIngest = {
