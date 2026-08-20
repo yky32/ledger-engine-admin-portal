@@ -145,7 +145,7 @@ export default function CoaPage() {
       <EngineStatusBanner />
       <PageHeader
         title="COA profiles"
-        description="transactionCode (eventType) → this COA. currency = points book. Segments entity/type/sub/buffer."
+        description="code = profile id (= eventType by default). currency = points book. Segments entity/type/sub/buffer."
       />
       <Alert tone="info">
         One row per client. Same segments for settlement + LP books.{" "}
@@ -215,7 +215,7 @@ export default function CoaPage() {
               </label>
               {(
                 [
-                  ["transactionCode", "transactionCode (eventType e.g. CC_TXN_LP)"],
+                  ["transactionCode", "transactionCode (optional; blank = same as code)"],
                   ["entity", "entity"],
                   ["type", "type"],
                   ["subType", "subType"],
