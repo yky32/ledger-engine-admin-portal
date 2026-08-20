@@ -177,8 +177,10 @@ export default function IngestPolicyPage() {
       let entryFactors: IngestPolicy["entryFactors"] = [];
       try {
         const parsed = JSON.parse(entryFactorsText || "[]");
-        if (!Array.isArray(parsed)) throw new Error("entryFactors must be a JSON array");
-        entryFactors = parsed;
+        if (!Array.isArray(parsed) && (typeof parsed !== "object" || parsed === null)) {
+          throw new Error("entryFactors must be a JSON array or FactorSet object");
+        }
+        entryFactors = parsed as IngestPolicy["entryFactors"];
       } catch (pe) {
         setError(errMsg(pe));
         setLoading(false);
@@ -377,7 +379,8 @@ export default function IngestPolicyPage() {
                   placeholder='[{"field":"currency","op":"in","value":["HKD"]}]'
                 />
                 <span className="mt-1 block text-[11px] text-slate-500">
-                  Empty [] = only isEnabled. Ops: eq/in/nin/gt/gte/lt/lte/between. See FACTORS.md
+                  Array = AND all. Or FactorSet object: match any / atLeast / anyGroup.
+                  See engine docs/FACTORS.md
                 </span>
               </label>
 

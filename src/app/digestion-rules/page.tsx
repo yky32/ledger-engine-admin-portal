@@ -8,7 +8,7 @@ import { FieldLabel, ExplainBox } from "@/components/ui/help";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
-import type { DigestionRule } from "@/lib/types";
+import type { CreateDigestionRuleBody, DigestionRule } from "@/lib/types";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR";
@@ -90,11 +90,16 @@ export default function DigestionRulesPage() {
     setLoading(true);
     setError(null);
     try {
-      let whenFactors: unknown[] | undefined;
+      let whenFactors: CreateDigestionRuleBody["whenFactors"];
       try {
         const parsed = JSON.parse(form.whenFactors || "[]");
-        if (!Array.isArray(parsed)) throw new Error("whenFactors must be JSON array");
-        whenFactors = parsed.length ? parsed : undefined;
+        if (!Array.isArray(parsed) && (typeof parsed !== "object" || parsed === null)) {
+          throw new Error("whenFactors must be JSON array or FactorSet object");
+        }
+        whenFactors =
+          Array.isArray(parsed) && parsed.length === 0
+            ? undefined
+            : (parsed as CreateDigestionRuleBody["whenFactors"]);
       } catch (pe) {
         setError(errMsg(pe));
         setLoading(false);
@@ -197,12 +202,12 @@ export default function DigestionRulesPage() {
               </label>
             ))}
             <label className="field">
-              <span className="field-label">whenFactors (JSON array, optional)</span>
+              <span className="field-label">whenFactors (JSON array|FactorSet)</span>
               <textarea
                 className="field-input font-mono text-xs min-h-[80px]"
                 value={form.whenFactors}
                 onChange={(e) => setForm((f) => ({ ...f, whenFactors: e.target.value }))}
-                placeholder='[{"field":"amount","op":"between","value":{"min":100,"max":9999}}]'
+                placeholder='{"match":"anyGroup","groups":[...]} or [{field,op,value}]'
               />
             </label>
             <label className="field">
