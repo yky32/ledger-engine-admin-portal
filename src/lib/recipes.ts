@@ -40,6 +40,9 @@ export const POSTING_RECIPES: RecipeDef[] = [
   { code: "LOAN_DD_HKD", profile: "UA_LOAN", atoms: ["CREDIT_REWARD"], rewardCcy: "HKD" },
   { code: "LOAN_DD_LP", profile: "UA_LOAN", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
   { code: "LOAN_DD_LP_REDEEM", profile: "UA_LOAN", atoms: ["CREDIT_REWARD", "REDEEM"], rewardCcy: "LP" },
+  { code: "LIKE_FB_PAGE", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "FIXED 5 via Brain" },
+  { code: "SOCIAL_LIKE", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
+  { code: "FOLLOW_IG", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
 ];
 
 /** COA quick-create presets (code ≡ eventType) */
@@ -80,6 +83,15 @@ export const COA_PRESETS = [
     buffer: "00",
     currency: "LP",
   },
+  {
+    code: "LIKE_FB_PAGE",
+    name: "Like Facebook page (+5 LP)",
+    entity: "01",
+    type: "20",
+    subType: "00",
+    buffer: "00",
+    currency: "LP",
+  },
 ] as const;
 
 export const WEBHOOK_EVENT_PRESETS = [
@@ -88,4 +100,5 @@ export const WEBHOOK_EVENT_PRESETS = [
   { eventType: "CC_TXN_HKD", label: "CC_TXN_HKD" },
   { eventType: "LOAN_DD_LP", label: "LOAN_DD_LP" },
   { eventType: "CC_TXN_LP_REDEEM", label: "CC_TXN_LP_REDEEM (credit+burn)" },
+  { eventType: "LIKE_FB_PAGE", label: "LIKE_FB_PAGE (+5 LP FIXED, non-financial)" },
 ] as const;
