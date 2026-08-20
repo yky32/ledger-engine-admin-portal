@@ -13,23 +13,25 @@ type CoaRow = {
   id?: number;
   code?: string;
   name?: string;
+  transactionCode?: string | null;
   isDefault?: boolean;
   isEnabled?: boolean;
   entity?: string;
   type?: string;
   subType?: string;
   buffer?: string;
-  lpCurrency?: string;
+  currency?: string;
   poolAllowNegative?: boolean;
 };
 
 const emptyForm = {
   name: "",
+  transactionCode: "",
   entity: "10",
   type: "20",
   subType: "00",
   buffer: "00",
-  lpCurrency: "LP",
+  currency: "LP",
   poolAllowNegative: true,
 };
 
@@ -59,11 +61,12 @@ export default function CoaPage() {
         setSelectedId(pick.id);
         setForm({
           name: pick.name || "",
+          transactionCode: pick.transactionCode || "",
           entity: pick.entity || "10",
           type: pick.type || "20",
           subType: pick.subType || "00",
           buffer: pick.buffer || "00",
-          lpCurrency: pick.lpCurrency || "LP",
+          currency: pick.currency || "LP",
           poolAllowNegative: pick.poolAllowNegative !== false,
         });
       }
@@ -85,11 +88,12 @@ export default function CoaPage() {
     setOk(null);
     setForm({
       name: r.name || "",
+      transactionCode: r.transactionCode || "",
       entity: r.entity || "10",
       type: r.type || "20",
       subType: r.subType || "00",
       buffer: r.buffer || "00",
-      lpCurrency: r.lpCurrency || "LP",
+      currency: r.currency || "LP",
       poolAllowNegative: r.poolAllowNegative !== false,
     });
   };
@@ -141,7 +145,7 @@ export default function CoaPage() {
       <EngineStatusBanner />
       <PageHeader
         title="COA profiles"
-        description="Flat COA table — entity / type / subType / buffer. Optional coaProfileCode on onboard."
+        description="transactionCode (eventType) → this COA. currency = points book. Segments entity/type/sub/buffer."
       />
       <Alert tone="info">
         One row per client. Same segments for settlement + LP books.{" "}
@@ -211,11 +215,12 @@ export default function CoaPage() {
               </label>
               {(
                 [
+                  ["transactionCode", "transactionCode (eventType e.g. CC_TXN_LP)"],
                   ["entity", "entity"],
                   ["type", "type"],
                   ["subType", "subType"],
                   ["buffer", "buffer"],
-                  ["lpCurrency", "lpCurrency"],
+                  ["currency", "currency (points)"],
                 ] as const
               ).map(([k, label]) => (
                 <label key={k} className="field">
