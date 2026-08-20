@@ -15,6 +15,7 @@ export default function WebhookPage() {
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState("HKD");
   const [mcc, setMcc] = useState("");
+  const [coaProfileCode, setCoaProfileCode] = useState("");
   const [occurredAt, setOccurredAt] = useState(nowIso());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +40,27 @@ export default function WebhookPage() {
     metadata: {
       source: "admin-portal",
       ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
+      ...(coaProfileCode.trim()
+        ? { coaProfileCode: coaProfileCode.trim().toUpperCase() }
+        : {}),
     },
   });
+
+  const applyPreset = (kind: "earn" | "burn") => {
+    setEventId(randomEventId());
+    setOccurredAt(nowIso());
+    if (kind === "earn") {
+      setEventType("PURCHASE");
+      setAmount("500");
+      setCurrency("HKD");
+      setMcc("5411");
+    } else {
+      setEventType("REDEEM");
+      setAmount("5");
+      setCurrency("LP");
+      setMcc("");
+    }
+  };
 
   const fire = async (dry: boolean) => {
     setLoading(true);
@@ -69,6 +89,25 @@ export default function WebhookPage() {
         title="Fire webhook"
         description="Live or dry-run. Response includes matchedRuleCode + eligibilityTrace (Trust B)."
       />
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={() => applyPreset("earn")}
+        >
+          Preset · Earn grocery 500 HKD / MCC 5411
+        </button>
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={() => applyPreset("burn")}
+        >
+          Preset · Burn / REDEEM 5 LP
+        </button>
+        <a href="/demo" className="btn-secondary text-xs">
+          Open guided Demo page
+        </a>
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Payload">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -147,6 +186,15 @@ export default function WebhookPage() {
                 placeholder="5411"
               />
             </label>
+            <label className="field">
+              <span className="field-label">coaProfileCode (meta, optional)</span>
+              <input
+                className="field-input font-mono"
+                value={coaProfileCode}
+                onChange={(e) => setCoaProfileCode(e.target.value)}
+                placeholder="e.g. STREAM_A — only on auto-wallet"
+              />
+            </label>
             <label className="field sm:col-span-2">
               <span className="field-label">occurredAt</span>
               <input
@@ -191,7 +239,9 @@ export default function WebhookPage() {
                 <dt className="text-slate-500">matchedRule</dt>
                 <dd className="font-mono text-xs">{result.matchedRuleCode || "—"}</dd>
                 <dt className="text-slate-500">points</dt>
-                <dd className="font-mono">{result.points ?? "—"}</dd>
+                <dd className="text-lg font-bold text-emerald-700">
+                  {result.points ?? "—"}
+                </dd>
                 <dt className="text-slate-500">reason</dt>
                 <dd className="text-xs">{result.reason || "—"}</dd>
               </dl>
