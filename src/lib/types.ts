@@ -163,6 +163,8 @@ export type EligibilityTraceEntry = {
   matched?: boolean;
   failStep?: string | null;
   detail?: string;
+  /** Explain path e.g. ["G12","F1","currency:eq"] */
+  matchedPath?: string[] | null;
 };
 
 export type LedgerLeg = {
@@ -195,15 +197,80 @@ export type DigestionRule = {
 };
 
 export type FormulaConfig =
-  | { type: "AMOUNT"; multiplier?: number | string }
-  | { type: "RATE"; rate: number | string; multiplier?: number | string }
-  | { type: "FIXED"; value: number | string; multiplier?: number | string }
+  | {
+      type: "AMOUNT";
+      multiplier?: number | string;
+      cap?: number | string;
+      floor?: number | string;
+    }
+  | {
+      type: "RATE";
+      rate: number | string;
+      multiplier?: number | string;
+      cap?: number | string;
+      floor?: number | string;
+    }
+  | {
+      type: "FIXED";
+      value: number | string;
+      multiplier?: number | string;
+      cap?: number | string;
+      floor?: number | string;
+    }
   | {
       type: "LINEAR";
       rate: number | string;
       fixed: number | string;
       multiplier?: number | string;
+      cap?: number | string;
+      floor?: number | string;
+    }
+  | {
+      type: "TIERED_RATE";
+      brackets: Array<{ upTo?: number | string | null; rate: number | string }>;
+      multiplier?: number | string;
+      cap?: number | string;
+      floor?: number | string;
+    }
+  | {
+      type: "TABLE";
+      by: string;
+      map: Record<string, FormulaConfig | Record<string, unknown>>;
+      default?: FormulaConfig | Record<string, unknown>;
+      multiplier?: number | string;
+      cap?: number | string;
+      floor?: number | string;
     };
+
+/** Shared Door/Brain factor predicate */
+export type FactorSpec = {
+  field?: string;
+  op?: string;
+  value?: unknown;
+  id?: string;
+};
+
+/** UAF boolean composition — array means AND all leaves */
+export type FactorSet = {
+  match?:
+    | "all"
+    | "any"
+    | "atLeast"
+    | "exactly"
+    | "atMost"
+    | "not"
+    | "oneOf"
+    | "anyGroup"
+    | "allGroups"
+    | string;
+  count?: number;
+  min?: number;
+  id?: string;
+  factors?: Array<FactorSpec | FactorSet>;
+  groups?: Array<FactorSpec | (FactorSet & { id?: string })>;
+  items?: Array<FactorSpec | FactorSet>;
+  rules?: Array<FactorSpec | FactorSet>;
+};
 
 export type CreateDigestionRuleBody = {
   code: string;
@@ -235,24 +302,6 @@ export type IngestPolicy = {
   entryFactors?: FactorSpec[] | FactorSet | null;
   createDt?: string;
   updateDt?: string;
-};
-
-/** Shared Door/Brain factor predicate */
-export type FactorSpec = {
-  field?: string;
-  op?: string;
-  value?: unknown;
-  id?: string;
-};
-
-/** UAF boolean composition — array means AND all leaves */
-export type FactorSet = {
-  match?: "all" | "any" | "atLeast" | "anyGroup" | "allGroups" | string;
-  count?: number;
-  min?: number;
-  factors?: Array<FactorSpec | FactorSet>;
-  groups?: Array<FactorSpec | (FactorSet & { id?: string })>;
-  items?: Array<FactorSpec | FactorSet>;
 };
 
 export type FailedIngest = {
