@@ -56,6 +56,10 @@ export default function MovementsPage() {
       <PageHeader
         title="4 · Audit — Movements"
         description="Prefer GET /wallets/{ownerId}/movements. GET /movements requires walletId query."
+        api={[
+          { method: "GET", path: "/wallets/{ownerId}/movements" },
+          { method: "GET", path: "/movements?walletId=" },
+        ]}
       />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="By ownerId (recommended)">

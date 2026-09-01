@@ -26,6 +26,10 @@ export default function HealthPage() {
       <PageHeader
         title="Engine health"
         description="Best-effort /actuator/health or /dashboards via rewrite."
+        api={[
+          { method: "GET", path: "/actuator/health" },
+          { method: "GET", path: "/dashboards" },
+        ]}
       />
       <EngineStatusBanner />
       {error ? <Alert tone="error">{error}</Alert> : null}

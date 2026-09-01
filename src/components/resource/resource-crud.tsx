@@ -263,6 +263,13 @@ export function ResourceCrud(props: Props) {
       <PageHeader
         title={title}
         description={description}
+        api={[
+          { method: "GET", path: listPath },
+          ...(createPath ? [{ method: createMethod, path: createPath }] : []),
+          ...(updatePathTemplate
+            ? [{ method: updateMethod, path: updatePathTemplate }]
+            : []),
+        ]}
         actions={
           <>
             <Button variant="secondary" onClick={() => void load()} disabled={loading}>

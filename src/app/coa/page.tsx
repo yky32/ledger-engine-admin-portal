@@ -160,8 +160,13 @@ export default function CoaPage() {
       <FlowStrip active="ops" />
       <EngineStatusBanner />
       <PageHeader
-        title="COA profiles"
-        description="code ≡ eventType by default. Upstream event maps here → books segments + currency."
+        title="1 · Brain — COA"
+        description="Brain books map — code ≡ eventType. Upstream event maps here → segments + currency."
+        api={[
+          { method: "GET", path: "/coa-profiles" },
+          { method: "POST", path: "/coa-profiles" },
+          { method: "PUT", path: "/coa-profiles/{id}" },
+        ]}
       />
       <Alert tone="info">
         <strong>code = transactionCode = webhook eventType</strong> unless you override. See{" "}

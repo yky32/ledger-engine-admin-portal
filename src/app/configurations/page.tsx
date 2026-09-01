@@ -50,6 +50,10 @@ export default function ConfigurationsPage() {
       <PageHeader
         title="System configuration"
         description="JSONB value — e.g. name user-register.otp. GET/PUT /configurations"
+        api={[
+          { method: "GET", path: "/configurations" },
+          { method: "PUT", path: "/configurations" },
+        ]}
       />
       <EngineStatusBanner />
       <div className="grid gap-4 lg:grid-cols-2">

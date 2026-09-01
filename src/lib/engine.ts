@@ -47,6 +47,9 @@ export const engine = {
   },
 
   /* ─── Product wallets (/wallets) ─── */
+  /** GET /wallets — active wallets (no nested accounts). */
+  listWallets: () => ledger.get<WalletView[]>("/wallets"),
+
   /** GET /wallets/{ownerId} */
   getWallet: (ownerId: string) =>
     ledger.get<WalletView>(`/wallets/${encodeURIComponent(ownerId)}`),
@@ -95,7 +98,7 @@ export const engine = {
   /* ─── Ingest / loyalty ─── */
   /**
    * POST /integrations/webhooks/transactions
-   * Body: TransactionalEvent (ownerId, eventId, eventType, amount, currency, occurredAt?, metadata?)
+   * Body: TransactionalEvent (ownerId, eventId, eventType, amount, currency, occurredAt?, metadata?, mainAccount?)
    */
   webhookTxn: (body: TransactionalEventBody | Record<string, unknown>) => {
     const b = { ...body } as Record<string, unknown>;
@@ -188,7 +191,7 @@ export const engine = {
   digestionDisable: (id: string | number) =>
     ledger.post<DigestionRule>(`/digestion-rules/${id}/disable`),
 
-  /* ─── COA profiles (1 table) ─── */
+  /* ─── Brain: COA profiles (books map) ─── */
   coaProfiles: () => ledger.get("/coa-profiles"),
   coaProfileDefault: () => ledger.get("/coa-profiles/default"),
   coaProfileGet: (id: string | number) => ledger.get(`/coa-profiles/${id}`),

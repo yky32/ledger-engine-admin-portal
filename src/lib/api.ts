@@ -75,6 +75,44 @@ function messageFromBody(body: unknown, fallback: string): { message: string; co
   }
 }
 
+export type ApiCall = {
+  id: number;
+  method: string;
+  /** Engine path (no /api/ledger prefix), including query string. */
+  path: string;
+  status: number | null;
+  ms: number | null;
+  at: number;
+};
+
+const API_LOG_MAX = 24;
+const apiCalls: ApiCall[] = [];
+const apiCallListeners = new Set<(calls: ApiCall[]) => void>();
+let apiCallSeq = 0;
+
+function enginePath(path: string): string {
+  let p = path.startsWith("/api/ledger") ? path.slice("/api/ledger".length) : path;
+  if (!p.startsWith("/")) p = `/${p}`;
+  return p;
+}
+
+function notifyApiCalls() {
+  const snap = apiCalls.slice();
+  apiCallListeners.forEach((fn) => fn(snap));
+}
+
+export function subscribeApiCalls(fn: (calls: ApiCall[]) => void): () => void {
+  apiCallListeners.add(fn);
+  fn(apiCalls.slice());
+  return () => {
+    apiCallListeners.delete(fn);
+  };
+}
+
+export function formatApiCall(call: Pick<ApiCall, "method" | "path">): string {
+  return `${call.method} ${call.path}`;
+}
+
 export async function apiRaw(
   path: string,
   init?: RequestInit & { json?: unknown },
@@ -82,6 +120,19 @@ export async function apiRaw(
   const url = path.startsWith("/api/ledger")
     ? path
     : `/api/ledger${path.startsWith("/") ? path : `/${path}`}`;
+  const method = (init?.method || "GET").toUpperCase();
+  const call: ApiCall = {
+    id: ++apiCallSeq,
+    method,
+    path: enginePath(path),
+    status: null,
+    ms: null,
+    at: Date.now(),
+  };
+  apiCalls.unshift(call);
+  if (apiCalls.length > API_LOG_MAX) apiCalls.pop();
+  notifyApiCalls();
+  const t0 = performance.now();
 
   const headers = new Headers(init?.headers);
   let body = init?.body;
@@ -95,6 +146,9 @@ export async function apiRaw(
   try {
     res = await fetch(url, { ...init, headers, body, cache: "no-store" });
   } catch (e) {
+    call.status = 0;
+    call.ms = Math.round(performance.now() - t0);
+    notifyApiCalls();
     const msg =
       e instanceof Error
         ? `Engine unreachable (${e.message}). Start ledger-engine on LEDGER_ENGINE_URL.`
@@ -103,6 +157,9 @@ export async function apiRaw(
   }
 
   const parsed = await parseBody(res);
+  call.status = res.status;
+  call.ms = Math.round(performance.now() - t0);
+  notifyApiCalls();
   return { status: res.status, body: parsed };
 }
 

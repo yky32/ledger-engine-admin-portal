@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader, Card, Badge, JsonBlock, Alert, Empty } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
-import { errMsg, nowIso, randomEventId, randomOwnerId, clsx, isConflictError } from "@/lib/format";
+import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount, clsx, isConflictError } from "@/lib/format";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { ExplainBox } from "@/components/ui/help";
 import { Plus, Copy, Trash2, Users } from "lucide-react";
@@ -73,6 +73,10 @@ type SimCustomer = {
   enabled: boolean;
   label: string;
   ownerId: string;
+  /** Optional UAF main-account 9089… / 9088…; blank → engine generates */
+  mainAccount: string;
+  /** Extra metadata keys merged into every webhook (JSON object of strings) */
+  extraMetaJson: string;
   displayName: string;
   settlement: string;
   vanityCode: string;
@@ -334,6 +338,8 @@ function newCustomer(n: number, preset: PresetKey = "smoke"): SimCustomer {
     enabled: true,
     label: `Customer ${n}`,
     ownerId: oid,
+    mainAccount: randomMainAccount(n % 2 === 0 ? "9089" : "9088"),
+    extraMetaJson: '{\n  "channel": "UAF_CC",\n  "posId": "SIM"\n}',
     displayName: `Sim C${n}`,
     settlement: "HKD",
     vanityCode: "",
@@ -358,6 +364,8 @@ function cloneCustomer(c: SimCustomer, n: number): SimCustomer {
     id: `cust-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     label: `${c.label} copy`,
     ownerId: randomOwnerId(),
+    mainAccount: randomMainAccount("9089"),
+    extraMetaJson: c.extraMetaJson || '{\n  "channel": "UAF_CC"\n}',
     displayName: `Sim C${n}`,
     caseOverrides: {},
   };
@@ -586,6 +594,7 @@ export default function SimulatorPage() {
               name: c.displayName,
               vanityCode: c.vanityCode.trim() || undefined,
               coaProfileCode: c.coaProfileCode.trim() || undefined,
+              mainAccount: c.mainAccount.trim() || undefined,
               accounts: c.extraLp ? [{ currency: "LP" }] : undefined,
             }),
           );
@@ -612,6 +621,18 @@ export default function SimulatorPage() {
           const eventId = randomEventId(
             `${c.label.slice(0, 4)}-${wc.eventType.slice(0, 3)}-${wc.currency}-${wc.amount}`,
           );
+          let extraMeta: Record<string, string> = {};
+          try {
+            const v = JSON.parse(c.extraMetaJson || "{}") as unknown;
+            if (v && typeof v === "object" && !Array.isArray(v)) {
+              for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+                if (val == null) continue;
+                extraMeta[k] = String(val);
+              }
+            }
+          } catch {
+            extraMeta = {};
+          }
           const body: Record<string, unknown> = {
             eventId,
             ownerId: oid,
@@ -620,14 +641,16 @@ export default function SimulatorPage() {
             currency: wc.currency,
             occurredAt: occurredAtForAge(wc.ageDays),
             metadata: {
-              source: "ledgerx-simulator-multi",
+              source: "uaf-sdk",
               customerLabel: c.label,
               tag: wc.tag,
               caseId: wc.id,
               ageDays: String(wc.ageDays),
               ...(wc.mcc ? { mcc: wc.mcc } : {}),
+              ...extraMeta,
             },
           };
+          if (c.mainAccount?.trim()) body.mainAccount = c.mainAccount.trim();
           if (!firstBody) firstBody = body;
 
           const t = await timed(() => engine.webhookTxn(body));
@@ -804,7 +827,12 @@ export default function SimulatorPage() {
       </div>
       <PageHeader
         title="Txn simulator"
-        description="Multi-customer upstream · each customer has its own transaction matrix (eventType × ccy × amount × age × repeats)."
+        description="SDK webhook per customer: ownerId (01A…) · optional mainAccount (9089/9088) · metadata hashmap."
+        api={[
+          { method: "POST", path: "/integrations/webhooks/transactions" },
+          { method: "GET", path: "/ingest-policies" },
+          { method: "GET", path: "/wallets/{ownerId}" },
+        ]}
         actions={
           <Link href="/review" className="btn-secondary text-xs">
             Customer review →
@@ -980,7 +1008,7 @@ export default function SimulatorPage() {
                     />
                   </label>
                   <label className="field sm:col-span-2">
-                    <span className="field-label">ownerId</span>
+                    <span className="field-label">ownerId (01A…)</span>
                     <div className="flex gap-2">
                       <input
                         className="field-input font-mono text-xs"
@@ -995,6 +1023,39 @@ export default function SimulatorPage() {
                         regen
                       </button>
                     </div>
+                  </label>
+                  <label className="field sm:col-span-2">
+                    <span className="field-label">mainAccount (9089… / 9088…, optional)</span>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        className="field-input font-mono text-xs"
+                        value={active.mainAccount ?? ""}
+                        onChange={(e) => updateActive({ mainAccount: e.target.value })}
+                        placeholder="blank → engine generates"
+                      />
+                      <button
+                        type="button"
+                        className="btn-secondary text-xs"
+                        onClick={() => updateActive({ mainAccount: randomMainAccount("9089") })}
+                      >
+                        9089…
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary text-xs"
+                        onClick={() => updateActive({ mainAccount: randomMainAccount("9088") })}
+                      >
+                        9088…
+                      </button>
+                    </div>
+                  </label>
+                  <label className="field sm:col-span-2">
+                    <span className="field-label">metadata (client hashmap JSON)</span>
+                    <textarea
+                      className="field-input min-h-[72px] font-mono text-[11px]"
+                      value={active.extraMetaJson ?? ""}
+                      onChange={(e) => updateActive({ extraMetaJson: e.target.value })}
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">settlement</span>

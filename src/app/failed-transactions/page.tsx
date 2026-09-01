@@ -68,6 +68,10 @@ export default function FailedPage() {
       <PageHeader
         title="Failed ingest"
         description="GET/POST /integrations/failed-transactions — review ack or replay pipeline."
+        api={[
+          { method: "GET", path: "/integrations/failed-transactions" },
+          { method: "POST", path: "/integrations/failed-transactions/{id}/replay" },
+        ]}
       />
 
       <Card className="mb-4">

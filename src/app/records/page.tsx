@@ -40,6 +40,7 @@ export default function DbRecordsPage() {
 
   const [door, setDoor] = useState<IngestPolicy | null>(null);
   const [brain, setBrain] = useState<DigestionRule[]>([]);
+  const [coa, setCoa] = useState<Record<string, unknown>[]>([]);
   const [failed, setFailed] = useState<FailedIngest[]>([]);
   const [ledgerWallets, setLedgerWallets] = useState<unknown[]>([]);
   const [ownerInput, setOwnerInput] = useState("");
@@ -58,23 +59,26 @@ export default function DbRecordsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [d, b, f, lw] = await Promise.all([
+      const [d, b, c, f, lw] = await Promise.all([
         engine.ingestPolicyGet().catch((e) => {
           throw e;
         }),
         engine.digestionRules(),
+        engine.coaProfiles().catch(() => ({ data: [] as unknown[] })),
         engine.failedList({ page: 1, size: 100 }).catch(() => ({ data: [] as FailedIngest[] })),
         engine.ledgerWalletsList(1, 100).catch(() => ({ data: [] as unknown[] })),
       ]);
       setDoor((d.data as IngestPolicy) ?? null);
       const br = b.data;
       setBrain(Array.isArray(br) ? br : br ? [br] : []);
+      setCoa(Array.isArray(c.data) ? (c.data as Record<string, unknown>[]) : []);
       setFailed(Array.isArray(f.data) ? f.data : []);
       setLedgerWallets(Array.isArray(lw.data) ? lw.data : []);
       setLoadedAt(new Date().toISOString());
       setRawDump({
         door: d.data,
         brain: b.data,
+        coa: c.data,
         failedCount: Array.isArray(f.data) ? f.data.length : 0,
         ledgerWalletsCount: Array.isArray(lw.data) ? lw.data.length : 0,
       });
@@ -138,13 +142,13 @@ export default function DbRecordsPage() {
   const tabs: { id: Tab; label: string; count?: number }[] = useMemo(
     () => [
       { id: "door", label: "Door (ingest_policies)" },
-      { id: "brain", label: "Brain (digestion_rule)", count: brain.length },
+      { id: "brain", label: "Brain (rules + COA)", count: brain.length + coa.length },
       { id: "wallets", label: "Wallets by ownerId", count: ownerIds.length },
       { id: "movements", label: "Movements", count: Object.values(movementsByOwner).reduce((n, a) => n + a.length, 0) },
       { id: "failed", label: "Fail queue", count: failed.length },
       { id: "ledger-wallets", label: "ledger_wallets list", count: ledgerWallets.length },
     ],
-    [brain.length, ownerIds.length, movementsByOwner, failed.length, ledgerWallets.length],
+    [brain.length, coa.length, ownerIds.length, movementsByOwner, failed.length, ledgerWallets.length],
   );
 
   return (
@@ -154,6 +158,13 @@ export default function DbRecordsPage() {
       <PageHeader
         title="DB records"
         description="Reload from engine APIs — shows what is persisted (not local form state)."
+        api={[
+          { method: "GET", path: "/ingest-policies" },
+          { method: "GET", path: "/digestion-rules" },
+          { method: "GET", path: "/coa-profiles" },
+          { method: "GET", path: "/wallets/{ownerId}" },
+          { method: "GET", path: "/integrations/failed-transactions" },
+        ]}
         actions={
           <ActionBar loading={loading} error={error}>
             <button
@@ -282,69 +293,121 @@ export default function DbRecordsPage() {
       )}
 
       {tab === "brain" && (
-        <Card
-          title={`digestion_rule (${brain.length}) — GET /digestion-rules`}
-          right={
-            <Link href="/digestion-rules" className="text-xs text-emerald-700 hover:underline">
-              Edit Brain →
-            </Link>
-          }
-        >
-          {brain.length === 0 ? (
-            <Empty>No rules in DB</Empty>
-          ) : (
-            <div className="table-wrap max-h-[480px] overflow-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>id</th>
-                    <th>code</th>
-                    <th>event</th>
-                    <th>op</th>
-                    <th>pri</th>
-                    <th>ccy</th>
-                    <th>mcc</th>
-                    <th>formula</th>
-                    <th>on</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {brain.map((r) => (
-                    <tr key={r.id ?? r.code}>
-                      <td className="font-mono text-[10px]">{r.id != null ? shortId(String(r.id), 8) : "—"}</td>
-                      <td className="font-mono text-xs font-medium">{r.code}</td>
-                      <td>{r.eventType}</td>
-                      <td>{r.operation}</td>
-                      <td>{r.priority}</td>
-                      <td className="font-mono text-[10px]">
-                        {r.eligibleCurrencies?.length ? r.eligibleCurrencies.join(",") : "any"}
-                      </td>
-                      <td className="font-mono text-[10px]">
-                        {r.eligibleMccs?.length ? r.eligibleMccs.join(",") : "any"}
-                      </td>
-                      <td className="max-w-[140px] truncate font-mono text-[10px]" title={JSON.stringify(r.formula)}>
-                        {typeof r.formula === "object" && r.formula && "type" in r.formula
-                          ? String((r.formula as { type: string }).type)
-                          : JSON.stringify(r.formula)}
-                      </td>
-                      <td>
-                        <Badge tone={r.isEnabled ? "ok" : "neutral"}>{r.isEnabled ? "on" : "off"}</Badge>
-                      </td>
+        <div className="space-y-4">
+          <Card
+            title={`Brain · digestion_rule (${brain.length}) — GET /digestion-rules`}
+            right={
+              <Link href="/digestion-rules" className="text-xs text-emerald-700 hover:underline">
+                Edit rules →
+              </Link>
+            }
+          >
+            {brain.length === 0 ? (
+              <Empty>No rules in DB</Empty>
+            ) : (
+              <div className="table-wrap max-h-[480px] overflow-auto">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>id</th>
+                      <th>code</th>
+                      <th>event</th>
+                      <th>op</th>
+                      <th>pri</th>
+                      <th>ccy</th>
+                      <th>mcc</th>
+                      <th>formula</th>
+                      <th>on</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {brain[0] ? (
-            <details className="mt-3">
-              <summary className="cursor-pointer text-xs text-slate-500">Full JSON (all rules)</summary>
-              <div className="mt-2">
-                <JsonBlock value={brain} maxHeight={280} />
+                  </thead>
+                  <tbody>
+                    {brain.map((r) => (
+                      <tr key={r.id ?? r.code}>
+                        <td className="font-mono text-[10px]">{r.id != null ? shortId(String(r.id), 8) : "—"}</td>
+                        <td className="font-mono text-xs font-medium">{r.code}</td>
+                        <td>{r.eventType}</td>
+                        <td>{r.operation}</td>
+                        <td>{r.priority}</td>
+                        <td className="font-mono text-[10px]">
+                          {r.eligibleCurrencies?.length ? r.eligibleCurrencies.join(",") : "any"}
+                        </td>
+                        <td className="font-mono text-[10px]">
+                          {r.eligibleMccs?.length ? r.eligibleMccs.join(",") : "any"}
+                        </td>
+                        <td className="max-w-[140px] truncate font-mono text-[10px]" title={JSON.stringify(r.formula)}>
+                          {typeof r.formula === "object" && r.formula && "type" in r.formula
+                            ? String((r.formula as { type: string }).type)
+                            : JSON.stringify(r.formula)}
+                        </td>
+                        <td>
+                          <Badge tone={r.isEnabled ? "ok" : "neutral"}>{r.isEnabled ? "on" : "off"}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </details>
-          ) : null}
-        </Card>
+            )}
+            {brain[0] ? (
+              <details className="mt-3">
+                <summary className="cursor-pointer text-xs text-slate-500">Full JSON (all rules)</summary>
+                <div className="mt-2">
+                  <JsonBlock value={brain} maxHeight={280} />
+                </div>
+              </details>
+            ) : null}
+          </Card>
+
+          <Card
+            title={`Brain · coa_profile (${coa.length}) — GET /coa-profiles`}
+            right={
+              <Link href="/coa-list" className="text-xs text-emerald-700 hover:underline">
+                COA list →
+              </Link>
+            }
+          >
+            {coa.length === 0 ? (
+              <Empty>No COA profiles in DB</Empty>
+            ) : (
+              <div className="table-wrap max-h-[480px] overflow-auto">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>id</th>
+                      <th>code</th>
+                      <th>txn</th>
+                      <th>ccy</th>
+                      <th>entity</th>
+                      <th>type</th>
+                      <th>default</th>
+                      <th>on</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coa.map((r, i) => (
+                      <tr key={String(r.id ?? r.code ?? i)}>
+                        <td className="font-mono text-[10px]">{r.id != null ? String(r.id) : "—"}</td>
+                        <td className="font-mono text-xs font-medium">{String(r.code ?? "—")}</td>
+                        <td className="font-mono text-[10px]">
+                          {String(r.transactionCode || r.code || "—")}
+                        </td>
+                        <td>{String(r.currency ?? "—")}</td>
+                        <td className="font-mono text-[10px]">{String(r.entity ?? "—")}</td>
+                        <td className="font-mono text-[10px]">{String(r.type ?? "—")}</td>
+                        <td>{r.isDefault ? <Badge tone="ok">yes</Badge> : "—"}</td>
+                        <td>
+                          <Badge tone={r.isEnabled ? "ok" : "neutral"}>
+                            {r.isEnabled ? "on" : "off"}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
       {tab === "wallets" && (
@@ -381,8 +444,6 @@ export default function DbRecordsPage() {
                         <dd>{w.status}</dd>
                         <dt className="text-slate-500">settlement</dt>
                         <dd>{w.settlementCurrency}</dd>
-                        <dt className="text-slate-500">COA profile</dt>
-                        <dd className="font-mono text-xs">{w.coaProfileCode || "DEFAULT"}</dd>
                         <dt className="text-slate-500">vanity</dt>
                         <dd className="font-mono text-xs">{w.vanityCode || "—"}</dd>
                       </dl>

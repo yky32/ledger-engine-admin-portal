@@ -46,6 +46,12 @@ export function randomOwnerId(): string {
   return `01A${n}`;
 }
 
+/** UAF-style main account: 9089… or 9088… */
+export function randomMainAccount(prefix: "9089" | "9088" = "9089"): string {
+  const n = Math.floor(10_000_000 + Math.random() * 89_999_999);
+  return `${prefix}${n}`;
+}
+
 export function randomEventId(prefix = "evt"): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }

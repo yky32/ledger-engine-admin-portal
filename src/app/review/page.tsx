@@ -79,6 +79,11 @@ export default function ReviewPage() {
       <PageHeader
         title="Customer review"
         description="Lookup by ownerId — wallet books, movements, as-of balances, failed ingest, DE legs."
+        api={[
+          { method: "GET", path: "/wallets/{ownerId}" },
+          { method: "GET", path: "/wallets/{ownerId}/movements" },
+          { method: "GET", path: "/integrations/ledger-entries" },
+        ]}
         actions={
           <Link href="/simulator" className="btn-secondary text-xs">
             Open simulator
@@ -118,8 +123,6 @@ export default function ReviewPage() {
               </dd>
               <dt className="text-slate-500">settlement</dt>
               <dd>{wallet.settlementCurrency || "—"}</dd>
-              <dt className="text-slate-500">COA profile</dt>
-              <dd className="font-mono text-xs">{wallet.coaProfileCode || "DEFAULT"}</dd>
               <dt className="text-slate-500">type / walletType</dt>
               <dd>
                 {wallet.type || "—"} · {wallet.walletType || "—"}

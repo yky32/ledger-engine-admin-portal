@@ -52,7 +52,8 @@ export default function HomePage() {
     <div>
       <PageHeader
         title="End-to-end business picture"
-        description="LedgeRX — Door → Brain → COA/recipe → books. Demo: grocery 500 HKD → 5 LP · or CC_TXN_LP."
+        description="LedgeRX — Door → Brain (rules + COA) → books. Demo: grocery 500 HKD → 5 LP · or CC_TXN_LP."
+        api={[{ method: "GET", path: "/actuator/health" }]}
         actions={
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Link href="/demo" className="btn-primary text-xs">
@@ -111,13 +112,13 @@ export default function HomePage() {
               <li>
                 <Link className="flow-link" href="/digestion-rules">
                   <Brain className="h-3.5 w-3.5" />
-                  Digestion rules <span className="text-slate-400">(brain)</span>
+                  Brain · digestion rules
                 </Link>
               </li>
               <li>
                 <Link className="flow-link" href="/coa">
                   <BookOpen className="h-3.5 w-3.5" />
-                  COA profiles <span className="text-slate-400">(code ≡ eventType)</span>
+                  Brain · COA <span className="text-slate-400">(code ≡ eventType)</span>
                 </Link>
               </li>
               <li>
@@ -196,9 +197,9 @@ export default function HomePage() {
               <EngineStep
                 n="2"
                 icon={Brain}
-                title="Brain — match rule + score points"
+                title="Brain — match rule, score, map COA books"
                 href="/digestion-rules"
-                note="Digestion rules"
+                note="Digestion rules + COA"
               />
               <EngineStep
                 n="3"
@@ -267,18 +268,26 @@ export default function HomePage() {
             Open door config
           </Link>
         </Card>
-        <Card title="Digestion rules = Brain">
+        <Card title="Brain = digestion rules + COA">
           <p className="text-sm text-slate-600">
-            Business question: <em>“Which events earn/burn, and how many points?”</em>
+            Business question: <em>“Which events earn/burn, how many points, which books?”</em>
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
-            <li>Many rules by eventType / priority</li>
-            <li>Formula e.g. RATE:0.01 · FIXED:100 · AMOUNT</li>
-            <li>API <code>/digestion-rules</code></li>
+            <li>Rules by eventType / priority · formula RATE / FIXED / AMOUNT</li>
+            <li>COA maps that eventType → numeric books + currency</li>
+            <li>API <code>/digestion-rules</code> + <code>/coa-profiles</code></li>
           </ul>
-          <Link href="/digestion-rules" className="btn-secondary mt-3 text-xs">
-            Open brain config
-          </Link>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/digestion-rules" className="btn-secondary text-xs">
+              Digestion rules
+            </Link>
+            <Link href="/coa" className="btn-secondary text-xs">
+              COA
+            </Link>
+            <Link href="/coa-list" className="btn-secondary text-xs">
+              COA list
+            </Link>
+          </div>
         </Card>
       </div>
 

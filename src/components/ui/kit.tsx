@@ -1,23 +1,36 @@
+"use client";
+
 import { clsx } from "@/lib/format";
+import { PageApiPaths } from "@/components/layout/page-api-paths";
+import type { ApiRef } from "@/components/ui/api-path";
+
+export type { ApiRef };
+export { ApiPath } from "@/components/ui/api-path";
 
 export function PageHeader({
   title,
   description,
   actions,
+  api,
 }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  /** Declared engine paths for this page (shown until live calls exist). */
+  api?: ApiRef[];
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
-        {description ? (
-          <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>
-        ) : null}
+    <div className="mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
+          {description ? (
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>
+          ) : null}
+        </div>
+        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      <PageApiPaths fallback={api} />
     </div>
   );
 }

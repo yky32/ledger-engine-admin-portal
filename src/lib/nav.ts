@@ -17,6 +17,7 @@ import {
   Database,
   BookOpen,
   Sparkles,
+  Table2,
 } from "lucide-react";
 
 /**
@@ -69,6 +70,21 @@ export const NAV: NavItem[] = [
   },
 
   {
+    href: "/coa-list",
+    label: "Brain · COA",
+    icon: Table2,
+    group: "Query",
+    blurb: "GET /coa-profiles table",
+  },
+  {
+    href: "/wallets-list",
+    label: "Wallets",
+    icon: Wallet,
+    group: "Query",
+    blurb: "GET /wallets table",
+  },
+
+  {
     href: "/ingest-policies",
     label: "1 · Door — Ingest policy",
     icon: DoorOpen,
@@ -86,7 +102,7 @@ export const NAV: NavItem[] = [
   },
   {
     href: "/coa",
-    label: "1 · COA profiles",
+    label: "1 · Brain — COA",
     icon: BookOpen,
     group: "① Ops configures",
     blurb: "code ≡ eventType → books",
@@ -97,7 +113,7 @@ export const NAV: NavItem[] = [
     label: "Wallet onboard (CRM)",
     icon: Wallet,
     group: "① Ops configures",
-    blurb: "1 ownerId → 1 wallet · coaProfileCode",
+    blurb: "1 ownerId → 1 wallet",
     step: "ops",
   },
 
@@ -194,6 +210,7 @@ export function navGroups(): { name: string; items: NavItem[] }[] {
   }
   const order = [
     "Overview",
+    "Query",
     "① Ops configures",
     "② Upstream shoot",
     "③ Engine outcomes",

@@ -63,6 +63,10 @@ export default function WalletsPage() {
       <PageHeader
         title="Wallet onboard (CRM path)"
         description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode selects COA profile."
+        api={[
+          { method: "POST", path: "/wallets" },
+          { method: "GET", path: "/wallets/{ownerId}" },
+        ]}
       />
       <div className="mb-4 grid gap-3 lg:grid-cols-2">
         <ExplainBox title="When to use explicit onboard" tone="ops">

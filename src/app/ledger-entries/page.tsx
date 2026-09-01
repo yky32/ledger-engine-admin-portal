@@ -38,6 +38,7 @@ export default function LegsPage() {
       <PageHeader
         title="Ledger legs"
         description="GET /integrations/ledger-entries?eventId= | movementId="
+        api={[{ method: "GET", path: "/integrations/ledger-entries" }]}
       />
       <Card className="mb-4">
         <div className="flex flex-wrap items-end gap-3">

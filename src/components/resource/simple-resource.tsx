@@ -82,7 +82,14 @@ export default function SimpleResourcePage({
   return (
     <div>
       {showFlow ? <FlowStrip active={showFlow} /> : null}
-      <PageHeader title={title} description={description} />
+      <PageHeader
+        title={title}
+        description={description}
+        api={[
+          { method: "GET", path: listPath },
+          ...(createPath ? [{ method: "POST" as const, path: createPath }] : []),
+        ]}
+      />
       <EngineStatusBanner />
       <div className="grid gap-4 lg:grid-cols-2">
         {createPath ? (

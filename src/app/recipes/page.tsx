@@ -18,11 +18,12 @@ export default function RecipesPage() {
       <PageHeader
         title="Posting recipes"
         description="eventType → atoms → ApplyPostingUseCase. Mirrors engine PostingRecipeCatalog (read-only)."
+        api={[{ method: "GET", path: "/integrations/use-cases" }]}
       />
       <Alert tone="info">
-        Bind COA with the <strong>same code</strong> on{" "}
+        Bind Brain COA with the <strong>same code</strong> on{" "}
         <Link href="/coa" className="underline">
-          COA profiles
+          Brain · COA
         </Link>
         . Shoot via{" "}
         <Link href="/transactions-ingest" className="underline">

@@ -202,6 +202,10 @@ export default function IngestPolicyPage() {
       <PageHeader
         title="1 · Door — Ingest policy"
         description="Webhook admission + lazy wallet + entryFactors (FactorSet). Not scoring. GET/PUT /ingest-policies"
+        api={[
+          { method: "GET", path: "/ingest-policies" },
+          { method: "PUT", path: "/ingest-policies" },
+        ]}
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-3">

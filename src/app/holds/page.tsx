@@ -44,6 +44,10 @@ export default function HoldsPage() {
       <PageHeader
         title="Hold / Release LP"
         description="Locks spendable (available) balance only — ledger/total balance unchanged. POST /wallets/holds · /releases"
+        api={[
+          { method: "POST", path: "/wallets/holds" },
+          { method: "POST", path: "/wallets/releases" },
+        ]}
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-2">

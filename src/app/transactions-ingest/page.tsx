@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader, Card, JsonBlock, Badge } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
-import { errMsg, nowIso, randomEventId, randomOwnerId } from "@/lib/format";
+import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount } from "@/lib/format";
 import { formatMatchedPath } from "@/lib/factors";
 import { WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
+const DEMO_OWNER = "01A81267065";
+
 export default function WebhookPage() {
-  const [ownerId, setOwnerId] = useState("");
+  const [ownerId, setOwnerId] = useState(DEMO_OWNER);
   const [eventId, setEventId] = useState(randomEventId());
   const [eventType, setEventType] = useState("PURCHASE");
   const [amount, setAmount] = useState("100");
@@ -19,6 +21,10 @@ export default function WebhookPage() {
   const [mcc, setMcc] = useState("");
   const [coaProfileCode, setCoaProfileCode] = useState("");
   const [occurredAt, setOccurredAt] = useState(nowIso());
+  const [mainAccount, setMainAccount] = useState(() => randomMainAccount("9089"));
+  const [extraMetaJson, setExtraMetaJson] = useState(
+    '{\n  "channel": "UAF_CC",\n  "posId": "HKG-001"\n}',
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IngestResult | null>(null);
@@ -26,28 +32,84 @@ export default function WebhookPage() {
   useEffect(() => {
     try {
       const s = sessionStorage.getItem("review.ownerId");
-      if (s) setOwnerId(s);
+      if (s && s.startsWith("01A")) setOwnerId(s);
     } catch {
       /* */
     }
   }, []);
 
-  const body = () => ({
-    eventId: eventId.trim(),
-    ownerId: ownerId.trim(),
+  const extraMeta = useMemo(() => {
+    try {
+      const v = JSON.parse(extraMetaJson || "{}") as unknown;
+      if (v && typeof v === "object" && !Array.isArray(v)) {
+        const out: Record<string, string> = {};
+        for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+          if (val == null) continue;
+          out[k] = String(val);
+        }
+        return out;
+      }
+    } catch {
+      /* */
+    }
+    return {} as Record<string, string>;
+  }, [extraMetaJson]);
+
+  const payload = useMemo(() => {
+    const body: Record<string, unknown> = {
+      eventId: eventId.trim(),
+      ownerId: ownerId.trim(),
+      eventType,
+      amount: Number(amount),
+      currency,
+      occurredAt,
+      metadata: {
+        source: "uaf-sdk",
+        useCase: eventType,
+        ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
+        ...(coaProfileCode.trim()
+          ? { coaProfileCode: coaProfileCode.trim().toUpperCase() }
+          : {}),
+        ...extraMeta,
+      },
+    };
+    const main = mainAccount.trim();
+    if (main) body.mainAccount = main;
+    return body;
+  }, [
+    eventId,
+    ownerId,
     eventType,
-    amount: Number(amount),
+    amount,
     currency,
     occurredAt,
-    metadata: {
-      source: "admin-portal",
-      useCase: eventType,
-      ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
-      ...(coaProfileCode.trim()
-        ? { coaProfileCode: coaProfileCode.trim().toUpperCase() }
-        : {}),
-    },
-  });
+    mcc,
+    coaProfileCode,
+    extraMeta,
+    mainAccount,
+  ]);
+
+  const sdkJava = useMemo(() => {
+    const meta = (payload.metadata as Record<string, string>) || {};
+    const metaEntries = Object.entries(meta)
+      .map(([k, v]) => `            "${k}", "${v}"`)
+      .join(",\n");
+    const mainLine = mainAccount.trim()
+      ? `\n    .mainAccount("${mainAccount.trim()}")`
+      : "";
+    return `TransactionalEvent event = TransactionalEvent.builder()
+    .eventId("${eventId.trim()}")
+    .ownerId("${ownerId.trim()}")${mainLine}
+    .eventType("${eventType}")
+    .amount(new BigDecimal("${amount}"))
+    .currency("${currency}")
+    .occurredAt(Instant.parse("${occurredAt}"))
+    .metadata(Map.of(
+${metaEntries}
+    ))
+    .build();
+client.events().submit(event);`;
+  }, [payload, eventId, ownerId, mainAccount, eventType, amount, currency, occurredAt]);
 
   const applyPreset = (kind: "earn" | "burn" | "cc_lp" | "like_fb") => {
     setEventId(randomEventId());
@@ -82,8 +144,8 @@ export default function WebhookPage() {
     setError(null);
     try {
       const r = dry
-        ? await engine.webhookTxnDryRun(body())
-        : await engine.webhookTxn(body());
+        ? await engine.webhookTxnDryRun(payload)
+        : await engine.webhookTxn(payload);
       setResult(r.data as IngestResult);
     } catch (e) {
       setError(errMsg(e));
@@ -102,7 +164,11 @@ export default function WebhookPage() {
       <FlowStrip active="shoot" />
       <PageHeader
         title="Fire webhook"
-        description="Live or dry-run. eligibilityTrace includes matchedPath (Factor explain)."
+        description="SDK TransactionalEvent — ownerId + optional mainAccount + metadata hashmap. Dry-run or live."
+        api={[
+          { method: "POST", path: "/integrations/webhooks/transactions" },
+          { method: "POST", path: "/integrations/webhooks/transactions/dry-run" },
+        ]}
       />
       <div className="mb-3 flex flex-wrap gap-2">
         <button
@@ -158,7 +224,7 @@ export default function WebhookPage() {
         <Card title="Payload">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="field sm:col-span-2">
-              <span className="field-label">ownerId</span>
+              <span className="field-label">ownerId (01A…)</span>
               <div className="flex gap-2">
                 <input
                   className="field-input font-mono"
@@ -168,9 +234,48 @@ export default function WebhookPage() {
                 <button
                   type="button"
                   className="btn-secondary"
+                  onClick={() => setOwnerId(DEMO_OWNER)}
+                >
+                  Demo
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
                   onClick={() => setOwnerId(randomOwnerId())}
                 >
                   Gen
+                </button>
+              </div>
+            </label>
+            <label className="field sm:col-span-2">
+              <span className="field-label">mainAccount (9089… / 9088…, optional)</span>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  className="field-input font-mono"
+                  value={mainAccount}
+                  onChange={(e) => setMainAccount(e.target.value)}
+                  placeholder="blank → engine generates"
+                />
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => setMainAccount(randomMainAccount("9089"))}
+                >
+                  9089…
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => setMainAccount(randomMainAccount("9088"))}
+                >
+                  9088…
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => setMainAccount("")}
+                >
+                  Clear
                 </button>
               </div>
             </label>
@@ -198,7 +303,7 @@ export default function WebhookPage() {
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
               >
-                {["PURCHASE", "REDEEM", "SIGNUP", "REFUND"].map((t) => (
+                {["PURCHASE", "CC_TXN_LP", "CC_TXN_HKD", "REDEEM", "SIGNUP", "REFUND"].map((t) => (
                   <option key={t}>{t}</option>
                 ))}
               </select>
@@ -249,6 +354,14 @@ export default function WebhookPage() {
                 onChange={(e) => setOccurredAt(e.target.value)}
               />
             </label>
+            <label className="field sm:col-span-2">
+              <span className="field-label">metadata (client hashmap JSON)</span>
+              <textarea
+                className="field-input min-h-[80px] font-mono text-[11px]"
+                value={extraMetaJson}
+                onChange={(e) => setExtraMetaJson(e.target.value)}
+              />
+            </label>
           </div>
           <div className="mt-4">
             <ActionBar loading={loading} error={error}>
@@ -290,6 +403,14 @@ export default function WebhookPage() {
                 </dd>
                 <dt className="text-slate-500">reason</dt>
                 <dd className="text-xs">{result.reason || "—"}</dd>
+                <dt className="text-slate-500">COA</dt>
+                <dd className="font-mono text-[11px]">
+                  {result.coa
+                    ? `${result.coa.code} · ${result.coa.entity}/${result.coa.type}/${result.coa.subType} · ${result.coa.currency}`
+                    : "—"}
+                </dd>
+                <dt className="text-slate-500">account</dt>
+                <dd className="font-mono text-[11px]">{result.coa?.fullNumber || result.coa?.accountId || "—"}</dd>
               </dl>
             ) : (
               <p className="text-sm text-slate-500">—</p>
@@ -334,7 +455,26 @@ export default function WebhookPage() {
               </div>
             )}
           </Card>
-          <Card title="Raw JSON">{result ? <JsonBlock value={result} /> : null}</Card>
+          <Card
+            title="Request JSON"
+            description="POST body — live preview before Dry-run / Send live"
+            right={<span className="font-mono text-[10px] text-slate-400">before send</span>}
+          >
+            <JsonBlock value={payload} />
+            <details className="mt-2">
+              <summary className="cursor-pointer text-[11px] text-emerald-700">
+                Java builder (ledger-engine-sdk)
+              </summary>
+              <pre className="mt-2 overflow-auto rounded-lg bg-slate-950 p-3 font-mono text-[10px] leading-relaxed text-emerald-100">
+                {sdkJava}
+              </pre>
+            </details>
+          </Card>
+          {result ? (
+            <Card title="Response JSON" description="Engine Result after last fire">
+              <JsonBlock value={result} />
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>

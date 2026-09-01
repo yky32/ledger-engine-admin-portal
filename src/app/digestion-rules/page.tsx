@@ -221,6 +221,11 @@ export default function DigestionRulesPage() {
       <PageHeader
         title="1 · Brain — Digestion rules"
         description="whenFactors (FactorSet) + formula (RATE / TIERED / TABLE + cap). · /digestion-rules"
+        api={[
+          { method: "GET", path: "/digestion-rules" },
+          { method: "POST", path: "/digestion-rules" },
+          { method: "PUT", path: "/digestion-rules/{id}" },
+        ]}
       />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-3">

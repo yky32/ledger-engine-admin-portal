@@ -14,6 +14,8 @@ export type CreateWalletOnboardBody = {
   /** Product-stream COA profile, omit → DEFAULT */
   coaProfileCode?: string;
   accounts?: AccountOpenSpec[];
+  /** Optional client main-account (9089… / 9088…). Omit → engine generates. */
+  mainAccount?: string;
 };
 
 export type AccountOpenSpec = {
@@ -30,8 +32,6 @@ export type WalletView = {
   ownerId?: string;
   vanityCode?: string | null;
   settlementCurrency?: CurrencyCode;
-  /** Product-stream COA profile stamped at onboard */
-  coaProfileCode?: string | null;
   status?: string;
   type?: string;
   walletType?: string;
@@ -139,6 +139,8 @@ export type TransactionalEventBody = {
   currency: CurrencyCode;
   occurredAt?: string;
   metadata?: Record<string, string>;
+  /** Optional UAF main-account (9089… / 9088…). Omit → engine generates. */
+  mainAccount?: string;
 };
 
 /** IngestionResult + Trust pack B */
@@ -155,6 +157,16 @@ export type IngestResult = {
   matchedRuleCode?: string;
   eligibilityTrace?: EligibilityTraceEntry[];
   dryRun?: boolean;
+  /** Per-event COA — which books this txn updates. */
+  coa?: {
+    code?: string;
+    entity?: string;
+    type?: string;
+    subType?: string;
+    currency?: string;
+    accountId?: number;
+    fullNumber?: string;
+  };
 };
 
 export type EligibilityTraceEntry = {
