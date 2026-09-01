@@ -21,16 +21,15 @@ export default function RecipesPage() {
         api={[{ method: "GET", path: "/integrations/use-cases" }]}
       />
       <Alert tone="info">
-        Bind Brain COA with the <strong>same code</strong> on{" "}
-        <Link href="/coa" className="underline">
-          Brain · COA
-        </Link>
-        . Shoot via{" "}
+        Upstream codes: <code className="text-xs">CC_TXN</code> credit card,{" "}
+        <code className="text-xs">CC_CIP</code> cash instalment,{" "}
+        <code className="text-xs">CC_SIP</code> spending instalment,{" "}
+        <code className="text-xs">LN_TXN</code> loan. Reward (LP vs HKD) is Brain{" "}
+        <code className="text-xs">resultCurrency</code>, not a suffix on the code. Shoot via{" "}
         <Link href="/transactions-ingest" className="underline">
           Single webhook
         </Link>{" "}
-        with matching <code className="text-xs">eventType</code>. Brain rule must match that
-        eventType too.
+        with matching <code className="text-xs">eventType</code>.
       </Alert>
 
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   ListTree,
   Wallet,
+  Scale,
 } from "lucide-react";
 
 /**
@@ -52,18 +53,18 @@ export default function HomePage() {
     <div>
       <PageHeader
         title="End-to-end business picture"
-        description="LedgeRX — Door → Brain (rules + COA) → books. Demo: grocery 500 HKD → 5 LP · or CC_TXN_LP."
+        description="One webhook eventType runs Door → Brain → Accounting books. Same code on all three."
         api={[{ method: "GET", path: "/actuator/health" }]}
         actions={
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Link href="/demo" className="btn-primary text-xs">
               Demo · Earn 5 LP
             </Link>
-            <Link href="/coa" className="btn-secondary text-xs">
-              COA map
+            <Link href="/accounting-rules" className="btn-secondary text-xs">
+              Accounting rules
             </Link>
-            <Link href="/recipes" className="btn-secondary text-xs">
-              Recipes
+            <Link href="/coa" className="btn-secondary text-xs">
+              COA chart
             </Link>
             {engineOk === null ? (
               <Badge>engine…</Badge>
@@ -81,6 +82,92 @@ export default function HomePage() {
           </div>
         }
       />
+
+      <Card className="mb-6" title="Mapping — one eventType">
+        <p className="mb-3 text-xs text-slate-500">
+          Example: <code className="font-mono">01AXXXX</code> credit-card spend · webhook{" "}
+          <code className="font-mono">eventType=CC_TXN</code> · amount 100 HKD.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="data-table text-xs">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Layer</th>
+                <th>What eventType does</th>
+                <th>What else maps</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="font-mono text-slate-400">0</td>
+                <td>Webhook</td>
+                <td>
+                  Payload field <code>eventType</code>
+                </td>
+                <td>
+                  <code>ownerId</code> · amount · currency · MCC · age
+                </td>
+              </tr>
+              <tr>
+                <td className="font-mono text-slate-400">1</td>
+                <td>
+                  <Link href="/ingest-policies" className="text-emerald-700 hover:underline">
+                    Door
+                  </Link>
+                </td>
+                <td>Optional AND gate (or any)</td>
+                <td>MCC · ccy · amount · age → entered / NOT_ENTERED</td>
+              </tr>
+              <tr>
+                <td className="font-mono text-slate-400">2</td>
+                <td>
+                  <Link href="/digestion-rules" className="text-emerald-700 hover:underline">
+                    Brain
+                  </Link>
+                </td>
+                <td>Required match. First bingo by priority</td>
+                <td>Same four gates + formula → points (e.g. 1 LP)</td>
+              </tr>
+              <tr>
+                <td className="font-mono text-slate-400">3</td>
+                <td>
+                  <Link href="/accounting-rules" className="text-emerald-700 hover:underline">
+                    Accounting
+                  </Link>
+                </td>
+                <td>Bind one combination to this eventType</td>
+                <td>
+                  Walk CR/DR · <code>targetAccount</code> = COA code
+                </td>
+              </tr>
+              <tr>
+                <td className="font-mono text-slate-400">4</td>
+                <td>
+                  <Link href="/coa" className="text-emerald-700 hover:underline">
+                    COA
+                  </Link>{" "}
+                  (chart)
+                </td>
+                <td>Not an event key</td>
+                <td>
+                  Member <code>01-01-01</code> LP on this wallet · house <code>01-02-01</code> LP
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px] text-slate-600">
+          <span className="rounded-md bg-slate-100 px-2 py-1">CC_TXN</span>
+          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="rounded-md bg-sky-50 px-2 py-1 text-sky-800">Door admit</span>
+          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="rounded-md bg-violet-50 px-2 py-1 text-violet-800">Brain score LP</span>
+          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">DR operating LP</span>
+          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">CR 01AXXXX 01-01-01 LP</span>
+        </div>
+      </Card>
 
       {!engineOk && engineOk !== null ? (
         <div className="mb-4">
@@ -104,6 +191,12 @@ export default function HomePage() {
           >
             <ul className="mt-2 space-y-1.5 text-sm">
               <li>
+                <Link className="flow-link" href="/corporate-coa">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  House · corporate COA <span className="text-slate-400">(company books first)</span>
+                </Link>
+              </li>
+              <li>
                 <Link className="flow-link" href="/ingest-policies">
                   <DoorOpen className="h-3.5 w-3.5" />
                   Ingest policy <span className="text-slate-400">(door)</span>
@@ -118,13 +211,19 @@ export default function HomePage() {
               <li>
                 <Link className="flow-link" href="/coa">
                   <BookOpen className="h-3.5 w-3.5" />
-                  Brain · COA <span className="text-slate-400">(code ≡ eventType)</span>
+                  Brain · COA <span className="text-slate-400">(chart only)</span>
+                </Link>
+              </li>
+              <li>
+                <Link className="flow-link" href="/accounting-rules">
+                  <Scale className="h-3.5 w-3.5" />
+                  Accounting rules <span className="text-slate-400">(CR/DR sequence)</span>
                 </Link>
               </li>
               <li>
                 <Link className="flow-link" href="/recipes">
                   <ListTree className="h-3.5 w-3.5" />
-                  Posting recipes <span className="text-slate-400">(CC_TXN_* atoms)</span>
+                  Posting recipes <span className="text-slate-400">(legacy atoms)</span>
                 </Link>
               </li>
               <li>
@@ -182,7 +281,7 @@ export default function HomePage() {
           <FlowBox
             tone="engine"
             title="LedgeRX"
-            subtitle="Door → Brain → Books → Audit"
+            subtitle="Door → Brain → Accounting → Audit"
             href="/review"
             wide
           >
@@ -190,29 +289,29 @@ export default function HomePage() {
               <EngineStep
                 n="1"
                 icon={DoorOpen}
-                title="Door — accept event? auto-wallet?"
+                title="Door — eventType + MCC/ccy/amount/age → entered?"
                 href="/ingest-policies"
                 note="Ingest policy"
               />
               <EngineStep
                 n="2"
                 icon={Brain}
-                title="Brain — match rule, score, map COA books"
+                title="Brain — same eventType, first bingo, score points"
                 href="/digestion-rules"
-                note="Digestion rules + COA"
+                note="Digestion rules"
               />
               <EngineStep
                 n="3"
-                icon={BookOpen}
-                title="Books — double-entry on LP (+ HKD)"
-                href="/ledger-entries"
-                note="PROGRAM pool ↔ customer"
+                icon={Scale}
+                title="Accounting — bound combo walks CR/DR onto COA"
+                href="/accounting-rules"
+                note="Dynamic account id from wallet + chart"
               />
               <EngineStep
                 n="4"
                 icon={ScrollText}
                 title="Audit — legs + movement history"
-                href="/movements"
+                href="/ledger-entries"
                 note="Query / review"
               />
             </ol>
@@ -233,8 +332,8 @@ export default function HomePage() {
             cta="Customer review"
           />
           <OutcomeCard
-            title="PROGRAM pool counterparty"
-            desc="True double-entry: DR/CR vs system PROGRAM LP pool."
+            title="House operating ↔ member books"
+            desc="Same-currency DE: DR 01-02-01 LP (company) · CR 01-01-01 LP on this CUST wallet."
             href="/ledger-entries"
             icon={ListTree}
             cta="View DE legs"
@@ -268,14 +367,14 @@ export default function HomePage() {
             Open door config
           </Link>
         </Card>
-        <Card title="Brain = digestion rules + COA">
+        <Card title="Brain = digestion · COA = chart · accounting = legs">
           <p className="text-sm text-slate-600">
-            Business question: <em>“Which events earn/burn, how many points, which books?”</em>
+            Brain scores how many points. COA is the account structure. Accounting rules walk CR/DR onto those books.
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
-            <li>Rules by eventType / priority · formula RATE / FIXED / AMOUNT</li>
-            <li>COA maps that eventType → numeric books + currency</li>
-            <li>API <code>/digestion-rules</code> + <code>/coa-profiles</code></li>
+            <li>One webhook <code>eventType</code> (CC_TXN / CC_CIP / CC_SIP / LN_TXN) on Door, Brain, and accounting</li>
+            <li>COA is the chart only (01-01-01 member · 01-02-01 operating)</li>
+            <li>Accounting bind that same eventType → CR/DR walk</li>
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link href="/digestion-rules" className="btn-secondary text-xs">
@@ -284,8 +383,8 @@ export default function HomePage() {
             <Link href="/coa" className="btn-secondary text-xs">
               COA
             </Link>
-            <Link href="/coa-list" className="btn-secondary text-xs">
-              COA list
+            <Link href="/accounting-rules" className="btn-secondary text-xs">
+              Accounting rules
             </Link>
           </div>
         </Card>
@@ -298,9 +397,9 @@ export default function HomePage() {
             {
               n: "1",
               t: "Ops configures",
-              d: "Turn door on + seed PURCHASE earn rule (or let simulator seed).",
-              href: "/ingest-policies",
-              cta: "Door + Brain",
+              d: "Door gates · Brain eventType rule · bind accounting combo to the same eventType.",
+              href: "/accounting-rules",
+              cta: "Door · Brain · Books",
             },
             {
               n: "2",
@@ -319,7 +418,7 @@ export default function HomePage() {
             {
               n: "4",
               t: "Inspect booking (double-entry)",
-              d: "Legs by eventId/movementId — PROGRAM pool vs customer LP.",
+              d: "Legs by eventId — house operating vs this customer's 01-01-01.",
               href: "/ledger-entries",
               cta: "DE legs",
             },

@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/rules", destination: "/digestion-rules", permanent: false },
+      { source: "/account-rules", destination: "/accounting-rules", permanent: false },
       { source: "/rule-executions", destination: "/review", permanent: false },
       { source: "/accounts", destination: "/records", permanent: false },
       { source: "/ledger-accounts", destination: "/coa", permanent: false },

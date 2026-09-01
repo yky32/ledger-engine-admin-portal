@@ -23,6 +23,7 @@ import {
 } from "@/lib/factors";
 import { errMsg, clsx } from "@/lib/format";
 import type { CreateDigestionRuleBody, DigestionRule } from "@/lib/types";
+import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/recipes";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR" | "TIERED_RATE" | "TABLE";
@@ -35,8 +36,6 @@ const FORMULA_TYPES: { id: FormulaType; label: string; hint: string }[] = [
   { id: "TIERED_RATE", label: "TIERED", hint: "marginal brackets" },
   { id: "TABLE", label: "TABLE", hint: "by metadata key" },
 ];
-
-const EVENT_TYPES = ["CC_TXN_LP", "PURCHASE", "REDEEM", "SIGNUP", "REFUND"];
 
 function moveItem<T>(arr: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
@@ -54,15 +53,31 @@ function nth(i: number): string {
   return `${n}th`;
 }
 
+/** Unique digestion_rule.code from eventType (CC_TXN, CC_TXN_2, …). */
+function suggestCode(eventType: string, existing: DigestionRule[]): string {
+  const base = (eventType || "RULE")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "") || "RULE";
+  const taken = new Set(existing.map((r) => (r.code || "").toUpperCase()).filter(Boolean));
+  if (!taken.has(base)) return base;
+  for (let i = 2; i < 1000; i++) {
+    const c = `${base}_${i}`;
+    if (!taken.has(c)) return c;
+  }
+  return `${base}_${Date.now().toString(36).toUpperCase()}`;
+}
+
 const PRESETS = {
   demoCc: {
     gate: { mccs: "101", currencies: "HKD", ageLte: "30", amtMin: "1", amtMax: "" } satisfies FactorGate,
     identity: {
-      code: "DEMO_CC_1PCT",
-      name: "Demo CC 1%",
-      eventType: "CC_TXN_LP",
+      code: "CC_TXN",
+      name: "Credit card 1%",
+      eventType: "CC_TXN",
       operation: "EARN",
-      pointCurrency: "LP",
+      resultCurrency: "LP",
       priority: "10",
     },
     formulaType: "RATE" as FormulaType,
@@ -77,11 +92,11 @@ const PRESETS = {
       amtMax: "999999",
     } satisfies FactorGate,
     identity: {
-      code: "GROCERY_BAND",
+      code: "CC_TXN_GROCERY",
       name: "Grocery band 1%",
-      eventType: "PURCHASE",
+      eventType: "CC_TXN",
       operation: "EARN",
-      pointCurrency: "LP",
+      resultCurrency: "LP",
       priority: "20",
     },
     formulaType: "RATE" as FormulaType,
@@ -210,6 +225,7 @@ export default function DigestionRulesPage() {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [codeAuto, setCodeAuto] = useState(true);
 
   const formulaPreview = useMemo(() => {
     try {
@@ -236,8 +252,8 @@ export default function DigestionRulesPage() {
   ]);
 
   const example = useMemo(
-    () => exampleScore(formulaPreview, 1000, form.pointCurrency),
-    [formulaPreview, form.pointCurrency],
+    () => exampleScore(formulaPreview, 1000, form.resultCurrency),
+    [formulaPreview, form.resultCurrency],
   );
 
   const load = useCallback(async () => {
@@ -257,6 +273,14 @@ export default function DigestionRulesPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!codeAuto) return;
+    setForm((f) => {
+      const next = suggestCode(f.eventType, rows);
+      return next === f.code ? f : { ...f, code: next };
+    });
+  }, [rows, codeAuto]);
 
   useEffect(() => {
     if (!gatesLive) return;
@@ -288,10 +312,29 @@ export default function DigestionRulesPage() {
     const p = PRESETS[key];
     setGatesLive(true);
     setAdvanced(false);
+    setCodeAuto(true);
     setGate(p.gate);
     setFormulaType(p.formulaType);
     setRate(p.rate);
-    setForm((f) => ({ ...f, ...p.identity }));
+    setForm((f) => ({
+      ...f,
+      ...p.identity,
+      code: suggestCode(p.identity.eventType, rows),
+    }));
+  };
+
+  const resetForm = () => {
+    applyPreset("demoCc");
+    setCreated(null);
+    setError(null);
+  };
+
+  const setEventType = (eventType: string) => {
+    setForm((f) => ({
+      ...f,
+      eventType,
+      code: codeAuto ? suggestCode(eventType, rows) : f.code,
+    }));
   };
 
   const create = async () => {
@@ -324,7 +367,7 @@ export default function DigestionRulesPage() {
         eventType: form.eventType.trim(),
         operation: form.operation,
         formula,
-        pointCurrency: form.pointCurrency,
+        resultCurrency: form.resultCurrency,
         priority: Number(form.priority),
         minAmount: Number(form.minAmount),
         eligibleCurrencies: form.eligibleCurrencies
@@ -626,11 +669,26 @@ export default function DigestionRulesPage() {
         </div>
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           <label className="field">
-            <span className="field-label">code</span>
+            <span className="field-label">
+              code{" "}
+              <button
+                type="button"
+                className="font-normal text-slate-400 hover:text-emerald-700"
+                onClick={() => {
+                  setCodeAuto(true);
+                  setForm((f) => ({ ...f, code: suggestCode(f.eventType, rows) }));
+                }}
+              >
+                {codeAuto ? "auto from eventType" : "manual · click to auto"}
+              </button>
+            </span>
             <input
               className="field-input font-mono text-xs"
               value={form.code}
-              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+              onChange={(e) => {
+                setCodeAuto(false);
+                setForm((f) => ({ ...f, code: e.target.value }));
+              }}
             />
           </label>
           <label className="field">
@@ -646,17 +704,26 @@ export default function DigestionRulesPage() {
             <input
               className="field-input font-mono text-xs"
               value={form.eventType}
-              onChange={(e) => setForm((f) => ({ ...f, eventType: e.target.value }))}
+              onChange={(e) => setEventType(e.target.value)}
             />
           </label>
         </div>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {EVENT_TYPES.map((t) => (
-            <Chip key={t} active={form.eventType === t} onClick={() => setForm((f) => ({ ...f, eventType: t }))}>
+            <Chip
+              key={t}
+              active={form.eventType === t}
+              title={EVENT_TYPE_LABELS[t]}
+              onClick={() => setEventType(t)}
+            >
               {t}
             </Chip>
           ))}
         </div>
+        <p className="mt-1 text-[11px] text-slate-500">
+          Upstream: CC_TXN credit card · CC_CIP cash instalment · CC_SIP spending instalment · LN_TXN
+          loan. Reward is Loyalty / Cashback, not a suffix on this code.
+        </p>
         <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
           <label className="field">
             <span className="field-label">operation</span>
@@ -673,12 +740,30 @@ export default function DigestionRulesPage() {
             </div>
           </label>
           <label className="field">
-            <span className="field-label">points ccy</span>
-            <input
-              className="field-input font-mono text-xs"
-              value={form.pointCurrency}
-              onChange={(e) => setForm((f) => ({ ...f, pointCurrency: e.target.value }))}
-            />
+            <span className="field-label">reward</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Chip
+                active={form.resultCurrency.toUpperCase() === "LP"}
+                onClick={() => setForm((f) => ({ ...f, resultCurrency: "LP" }))}
+              >
+                Loyalty · LP
+              </Chip>
+              <Chip
+                active={form.resultCurrency.toUpperCase() === "HKD"}
+                onClick={() => setForm((f) => ({ ...f, resultCurrency: "HKD" }))}
+              >
+                Cashback · HKD
+              </Chip>
+              <input
+                className="field-input w-24 font-mono text-xs"
+                value={form.resultCurrency}
+                onChange={(e) => setForm((f) => ({ ...f, resultCurrency: e.target.value }))}
+                placeholder="LP"
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Books follow this: LP → 01-01-01 LP (loyalty). HKD → 01-01-01 HKD (realtime cashback).
+            </p>
           </label>
           <label className="field">
             <span className="field-label">priority</span>
@@ -708,6 +793,9 @@ export default function DigestionRulesPage() {
             </button>
             <button type="button" className="btn-secondary" onClick={() => void load()}>
               Refresh
+            </button>
+            <button type="button" className="btn-ghost text-xs" onClick={resetForm}>
+              Reset form
             </button>
           </ActionBar>
           {created ? (
@@ -795,7 +883,17 @@ export default function DigestionRulesPage() {
                         <div>
                           <div className="font-mono text-sm font-semibold text-slate-900">{r.code}</div>
                           <div className="mt-0.5 text-xs text-slate-500">
-                            {[r.name, r.operation, r.pointCurrency].filter(Boolean).join(" · ")}
+                            {[
+                              r.name,
+                              r.operation,
+                              String(r.resultCurrency || "").toUpperCase() === "HKD"
+                                ? "cashback HKD"
+                                : String(r.resultCurrency || "").toUpperCase() === "LP"
+                                  ? "loyalty LP"
+                                  : r.resultCurrency,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">

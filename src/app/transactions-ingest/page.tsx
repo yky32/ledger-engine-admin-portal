@@ -6,7 +6,7 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount } from "@/lib/format";
 import { formatMatchedPath } from "@/lib/factors";
-import { WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
+import { EVENT_TYPES, WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
@@ -15,7 +15,7 @@ const DEMO_OWNER = "01A81267065";
 export default function WebhookPage() {
   const [ownerId, setOwnerId] = useState(DEMO_OWNER);
   const [eventId, setEventId] = useState(randomEventId());
-  const [eventType, setEventType] = useState("PURCHASE");
+  const [eventType, setEventType] = useState("CC_TXN");
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState("HKD");
   const [mcc, setMcc] = useState("");
@@ -65,7 +65,6 @@ export default function WebhookPage() {
       occurredAt,
       metadata: {
         source: "uaf-sdk",
-        useCase: eventType,
         ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
         ...(coaProfileCode.trim()
           ? { coaProfileCode: coaProfileCode.trim().toUpperCase() }
@@ -111,23 +110,24 @@ ${metaEntries}
 client.events().submit(event);`;
   }, [payload, eventId, ownerId, mainAccount, eventType, amount, currency, occurredAt]);
 
-  const applyPreset = (kind: "earn" | "burn" | "cc_lp" | "like_fb") => {
+  const applyPreset = (kind: "cc_txn" | "cc_cip" | "ln_txn" | "burn") => {
     setEventId(randomEventId());
     setOccurredAt(nowIso());
-    if (kind === "earn") {
-      setEventType("PURCHASE");
-      setAmount("500");
-      setCurrency("HKD");
-      setMcc("5411");
-    } else if (kind === "cc_lp") {
-      setEventType("CC_TXN_LP");
+    if (kind === "cc_txn") {
+      setEventType("CC_TXN");
       setAmount("500");
       setCurrency("HKD");
       setMcc("5411");
       setCoaProfileCode("");
-    } else if (kind === "like_fb") {
-      setEventType("LIKE_FB_PAGE");
-      setAmount("0");
+    } else if (kind === "cc_cip") {
+      setEventType("CC_CIP");
+      setAmount("500");
+      setCurrency("HKD");
+      setMcc("");
+      setCoaProfileCode("");
+    } else if (kind === "ln_txn") {
+      setEventType("LN_TXN");
+      setAmount("500");
       setCurrency("HKD");
       setMcc("");
       setCoaProfileCode("");
@@ -174,23 +174,23 @@ client.events().submit(event);`;
         <button
           type="button"
           className="btn-secondary text-xs"
-          onClick={() => applyPreset("earn")}
+          onClick={() => applyPreset("cc_txn")}
         >
-          Preset · Grocery PURCHASE 500
+          Preset · CC_TXN credit card
         </button>
         <button
           type="button"
           className="btn-secondary text-xs"
-          onClick={() => applyPreset("cc_lp")}
+          onClick={() => applyPreset("cc_cip")}
         >
-          Preset · CC_TXN_LP (recipe)
+          Preset · CC_CIP cash instalment
         </button>
         <button
           type="button"
           className="btn-secondary text-xs"
-          onClick={() => applyPreset("like_fb")}
+          onClick={() => applyPreset("ln_txn")}
         >
-          Preset · Like FB page (+5 LP)
+          Preset · LN_TXN loan
         </button>
         <button
           type="button"
@@ -303,7 +303,7 @@ client.events().submit(event);`;
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
               >
-                {["PURCHASE", "CC_TXN_LP", "CC_TXN_HKD", "REDEEM", "SIGNUP", "REFUND"].map((t) => (
+                {[...EVENT_TYPES, "REDEEM"].map((t) => (
                   <option key={t}>{t}</option>
                 ))}
               </select>

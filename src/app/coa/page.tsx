@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, Empty, Alert } from "@/components/ui/kit";
+import { PageHeader, Card, Empty, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 import { FlowStrip } from "@/components/layout/flow-strip";
@@ -53,7 +53,7 @@ export default function CoaPage() {
   const [rows, setRows] = useState<CoaRow[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [newCode, setNewCode] = useState("CC_TXN_LP");
+  const [newCode, setNewCode] = useState("MEMBER_CUST_LP");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -62,13 +62,13 @@ export default function CoaPage() {
     setLoading(true);
     setError(null);
     try {
-      await engine.coaProfileDefault();
       const r = await engine.coaProfiles();
-      const list = Array.isArray(r.data) ? (r.data as CoaRow[]) : [];
+      const list = (Array.isArray(r.data) ? (r.data as CoaRow[]) : []).filter(
+        (x) => (x.code || "").toUpperCase() !== "DEFAULT",
+      );
       setRows(list);
       const pick =
         (selectedId && list.find((x) => x.id === selectedId)) ||
-        list.find((x) => x.isDefault) ||
         list[0];
       if (pick?.id) {
         setSelectedId(pick.id);
@@ -91,7 +91,7 @@ export default function CoaPage() {
     setSelectedId(r.id);
     setOk(null);
     setForm(formFromRow(r));
-    setNewCode(r.code || "CC_TXN_LP");
+    setNewCode(r.code || "MEMBER_CUST_LP");
   };
 
   const save = async () => {
@@ -129,7 +129,7 @@ export default function CoaPage() {
             subType: preset.subType,
             buffer: preset.buffer,
             currency: preset.currency,
-            isDefault: c === "DEFAULT",
+            isDefault: false,
             poolAllowNegative: true,
           }
         : {
@@ -161,7 +161,7 @@ export default function CoaPage() {
       <EngineStatusBanner />
       <PageHeader
         title="1 · Brain — COA"
-        description="Brain books map — code ≡ eventType. Upstream event maps here → segments + currency."
+        description="Chart of accounts only (entity / type / subType / currency). Posting sequences bind eventType on Accounting rules."
         api={[
           { method: "GET", path: "/coa-profiles" },
           { method: "POST", path: "/coa-profiles" },
@@ -169,11 +169,12 @@ export default function CoaPage() {
         ]}
       />
       <Alert tone="info">
-        <strong>code = transactionCode = webhook eventType</strong> unless you override. See{" "}
-        <Link href="/recipes" className="underline">
-          recipes
-        </Link>{" "}
-        for atom chains.{" "}
+        COA is the <strong>chart</strong>, not the event. Webhook <code className="text-xs">eventType</code> is
+        shared by Door, Brain, and{" "}
+        <Link href="/accounting-rules" className="underline">
+          Accounting rules
+        </Link>
+        .{" "}
         <Link href="/records" className="underline">
           DB records
         </Link>
@@ -181,7 +182,7 @@ export default function CoaPage() {
 
       <Card title="Quick create (UA presets)" className="mt-4">
         <div className="flex flex-wrap gap-2">
-          {COA_PRESETS.filter((p) => p.code !== "DEFAULT").map((p) => (
+          {COA_PRESETS.map((p) => (
             <button
               key={p.code}
               type="button"
@@ -195,7 +196,7 @@ export default function CoaPage() {
           ))}
         </div>
         <p className="mt-2 text-[11px] text-slate-500">
-          Creates profile with code=eventType (e.g. CC_TXN_LP). Disabled if already present.
+          Chart codes (e.g. MEMBER_CUST_LP). Disabled if already present.
         </p>
       </Card>
 
@@ -217,7 +218,6 @@ export default function CoaPage() {
                     }
                   >
                     <span className="font-mono font-semibold">{r.code}</span>{" "}
-                    {r.isDefault ? <Badge tone="ok">default</Badge> : null}
                     <span className="mt-0.5 block font-mono text-[10px] text-emerald-700">
                       txn: {r.transactionCode || r.code || "—"} · {r.currency || "LP"}
                     </span>
@@ -234,7 +234,7 @@ export default function CoaPage() {
               className="field-input max-w-[140px] font-mono text-xs"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
-              placeholder="CC_TXN_LP"
+              placeholder="MEMBER_CUST_LP"
             />
             <button
               type="button"

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { clsx } from "@/lib/format";
 import type { FactorGate } from "@/lib/factors";
+import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/recipes";
 
 export type ChipTone = "violet" | "emerald" | "sky" | "rose";
 
@@ -11,11 +12,13 @@ export function Chip({
   onClick,
   children,
   tone = "violet",
+  title,
 }: {
   active: boolean;
   onClick: () => void;
   children: ReactNode;
   tone?: ChipTone;
+  title?: string;
 }) {
   const on = {
     violet: "bg-violet-600 text-white shadow-sm",
@@ -33,6 +36,7 @@ export function Chip({
     <button
       type="button"
       onClick={onClick}
+      title={title}
       className={clsx("rounded-full px-2.5 py-1 text-[11px] font-medium transition", active ? on : off)}
     >
       {children}
@@ -94,7 +98,7 @@ export function GateCard({
   );
 }
 
-/** Shared MCC × currency × age × amount AND grid (Door + Brain). */
+/** Shared eventType × MCC × currency × age × amount AND grid (Door + Brain). */
 export function AndGateGrid({
   gate,
   onChange,
@@ -105,7 +109,38 @@ export function AndGateGrid({
   tone?: ChipTone;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <GateCard
+        label="eventType"
+        value={gate.eventTypes ?? ""}
+        footer={
+          <input
+            className="field-input font-mono text-xs"
+            value={gate.eventTypes ?? ""}
+            onChange={(e) => onChange({ eventTypes: e.target.value.toUpperCase() })}
+            placeholder="CC_TXN, CC_CIP,…"
+          />
+        }
+      >
+        {EVENT_TYPES.map((v) => (
+          <Chip
+            key={v}
+            tone={tone}
+            title={EVENT_TYPE_LABELS[v]}
+            active={(gate.eventTypes ?? "") === v}
+            onClick={() => onChange({ eventTypes: v })}
+          >
+            {v}
+          </Chip>
+        ))}
+        <Chip
+          tone={tone}
+          active={!gate.eventTypes?.trim()}
+          onClick={() => onChange({ eventTypes: "" })}
+        >
+          any
+        </Chip>
+      </GateCard>
       <GateCard
         label="MCC"
         value={gate.mccs}

@@ -8,7 +8,7 @@ import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg, isConflictError, randomEventId, randomOwnerId } from "@/lib/format";
 import type { DigestionRule, IngestResult, WalletView } from "@/lib/types";
-import { COA_PRESETS } from "@/lib/recipes";
+
 import {
   CheckCircle2,
   Circle,
@@ -21,10 +21,10 @@ import {
   Search,
 } from "lucide-react";
 
-/** Guided demo: CC_TXN_LP · HKD 1000 · 15 Aug 2026 HKT · MCC 101 · RATE 1% → 10 LP */
+/** Guided demo: CC_TXN · HKD 1000 · 15 Aug 2026 HKT · MCC 101 · RATE 1% → 10 LP */
 const DEMO_RULE_CODE = "DEMO_CC_1PCT";
-const DEMO_COA_DEFAULT = "DEFAULT";
-const DEMO_COA_EVENT = "CC_TXN_LP";
+const DEMO_COA_MEMBER = "MEMBER_CUST_LP";
+const DEMO_EVENT_TYPE = "CC_TXN";
 
 type DemoCombo = {
   id: string;
@@ -64,7 +64,7 @@ function formatHkt(iso: string): string {
 const COMBO_BASE: DemoCombo = {
   id: "1",
   title: "Credit card transaction",
-  eventType: "CC_TXN_LP",
+  eventType: DEMO_EVENT_TYPE,
   amount: 1000,
   currency: "HKD",
   occurredAt: hktIso(2026, 8, 15, 14, 30),
@@ -233,22 +233,17 @@ export default function DemoPage() {
       setRuleDetail("could not list rules");
     }
     try {
-      await engine.coaProfileDefault().catch(() => null);
       const r = await engine.coaProfiles();
       const list = Array.isArray(r.data) ? (r.data as CoaRow[]) : [];
-      const def = list.find(
-        (x) => (x.code || "").toUpperCase() === DEMO_COA_DEFAULT || x.isDefault,
+      const member = list.find(
+        (x) => (x.code || "").toUpperCase() === DEMO_COA_MEMBER,
       );
-      const purchase = list.find((x) => (x.code || "").toUpperCase() === DEMO_COA_EVENT);
-      if (def && purchase) {
+      if (member) {
         setCoaOk(true);
-        setCoaDetail(`${coaLabel(def)} · ${coaLabel(purchase)}`);
-      } else if (def) {
-        setCoaOk(false);
-        setCoaDetail(`${coaLabel(def)} · ${DEMO_COA_EVENT} missing — Ensure demo COA`);
+        setCoaDetail(coaLabel(member));
       } else {
         setCoaOk(false);
-        setCoaDetail("missing — click Ensure demo COA");
+        setCoaDetail(`${DEMO_COA_MEMBER} missing — Ensure demo COA`);
       }
     } catch {
       setCoaOk(false);
@@ -270,7 +265,7 @@ export default function DemoPage() {
         autoWalletSettlementCurrency: "HKD",
         autoWalletEnsureCurrency: "LP",
         autoWalletNamePrefix: "Demo ",
-        autoWalletCoaProfileCode: DEMO_COA_DEFAULT,
+        autoWalletCoaProfileCode: DEMO_COA_MEMBER,
       });
       setOk("Door open · auto-wallet HKD+LP");
       await refreshPrereqs();
@@ -297,12 +292,12 @@ export default function DemoPage() {
         name: "Demo CC 1% (MCC 101 · HKD)",
         priority: 10,
         isEnabled: true,
-        eventType: "CC_TXN_LP",
+        eventType: DEMO_EVENT_TYPE,
         minAmount: 1,
         eligibleCurrencies: ["HKD"],
         eligibleMccs: ["101"],
         maxAgeDays: 30,
-        pointCurrency: "LP",
+        resultCurrency: "LP",
         operation: "EARN",
         formula: { type: "RATE" as const, rate: 0.01 },
       };
@@ -327,32 +322,28 @@ export default function DemoPage() {
     setError(null);
     setOk(null);
     try {
-      await engine.coaProfileDefault();
       const r = await engine.coaProfiles();
       const list = Array.isArray(r.data) ? (r.data as CoaRow[]) : [];
-      const hasEvent = list.some((x) => (x.code || "").toUpperCase() === DEMO_COA_EVENT);
-      if (!hasEvent) {
-        const preset = COA_PRESETS.find((p) => p.code === DEMO_COA_EVENT) ||
-          COA_PRESETS.find((p) => p.code === DEMO_COA_DEFAULT) ||
-          COA_PRESETS[0];
+      const hasMember = list.some((x) => (x.code || "").toUpperCase() === DEMO_COA_MEMBER);
+      if (!hasMember) {
         try {
           await engine.coaProfileCreate({
-            code: DEMO_COA_EVENT,
-            name: "Demo CC_TXN_LP → LP books",
-            entity: preset.entity,
-            type: preset.type,
-            subType: preset.subType,
-            buffer: preset.buffer,
+            code: DEMO_COA_MEMBER,
+            name: "Member Custodian LP",
+            entity: "01",
+            type: "01",
+            subType: "01",
+            buffer: "00",
             currency: "LP",
             isDefault: false,
             isEnabled: true,
-            poolAllowNegative: true,
+            poolAllowNegative: false,
           });
         } catch (e) {
           if (!isConflictError(e)) throw e;
         }
       }
-      setOk(`Brain COA ready · ${DEMO_COA_DEFAULT} + ${DEMO_COA_EVENT}`);
+      setOk(`Brain COA ready · ${DEMO_COA_MEMBER}`);
       await refreshPrereqs();
     } catch (e) {
       setError(errMsg(e));
@@ -492,10 +483,11 @@ client.events().submit(event);`;
 
       <div className="mb-4">
         <Alert tone="info">
-          Combo 1: <strong>CC_TXN_LP · HKD 1,000 · 15 Aug 2026 HKT · MCC 101</strong> → ~10 LP.
+          Combo 1: <strong>CC_TXN · HKD 1,000 · 15 Aug 2026 HKT · MCC 101</strong> → ~10 LP.
           Variants 2–6 change amount / day / MCC / currency / age so you can see earn vs skip.
-          Rule <code className="text-xs">{DEMO_RULE_CODE}</code> + COA{" "}
-          <code className="text-xs">{DEMO_COA_EVENT}</code>.
+          Rule <code className="text-xs">{DEMO_RULE_CODE}</code> · eventType{" "}
+          <code className="text-xs">{DEMO_EVENT_TYPE}</code> · COA{" "}
+          <code className="text-xs">{DEMO_COA_MEMBER}</code>.
         </Alert>
       </div>
 
@@ -609,7 +601,7 @@ client.events().submit(event);`;
           <Card title={`02 · Brain demo rule ${ruleOk ? "✓" : ""}`}>
             <p className="mb-1 font-mono text-xs text-slate-500">{ruleDetail || "—"}</p>
             <p className="mb-2 text-sm text-slate-600">
-              CC_TXN_LP · HKD · MCC 101 · RATE 0.01 · maxAge 30d · EARN
+              CC_TXN · HKD · MCC 101 · RATE 0.01 · maxAge 30d · EARN · Loyalty LP
             </p>
             <button
               type="button"
@@ -631,13 +623,12 @@ client.events().submit(event);`;
               {coaOk === null
                 ? "Checking…"
                 : coaOk
-                  ? "DEFAULT + CC_TXN_LP profiles"
+                  ? `${DEMO_COA_MEMBER} chart`
                   : "COA incomplete"}
             </div>
             <p className="mb-1 font-mono text-[11px] text-slate-500">{coaDetail || "—"}</p>
             <p className="mb-2 text-sm text-slate-600">
-              <code className="text-xs">{DEMO_COA_DEFAULT}</code> stamps auto-wallet books.{" "}
-              <code className="text-xs">{DEMO_COA_EVENT}</code> ≡ credit-card eventType → LP books.
+              Member chart <code className="text-xs">{DEMO_COA_MEMBER}</code> (01-01-01 LP). No DEFAULT profile.
             </p>
             <div className="flex flex-wrap gap-2">
               <button

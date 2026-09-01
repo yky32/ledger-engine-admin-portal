@@ -17,7 +17,9 @@ import {
   Database,
   BookOpen,
   Sparkles,
+  Building2,
   Table2,
+  Scale,
 } from "lucide-react";
 
 /**
@@ -53,7 +55,7 @@ export const NAV: NavItem[] = [
     label: "Posting recipes",
     icon: ListTree,
     group: "Overview",
-    blurb: "eventType → atoms (CC_TXN_*)",
+    blurb: "eventType → atoms (CC_TXN / CC_CIP / CC_SIP / LN_TXN)",
   },
   {
     href: "/health",
@@ -70,6 +72,13 @@ export const NAV: NavItem[] = [
   },
 
   {
+    href: "/corporate-coa-list",
+    label: "House · COA",
+    icon: Building2,
+    group: "Query",
+    blurb: "Company books (HOUSE_*)",
+  },
+  {
     href: "/coa-list",
     label: "Brain · COA",
     icon: Table2,
@@ -85,11 +94,19 @@ export const NAV: NavItem[] = [
   },
 
   {
+    href: "/corporate-coa",
+    label: "0 · House — Corporate COA",
+    icon: Building2,
+    group: "① Ops configures",
+    blurb: "Company books before first earn",
+    step: "ops",
+  },
+  {
     href: "/ingest-policies",
     label: "1 · Door — Ingest policy",
     icon: DoorOpen,
     group: "① Ops configures",
-    blurb: "Admit + entryFactors FactorSet",
+    blurb: "Admit · eventType + MCC/ccy/amount/age",
     step: "ops",
   },
   {
@@ -97,7 +114,7 @@ export const NAV: NavItem[] = [
     label: "1 · Brain — Digestion rules",
     icon: Brain,
     group: "① Ops configures",
-    blurb: "whenFactors + formula / tier / table",
+    blurb: "eventType first bingo + formula",
     step: "ops",
   },
   {
@@ -105,7 +122,15 @@ export const NAV: NavItem[] = [
     label: "1 · Brain — COA",
     icon: BookOpen,
     group: "① Ops configures",
-    blurb: "code ≡ eventType → books",
+    blurb: "chart of accounts (structure)",
+    step: "ops",
+  },
+  {
+    href: "/accounting-rules",
+    label: "1 · Accounting rules",
+    icon: Scale,
+    group: "① Ops configures",
+    blurb: "eventType → CR/DR posting sequence",
     step: "ops",
   },
   {

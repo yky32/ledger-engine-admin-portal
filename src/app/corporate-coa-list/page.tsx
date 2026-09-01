@@ -8,9 +8,10 @@ import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { isHouseCoaCode } from "@/lib/recipes";
 
 type CoaRow = {
-  id?: number;
+  id?: number | string;
   code?: string;
   name?: string;
   transactionCode?: string | null;
@@ -22,37 +23,34 @@ type CoaRow = {
   buffer?: string;
   currency?: string;
   poolAllowNegative?: boolean;
+  walletId?: number | string | null;
 };
 
-export default function CoaQueryListPage() {
+export default function CorporateCoaListPage() {
   const [rows, setRows] = useState<CoaRow[]>([]);
   const [code, setCode] = useState("");
   const [selected, setSelected] = useState<CoaRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [calledPath, setCalledPath] = useState("/coa-profiles");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const q = code.trim();
+      const r = await engine.coaProfiles();
+      let list = (Array.isArray(r.data) ? (r.data as CoaRow[]) : []).filter((x) =>
+        isHouseCoaCode(x.code),
+      );
+      const q = code.trim().toUpperCase();
       if (q) {
-        setCalledPath("/coa-profiles");
-        const r = await engine.coaProfiles();
-        const list = Array.isArray(r.data) ? (r.data as CoaRow[]) : [];
-        const hit = list.filter(
+        list = list.filter(
           (x) =>
-            x.code?.toUpperCase() === q.toUpperCase() ||
-            x.transactionCode?.toUpperCase() === q.toUpperCase(),
+            x.code?.toUpperCase().includes(q) ||
+            x.transactionCode?.toUpperCase().includes(q) ||
+            x.name?.toUpperCase().includes(q),
         );
-        setRows(hit.length ? hit : list.filter((x) => x.code?.toUpperCase().includes(q.toUpperCase())));
-      } else {
-        setCalledPath("/coa-profiles");
-        const r = await engine.coaProfiles();
-        const list = Array.isArray(r.data) ? (r.data as CoaRow[]) : [];
-        setRows(list.filter((x) => (x.code || "").toUpperCase() !== "DEFAULT"));
       }
+      setRows(list);
     } catch (e) {
       setRows([]);
       setError(errMsg(e));
@@ -71,15 +69,12 @@ export default function CoaQueryListPage() {
       <FlowStrip active="ops" />
       <EngineStatusBanner />
       <PageHeader
-        title="Brain · COA"
-        description="Query list — GET /coa-profiles (Brain books map). Click a row for JSON. Edit under Brain — COA."
-        api={[
-          { method: "GET", path: "/coa-profiles" },
-          { method: "GET", path: "/coa-profiles/default" },
-        ]}
+        title="House · COA"
+        description="Company books only (HOUSE_* / CORP_* / GL_*). Same GET /coa-profiles, filtered. Edit under 0 · House — Corporate COA."
+        api={[{ method: "GET", path: "/coa-profiles" }]}
         actions={
-          <Link href="/coa" className="btn-secondary text-xs">
-            Edit Brain COA →
+          <Link href="/corporate-coa" className="btn-secondary text-xs">
+            Edit house COA →
           </Link>
         }
       />
@@ -87,12 +82,12 @@ export default function CoaQueryListPage() {
       <Card className="mb-4">
         <div className="flex flex-wrap items-end gap-3">
           <label className="field min-w-[200px]">
-            <span className="field-label">code / transactionCode (optional)</span>
+            <span className="field-label">code / name (optional)</span>
             <input
               className="field-input font-mono"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="MEMBER_CUST_LP"
+              placeholder="HOUSE_LP"
             />
           </label>
           <ActionBar loading={loading} error={error}>
@@ -105,50 +100,52 @@ export default function CoaQueryListPage() {
 
       <div className="grid gap-4 lg:grid-cols-5">
         <Card
-          title={`Profiles (${rows.length})`}
+          title={`House profiles (${rows.length})`}
           className="lg:col-span-3"
-          right={<ApiPath method="GET" path={calledPath} />}
+          right={<ApiPath method="GET" path="/coa-profiles" />}
         >
           {rows.length === 0 ? (
-            <Empty>{loading ? "Loading…" : "No COA profiles"}</Empty>
+            <Empty>{loading ? "Loading…" : "No house COA — create under Corporate COA"}</Empty>
           ) : (
             <div className="table-wrap max-h-[640px] overflow-auto">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>id</th>
                     <th>code</th>
                     <th>name</th>
-                    <th>txn</th>
-                    <th>default</th>
-                    <th>on</th>
                     <th>entity</th>
                     <th>type</th>
                     <th>sub</th>
                     <th>buf</th>
                     <th>ccy</th>
+                    <th>walletId</th>
+                    <th>pool−</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr
-                      key={r.id ?? r.code}
-                      className={selected?.id === r.id ? "bg-emerald-50" : "cursor-pointer"}
+                      key={String(r.id ?? r.code)}
+                      className={
+                        selected && String(selected.id) === String(r.id)
+                          ? "cursor-pointer bg-emerald-50"
+                          : "cursor-pointer"
+                      }
                       onClick={() => setSelected(r)}
                     >
-                      <td className="font-mono text-[10px]">{r.id ?? "—"}</td>
                       <td className="font-mono text-xs font-medium">{r.code}</td>
-                      <td className="max-w-[160px] truncate">{r.name || "—"}</td>
-                      <td className="font-mono text-[10px]">{r.transactionCode || r.code || "—"}</td>
-                      <td>{r.isDefault ? <Badge tone="ok">yes</Badge> : "—"}</td>
-                      <td>
-                        <Badge tone={r.isEnabled ? "ok" : "neutral"}>{r.isEnabled ? "on" : "off"}</Badge>
-                      </td>
+                      <td className="max-w-[180px] truncate">{r.name || "—"}</td>
                       <td className="font-mono text-[10px]">{r.entity}</td>
                       <td className="font-mono text-[10px]">{r.type}</td>
                       <td className="font-mono text-[10px]">{r.subType}</td>
                       <td className="font-mono text-[10px]">{r.buffer}</td>
                       <td>{r.currency || "—"}</td>
+                      <td className="font-mono text-[10px]">{r.walletId ?? "—"}</td>
+                      <td>
+                        <Badge tone={r.poolAllowNegative ? "warn" : "neutral"}>
+                          {r.poolAllowNegative ? "yes" : "no"}
+                        </Badge>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -156,19 +153,16 @@ export default function CoaQueryListPage() {
             </div>
           )}
         </Card>
-
         <Card
           title={selected ? `Row · ${selected.code}` : "Row JSON"}
           className="lg:col-span-2"
           right={
-            selected?.id ? (
-              <Link href="/coa" className="text-xs text-emerald-700 hover:underline">
-                Edit →
-              </Link>
-            ) : null
+            <Link href="/corporate-coa" className="text-xs text-emerald-700 hover:underline">
+              Edit →
+            </Link>
           }
         >
-          {selected ? <JsonBlock value={selected} maxHeight={480} /> : <Empty>Click a row</Empty>}
+          {selected ? <JsonBlock value={selected} maxHeight={400} /> : <Empty>Click a row</Empty>}
         </Card>
       </div>
     </div>

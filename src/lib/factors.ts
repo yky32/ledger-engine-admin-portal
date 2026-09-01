@@ -78,6 +78,8 @@ export type FactorGate = {
   amtMin: string;
   amtMax: string;
   channel?: string;
+  /** CSV of webhook eventType codes. Blank = any. Same token as Brain / accounting. */
+  eventTypes?: string;
 };
 
 export const EMPTY_FACTOR_GATE: FactorGate = {
@@ -87,6 +89,7 @@ export const EMPTY_FACTOR_GATE: FactorGate = {
   amtMin: "",
   amtMax: "",
   channel: "",
+  eventTypes: "",
 };
 
 export function parseCsv(s: string): string[] {
@@ -112,6 +115,7 @@ export function gateBits(g: FactorGate): string[] {
   else if (g.amtMax.trim()) bits.push(`amt ≤ ${g.amtMax}`);
   else bits.push("any amount");
   if (g.channel?.trim()) bits.push(`channel ${g.channel.trim()}`);
+  bits.push(g.eventTypes?.trim() ? `eventType ${g.eventTypes}` : "any eventType");
   return bits;
 }
 
@@ -122,7 +126,8 @@ export function gateIsOpen(g: FactorGate): boolean {
     !g.ageLte.trim() &&
     !g.amtMin.trim() &&
     !g.amtMax.trim() &&
-    !g.channel?.trim()
+    !g.channel?.trim() &&
+    !g.eventTypes?.trim()
   );
 }
 
@@ -182,6 +187,11 @@ export function parseAndGates(factors: unknown): FactorGate | null {
     } else if (field === "metadata.channel") {
       if (op !== "eq") return null;
       gate.channel = String(val ?? "");
+    } else if (field === "eventType") {
+      if (op === "eq") gate.eventTypes = String(val ?? "").toUpperCase();
+      else if (op === "in" && Array.isArray(val))
+        gate.eventTypes = val.map((x) => String(x).toUpperCase()).join(",");
+      else return null;
     } else {
       return null;
     }
@@ -197,6 +207,7 @@ export function buildMccCcyAgeAmountFactors(opts: {
   amtMin?: number | null;
   amtMax?: number | null;
   channel?: string | null;
+  eventTypes?: string[];
 }): unknown[] {
   const factors: Record<string, unknown>[] = [];
   if (opts.mccs.length === 1) {
@@ -261,6 +272,22 @@ export function buildMccCcyAgeAmountFactors(opts: {
       value: opts.amtMax,
     });
   }
+  const eventTypes = (opts.eventTypes ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean);
+  if (eventTypes.length === 1) {
+    factors.push({
+      id: `F_et_${eventTypes[0]}`,
+      field: "eventType",
+      op: "eq",
+      value: eventTypes[0],
+    });
+  } else if (eventTypes.length > 1) {
+    factors.push({
+      id: "F_et_in",
+      field: "eventType",
+      op: "in",
+      value: eventTypes,
+    });
+  }
   const channel = opts.channel?.trim();
   if (channel) {
     factors.push({
@@ -281,6 +308,7 @@ export function factorsFromGate(g: FactorGate): unknown[] {
     amtMin: numOrNull(g.amtMin),
     amtMax: numOrNull(g.amtMax),
     channel: g.channel,
+    eventTypes: parseCsv(g.eventTypes ?? "").map((s) => s.toUpperCase()),
   });
 }
 

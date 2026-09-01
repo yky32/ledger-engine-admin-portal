@@ -32,7 +32,7 @@ type Props = {
   createFields?: CrudField[];
   /** static JSON body template merged with form fields */
   createDefaults?: Record<string, unknown>;
-  /** get detail by id path e.g. /rules/{id} */
+  /** get detail by id path e.g. /accounting-rules/{id} */
   detailPathTemplate?: string;
   updatePathTemplate?: string;
   updateMethod?: "PUT" | "PATCH" | "POST";

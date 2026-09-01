@@ -37,14 +37,14 @@ const TIPS = {
 } as const;
 
 const GATE_PRESETS: Record<string, FactorGate> = {
-  demoCc: { mccs: "101", currencies: "HKD", ageLte: "30", amtMin: "1", amtMax: "", channel: "" },
+  demoCc: { ...EMPTY_FACTOR_GATE, mccs: "101", currencies: "HKD", ageLte: "30", amtMin: "1", eventTypes: "CC_TXN" },
   grocery: {
+    ...EMPTY_FACTOR_GATE,
     mccs: "5411,5412",
     currencies: "HKD,USD",
     ageLte: "30",
     amtMin: "100",
     amtMax: "999999",
-    channel: "",
   },
   pos: { ...EMPTY_FACTOR_GATE, channel: "POS" },
   hkdPos: { ...EMPTY_FACTOR_GATE, currencies: "HKD", channel: "POS" },
@@ -531,10 +531,10 @@ export default function IngestPolicyPage() {
                         className="field-input font-mono text-xs"
                         value={String(policy.autoWalletCoaProfileCode ?? "")}
                         onChange={(e) => setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })}
-                        placeholder="DEFAULT"
+                        placeholder="MEMBER_CUST_LP"
                       />
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {["DEFAULT", "CC_TXN_LP"].map((c) => (
+                        {["MEMBER_CUST_LP", "MEMBER_CUST_HKD"].map((c) => (
                           <Chip
                             key={c}
                             tone="emerald"

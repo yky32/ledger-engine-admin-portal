@@ -126,12 +126,10 @@ const PRESET_LABEL: Record<PresetKey, string> = {
 function defaultDims(): DimConfig {
   return {
     eventTypes: [
-      { value: "PURCHASE", on: true },
-      { value: "REDEEM", on: false },
-      { value: "SIGNUP", on: false },
-      { value: "REFUND", on: false },
-      { value: "CARD_OPEN", on: false },
-      { value: "ADJUSTMENT", on: false },
+      { value: "CC_TXN", on: true },
+      { value: "CC_CIP", on: false },
+      { value: "CC_SIP", on: false },
+      { value: "LN_TXN", on: false },
     ],
     currencies: [
       { value: "HKD", on: true },
@@ -175,7 +173,7 @@ function applyPreset(key: PresetKey): DimConfig {
   switch (key) {
     case "smoke":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.find((x) => x.value === 200)!.on = true;
       d.ages.find((x) => x.days === 0)!.on = true;
@@ -183,7 +181,7 @@ function applyPreset(key: PresetKey): DimConfig {
       break;
     case "ccy-matrix":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       ["HKD", "USD", "JPY", "CNY"].forEach((c) => {
         const row = d.currencies.find((x) => x.value === c);
         if (row) row.on = true;
@@ -194,21 +192,21 @@ function applyPreset(key: PresetKey): DimConfig {
       break;
     case "amount-gates":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.forEach((x) => (x.on = true));
       d.ages.find((x) => x.days === 0)!.on = true;
       break;
     case "age-gates":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.find((x) => x.value === 200)!.on = true;
       d.ages.forEach((x) => (x.on = true));
       break;
     case "mcc-matrix":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.find((x) => x.value === 200)!.on = true;
       d.ages.find((x) => x.days === 0)!.on = true;
@@ -219,7 +217,7 @@ function applyPreset(key: PresetKey): DimConfig {
     case "event-mix":
       offAll();
       d.eventTypes.forEach((x) => {
-        if (["PURCHASE", "REDEEM", "SIGNUP", "REFUND", "CARD_OPEN"].includes(x.value)) x.on = true;
+        if (["CC_TXN", "CC_CIP", "CC_SIP", "LN_TXN"].includes(x.value)) x.on = true;
       });
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.forEach((x) => {
@@ -229,7 +227,7 @@ function applyPreset(key: PresetKey): DimConfig {
       break;
     case "stress":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       ["HKD", "USD", "JPY"].forEach((c) => {
         const row = d.currencies.find((x) => x.value === c);
         if (row) row.on = true;
@@ -243,7 +241,7 @@ function applyPreset(key: PresetKey): DimConfig {
       break;
     case "full-cartesian":
       d.eventTypes.forEach((x) => {
-        x.on = ["PURCHASE", "REDEEM", "SIGNUP"].includes(x.value);
+        x.on = ["CC_TXN", "CC_CIP", "LN_TXN"].includes(x.value);
       });
       d.currencies.forEach((x) => {
         x.on = ["HKD", "USD", "JPY"].includes(x.value);
@@ -257,7 +255,7 @@ function applyPreset(key: PresetKey): DimConfig {
       break;
     case "hold-flow":
       offAll();
-      d.eventTypes.find((x) => x.value === "PURCHASE")!.on = true;
+      d.eventTypes.find((x) => x.value === "CC_TXN")!.on = true;
       d.currencies.find((x) => x.value === "HKD")!.on = true;
       d.amounts.find((x) => x.value === 200)!.on = true;
       d.ages.find((x) => x.days === 0)!.on = true;
@@ -326,7 +324,7 @@ function guessExpect(c: WebhookCase): string {
   if (c.ageDays >= 400) return "maybe age-gate";
   if (c.amount === 0) return "maybe min-amount";
   if (c.mcc) return "earn if mcc/rule matches";
-  if (c.eventType === "PURCHASE") return "earn if rule matches";
+  if (c.eventType === "CC_TXN" || c.eventType === "CC_CIP" || c.eventType === "CC_SIP" || c.eventType === "LN_TXN") return "earn if rule matches";
   if (c.eventType === "CARD_OPEN" || c.eventType === "SIGNUP") return "fixed bonus if rule";
   return "depends on digestion";
 }
@@ -484,12 +482,12 @@ export default function SimulatorPage() {
       if (globalOpts.seedPurchaseRule) {
         const t = await timed(() =>
           engine.digestionCreate({
-            code: "SIM_PURCHASE_DEFAULT",
-            name: "Sim purchase earn 1%",
-            eventType: "PURCHASE",
+            code: "SIM_CC_TXN_DEFAULT",
+            name: "Sim CC_TXN earn 1%",
+            eventType: "CC_TXN",
             operation: "EARN",
             formula: { type: "RATE", rate: 0.01 },
-            pointCurrency: "LP",
+            resultCurrency: "LP",
             priority: 50,
             minAmount: 0,
             eligibleCurrencies: ["HKD", "USD", "JPY", "CNY"],
@@ -499,7 +497,7 @@ export default function SimulatorPage() {
         const ok = t.ok || isConflictError((t as { e: unknown }).e) || errMsg((t as { e?: unknown }).e || "").toLowerCase().includes("exist");
         push({
           kind: "bootstrap-rule",
-          name: "seed digestion SIM_PURCHASE_DEFAULT (+ REDEEM/CARD_OPEN try)",
+          name: "seed digestion SIM_CC_TXN_DEFAULT (+ REDEEM/CARD_OPEN try)",
           ok,
           ms: t.ms,
           detail: t.ok ? "created/ok" : errMsg((t as { e: unknown }).e),
@@ -512,7 +510,7 @@ export default function SimulatorPage() {
             eventType: "REDEEM",
             operation: "BURN",
             formula: { type: "AMOUNT" },
-            pointCurrency: "LP",
+            resultCurrency: "LP",
             priority: 50,
             minAmount: 0,
             isEnabled: true,
@@ -525,7 +523,7 @@ export default function SimulatorPage() {
             eventType: "CARD_OPEN",
             operation: "EARN",
             formula: { type: "FIXED", value: 1000 },
-            pointCurrency: "LP",
+            resultCurrency: "LP",
             priority: 40,
             minAmount: 0,
             isEnabled: true,
@@ -538,7 +536,7 @@ export default function SimulatorPage() {
             eventType: "SIGNUP",
             operation: "EARN",
             formula: { type: "FIXED", value: 100 },
-            pointCurrency: "LP",
+            resultCurrency: "LP",
             priority: 40,
             minAmount: 0,
             isEnabled: true,
@@ -1081,7 +1079,7 @@ export default function SimulatorPage() {
                                       <span className="field-label">coaProfileCode</span>
                                       <input
                                         className="field-input font-mono text-xs"
-                                        placeholder="blank = DEFAULT"
+                                        placeholder="blank = CoaCodes 10-20-00"
                                         value={active.coaProfileCode}
                                         onChange={(e) => updateActive({ coaProfileCode: e.target.value })}
                                       />
@@ -1374,7 +1372,7 @@ export default function SimulatorPage() {
                     setGlobalOpts((o) => ({ ...o, seedPurchaseRule: e.target.checked }))
                   }
                 />
-                Seed digestion (PURCHASE RATE / REDEEM / CARD_OPEN / SIGNUP)
+                Seed digestion (CC_TXN RATE / REDEEM / CARD_OPEN / SIGNUP)
               </label>
               <label className="flex items-center gap-2">
                 <input

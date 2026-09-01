@@ -11,7 +11,7 @@ export type CreateWalletOnboardBody = {
   settlementCurrency: CurrencyCode;
   name?: string;
   vanityCode?: string;
-  /** Product-stream COA profile, omit → DEFAULT */
+  /** Product-stream COA profile; omit → CoaCodes 10-20-00 (no DEFAULT row) */
   coaProfileCode?: string;
   accounts?: AccountOpenSpec[];
   /** Optional client main-account (9089… / 9088…). Omit → engine generates. */
@@ -202,7 +202,7 @@ export type DigestionRule = {
   /** MCC allow-list; empty = any. Webhook metadata.mcc */
   eligibleMccs?: string[];
   maxAgeDays?: number | null;
-  pointCurrency?: string;
+  resultCurrency?: string;
   formula?: FormulaConfig | string | Record<string, unknown>;
   processType?: string | null;
   whenFactors?: FactorSpec[] | FactorSet | Record<string, unknown> | null;
@@ -297,10 +297,34 @@ export type CreateDigestionRuleBody = {
   eligibleCurrencies?: string[];
   eligibleMccs?: string[];
   maxAgeDays?: number;
-  pointCurrency?: string;
+  resultCurrency?: string;
   formula: FormulaConfig | Record<string, unknown> | string;
   processType?: string;
   whenFactors?: FactorSpec[] | FactorSet | Record<string, unknown>;
+};
+
+/** GET /accounting-rules — one posting-sequence leg */
+export type AccountingRule = {
+  id?: number | string;
+  name?: string;
+  description?: string;
+  direction?: "CREDIT" | "DEBIT" | string;
+  multiplier?: number | string;
+  /** CoaProfile.code */
+  targetAccount?: string;
+  content?: string;
+  createDt?: string;
+};
+
+/** GET /accounting-rule-executions — ordered walk of AccountingRule ids */
+export type AccountingRuleExecution = {
+  id?: number | string;
+  name?: string;
+  description?: string;
+  orderType?: string;
+  eventType?: string | null;
+  metadata?: string | { rules?: Array<{ id?: string; seq?: number }> };
+  createDt?: string;
 };
 
 export type IngestPolicy = {

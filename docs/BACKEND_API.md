@@ -75,8 +75,8 @@ Webhook MCC: `metadata.mcc` | `mccCode` | `merchantCategoryCode`.
 | GET | `/configurations?target=&scope=global` | target **required** |
 | PUT | `/configurations` | `{name?,target,scope?,value}` JSONB |
 | GET/POST | `/fx-rates` | `{base,target,rate}` |
-| GET/POST | `/rules` | legacy catalog |
-| GET/POST | `/rule-executions` | |
+| GET/POST | `/accounting-rules` | accounting catalog |
+| GET/POST | `/accounting-rule-executions` | |
 
 ## Legacy parallel APIs (still on engine)
 

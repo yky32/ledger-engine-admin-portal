@@ -13,8 +13,12 @@ export type RecipeDef = {
 };
 
 export const POSTING_RECIPES: RecipeDef[] = [
-  { code: "CC_TXN_HKD", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "HKD" },
-  { code: "CC_TXN_LP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "primary demo" },
+  { code: "CC_TXN", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "credit card transaction" },
+  { code: "CC_CIP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "credit card cash instalment" },
+  { code: "CC_SIP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "credit card spending instalment" },
+  { code: "LN_TXN", profile: "UA_LOAN", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "loan transaction" },
+  { code: "CC_TXN_HKD", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "HKD", note: "legacy alias" },
+  { code: "CC_TXN_LP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "legacy alias" },
   { code: "CC_TXN_HKD_REDEEM", profile: "UA_CC", atoms: ["CREDIT_REWARD", "REDEEM"], rewardCcy: "HKD" },
   { code: "CC_TXN_HKD_CASHBACK", profile: "UA_CC", atoms: ["CREDIT_REWARD", "CASHBACK"], rewardCcy: "HKD" },
   { code: "CC_TXN_LP_REDEEM", profile: "UA_CC", atoms: ["CREDIT_REWARD", "REDEEM"], rewardCcy: "LP" },
@@ -45,60 +49,98 @@ export const POSTING_RECIPES: RecipeDef[] = [
   { code: "FOLLOW_IG", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
 ];
 
-/** COA quick-create presets (code ≡ eventType) */
+/** COA quick-create presets (chart codes — not webhook eventType). */
 export const COA_PRESETS = [
   {
-    code: "CC_TXN_LP",
-    name: "CC transaction → LP",
+    code: "MEMBER_CUST_LP",
+    name: "Member Custodian LP",
     entity: "01",
-    type: "20",
-    subType: "00",
+    type: "01",
+    subType: "01",
     buffer: "00",
     currency: "LP",
   },
   {
-    code: "CC_TXN_HKD",
-    name: "CC transaction → HKD reward",
+    code: "MEMBER_CUST_HKD",
+    name: "Member Custodian HKD",
     entity: "01",
-    type: "20",
-    subType: "00",
+    type: "01",
+    subType: "01",
     buffer: "00",
     currency: "HKD",
   },
+] as const;
+
+/**
+ * UA house / corporate books.
+ * Operating 01-02-01 (movement example). Expense 01-04-02.
+ * Operating main-account 9999. Member custodian 01-01-01 is member, not house.
+ */
+export const HOUSE_MAIN_ACCOUNT = "9999";
+
+export const HOUSE_COA_PRESETS = [
   {
-    code: "LOAN_DD_LP",
-    name: "Loan DD → LP",
-    entity: "02",
-    type: "20",
-    subType: "00",
-    buffer: "00",
-    currency: "LP",
-  },
-  {
-    code: "DEFAULT",
-    name: "Default COA",
-    entity: "10",
-    type: "20",
-    subType: "00",
-    buffer: "00",
-    currency: "LP",
-  },
-  {
-    code: "LIKE_FB_PAGE",
-    name: "Like Facebook page (+5 LP)",
+    code: "HOUSE_CC_OP_HKD",
+    name: "CC Operating HKD",
     entity: "01",
-    type: "20",
-    subType: "00",
+    type: "02",
+    subType: "01",
+    buffer: "00",
+    currency: "HKD",
+    poolAllowNegative: true,
+    mainAccount: HOUSE_MAIN_ACCOUNT,
+  },
+  {
+    code: "HOUSE_CC_OP_LP",
+    name: "CC Operating LP",
+    entity: "01",
+    type: "02",
+    subType: "01",
     buffer: "00",
     currency: "LP",
+    poolAllowNegative: true,
+    mainAccount: HOUSE_MAIN_ACCOUNT,
+  },
+  {
+    code: "HOUSE_CC_EXP_HKD",
+    name: "CC Expense Corporate HKD",
+    entity: "01",
+    type: "04",
+    subType: "02",
+    buffer: "00",
+    currency: "HKD",
+    poolAllowNegative: true,
+    mainAccount: HOUSE_MAIN_ACCOUNT,
+  },
+  {
+    code: "HOUSE_CC_EXP_LP",
+    name: "CC Expense Corporate LP",
+    entity: "01",
+    type: "04",
+    subType: "02",
+    buffer: "00",
+    currency: "LP",
+    poolAllowNegative: true,
+    mainAccount: HOUSE_MAIN_ACCOUNT,
   },
 ] as const;
 
-export const WEBHOOK_EVENT_PRESETS = [
-  { eventType: "PURCHASE", label: "PURCHASE (classic grocery demo)" },
-  { eventType: "CC_TXN_LP", label: "CC_TXN_LP (recipe + COA)" },
-  { eventType: "CC_TXN_HKD", label: "CC_TXN_HKD" },
-  { eventType: "LOAN_DD_LP", label: "LOAN_DD_LP" },
-  { eventType: "CC_TXN_LP_REDEEM", label: "CC_TXN_LP_REDEEM (credit+burn)" },
-  { eventType: "LIKE_FB_PAGE", label: "LIKE_FB_PAGE (+5 LP FIXED, non-financial)" },
-] as const;
+export function isHouseCoaCode(code?: string | null): boolean {
+  const c = (code ?? "").toUpperCase();
+  return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_") || c === "PROGRAM";
+}
+
+/** Shared webhook / Brain / accounting bind codes. Reward is resultCurrency, not a suffix. */
+export const EVENT_TYPES = ["CC_TXN", "CC_CIP", "CC_SIP", "LN_TXN"] as const;
+
+export const EVENT_TYPE_LABELS: Record<(typeof EVENT_TYPES)[number], string> = {
+  CC_TXN: "credit card transaction",
+  CC_CIP: "credit card cash instalment",
+  CC_SIP: "credit card spending instalment",
+  LN_TXN: "loan transaction",
+};
+
+export const WEBHOOK_EVENT_PRESETS = EVENT_TYPES.map((eventType) => ({
+  eventType,
+  label: EVENT_TYPE_LABELS[eventType],
+}));

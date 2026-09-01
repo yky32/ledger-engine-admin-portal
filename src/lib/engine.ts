@@ -6,6 +6,8 @@
 import { ledger, qs } from "@/lib/api";
 import type {
   AsOfBalance,
+  AccountingRule,
+  AccountingRuleExecution,
   CreateDigestionRuleBody,
   CreateWalletOnboardBody,
   DepositBody,
@@ -198,6 +200,40 @@ export const engine = {
   coaProfileCreate: (body: Record<string, unknown>) => ledger.post("/coa-profiles", body),
   coaProfileUpdate: (id: string | number, body: Record<string, unknown>) =>
     ledger.put(`/coa-profiles/${id}`, body),
+
+  /** GET /accounting-rules — posting-sequence legs */
+  accountingRules: (page = 1, size = 500) =>
+    ledger.get<AccountingRule[]>(`/accounting-rules${qs({ page, size })}`),
+
+  /** GET /accounting-rule-executions — eventType → ordered legs */
+  accountingRuleExecutions: (page = 1, size = 500) =>
+    ledger.get<AccountingRuleExecution[]>(`/accounting-rule-executions${qs({ page, size })}`),
+
+  /** POST /accounting-rules/ensure — createIfNotFound UA sequences */
+  accountingRulesEnsure: () =>
+    ledger.post<{ rules?: AccountingRule[]; executions?: AccountingRuleExecution[] }>(
+      "/accounting-rules/ensure",
+      {},
+    ),
+
+  accountingRuleCreate: (body: Record<string, unknown>) =>
+    ledger.post<AccountingRule>("/accounting-rules", body),
+
+  accountingRuleUpdate: (id: string | number, body: Record<string, unknown>) =>
+    ledger.put<AccountingRule>(`/accounting-rules/${id}`, body),
+
+  accountingRuleExecutionCreate: (body: Record<string, unknown>) =>
+    ledger.post<AccountingRuleExecution>("/accounting-rule-executions", body),
+
+  accountingRuleExecutionUpdate: (id: string | number, body: Record<string, unknown>) =>
+    ledger.put<AccountingRuleExecution>(`/accounting-rule-executions/${id}`, body),
+
+  /** GET /corporate-coa — HOUSE_* + company walletId + accounts */
+  houseBooks: () => ledger.get("/corporate-coa"),
+
+  /** POST /corporate-coa — createIfNotFound house COA + company wallet + accounts */
+  houseEnsure: (ownerId?: string) =>
+    ledger.post("/corporate-coa", ownerId ? { ownerId } : {}),
 
   /* ─── Door ─── */
   /** GET /ingest-policies */

@@ -83,7 +83,7 @@ export default function WalletsPage() {
         <ExplainBox title="vs Door auto-create">
           <p>
             If Ingest policy <code className="text-xs">isAutoCreateWallet=true</code>, first
-            eligible webhook can create the wallet (DEFAULT COA). Explicit onboard is for
+            eligible webhook can create the wallet (CoaCodes 10-20-00 if no profile). Explicit onboard is for
             controlled CRM join + product stream.
           </p>
         </ExplainBox>
@@ -131,13 +131,13 @@ export default function WalletsPage() {
             <label className="field">
               <FieldLabel
                 tipTitle="coaProfileCode"
-                tip="COA profile code from /coa. Blank = DEFAULT."
+                tip="COA profile code from /coa. Blank = CoaCodes 10-20-00 (no DEFAULT profile)."
               >
                 coaProfileCode
               </FieldLabel>
               <input
                 className="field-input font-mono"
-                placeholder="DEFAULT or profile code"
+                placeholder="MEMBER_CUST_LP or profile code"
                 value={coaProfileCode}
                 onChange={(e) => setCoaProfileCode(e.target.value)}
               />
