@@ -28,7 +28,7 @@ export type AccountOpenSpec = {
 
 /** GetWalletOnboardResponseDto */
 export type WalletView = {
-  walletId?: number;
+  walletId?: number | string;
   ownerId?: string;
   vanityCode?: string | null;
   settlementCurrency?: CurrencyCode;
@@ -45,9 +45,11 @@ export type WalletView = {
 };
 
 export type WalletAccount = {
-  id?: number;
+  id?: number | string;
+  walletId?: number | string;
   fullNumber?: string;
   name?: string;
+  refCode?: string | null;
   primary?: boolean;
   type?: string;
   currency?: CurrencyCode;
@@ -67,10 +69,10 @@ export type WalletBalance = {
 
 /** GetLedgerMovementResponseDto */
 export type MovementView = {
-  id?: number;
+  id?: number | string;
   movementKey?: string;
-  walletId?: number;
-  txnId?: number;
+  walletId?: number | string;
+  txnId?: number | string;
   alias?: string;
   originatorId?: string;
   targetId?: string;
@@ -180,15 +182,15 @@ export type EligibilityTraceEntry = {
 };
 
 export type LedgerLeg = {
-  entryId?: number;
-  accountId?: number;
+  entryId?: number | string;
+  accountId?: number | string;
   direction?: string;
   amount?: number | string;
   currency?: CurrencyCode;
 };
 
 export type DigestionRule = {
-  id?: number;
+  id?: number | string;
   code?: string;
   name?: string;
   eventType?: string;

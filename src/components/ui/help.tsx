@@ -69,16 +69,18 @@ export function FieldLabel({
   children,
   tip,
   tipTitle,
+  side = "top",
 }: {
   children: React.ReactNode;
   tip?: React.ReactNode;
   tipTitle?: string;
+  side?: "top" | "bottom" | "left" | "right";
 }) {
   return (
     <span className="field-label inline-flex items-center gap-1.5">
       <span>{children}</span>
       {tip ? (
-        <HelpTip title={tipTitle} wide>
+        <HelpTip title={tipTitle} wide side={side}>
           {tip}
         </HelpTip>
       ) : null}

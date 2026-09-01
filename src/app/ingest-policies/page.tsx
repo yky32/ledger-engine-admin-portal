@@ -1,156 +1,134 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, JsonBlock, Alert } from "@/components/ui/kit";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { PageHeader, Card, Badge, JsonBlock, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { FieldLabel, HelpTip, ExplainBox } from "@/components/ui/help";
+import { FieldLabel } from "@/components/ui/help";
 import { FlowStrip } from "@/components/layout/flow-strip";
 import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
-import { DOOR_FACTOR_PRESETS, parseFactorJson } from "@/lib/factors";
+import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
+import {
+  DOOR_FACTOR_PRESETS,
+  EMPTY_FACTOR_GATE,
+  factorsFromGate,
+  gateBits,
+  gateIsOpen,
+  humanizeWhenFactors,
+  parseAndGates,
+  parseFactorJson,
+  type FactorGate,
+} from "@/lib/factors";
 import { engine } from "@/lib/engine";
-import { errMsg } from "@/lib/format";
+import { errMsg, clsx } from "@/lib/format";
 import type { IngestPolicy } from "@/lib/types";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
-/**
- * Field copy aligned with ledger-engine/docs/INGEST_POLICY.md
- * + SYSTEM_BUSINESS_FLOW door concept.
- */
 const TIPS = {
-  isEnabled: {
-    title: "isEnabled — master switch (Door)",
-    body: (
-      <>
-        <p>
-          <strong>When true:</strong> engine accepts inbound webhooks (
-          <code className="text-emerald-200">POST /integrations/webhooks/transactions</code>
-          ).
-        </p>
-        <p className="mt-1">
-          <strong>When false:</strong> every event is rejected early as{" "}
-          <code className="text-emerald-200">SKIPPED / DISABLED</code> — no digestion, no
-          wallet create, no earn. Use as an incident kill-switch.
-        </p>
-        <p className="mt-1 text-slate-400">
-          This does <em>not</em> score points. Scoring is Digestion (Brain).
-        </p>
-      </>
-    ),
-  },
-  isAutoCreateWallet: {
-    title: "isAutoCreateWallet — lazy onboard",
-    body: (
-      <>
-        <p>
-          After the Door is open and Digestion says the event is eligible, if this customer
-          has <strong>no wallet yet</strong>:
-        </p>
-        <ul className="mt-1 list-disc space-y-0.5 pl-4">
-          <li>
-            <strong>true:</strong> create wallet in the <em>same transaction</em> as earn
-            (adopt / POS-first path).
-          </li>
-          <li>
-            <strong>false:</strong> fail with <code className="text-emerald-200">NO_WALLET</code>{" "}
-            — CRM must call onboard first.
-          </li>
-        </ul>
-        <p className="mt-1 text-slate-400">
-          Auto-create only runs when digestion already matched; junk events won&apos;t open
-          wallets.
-        </p>
-      </>
-    ),
-  },
   settlement: {
-    title: "Settlement currency (primary book)",
-    body: (
-      <>
-        <p>
-          Currency of the <strong>primary account</strong> when auto-creating a wallet (e.g.{" "}
-          <code className="text-emerald-200">HKD</code>).
-        </p>
-        <p className="mt-1">
-          This is the wallet&apos;s default settlement currency — cash-side book for the
-          member. Loyalty points usually sit on a <em>separate</em> ensure currency (LP).
-        </p>
-        <p className="mt-1 text-slate-400">
-          Example adopt: settlement HKD + ensure LP → member has both books under one
-          ownerId.
-        </p>
-      </>
-    ),
+    title: "Settlement currency",
+    body: "Primary cash book on auto-create (e.g. HKD). Loyalty points sit on the ensure book.",
   },
   ensure: {
-    title: "Ensure currency (extra book)",
-    body: (
-      <>
-        <p>
-          Second account always opened on auto-create — almost always{" "}
-          <code className="text-emerald-200">LP</code> (loyalty points).
-        </p>
-        <p className="mt-1">
-          Earn/burn double-entry posts to this book. Without an LP book, points cannot
-          settle even if Digestion scores them.
-        </p>
-        <p className="mt-1 text-slate-400">
-          You pointed here on the form: this is <em>not</em> settlement cash — it is the
-          points ledger line under the same wallet.
-        </p>
-      </>
-    ),
-  },
-  associatedFrom: {
-    title: "associatedFrom label (legacy display)",
-    body: (
-      <>
-        <p>
-          Soft label stored when auto-creating (e.g.{" "}
-          <code className="text-emerald-200">CRM</code>, <code className="text-emerald-200">POS</code>
-          ). Helps ops see <em>who/what</em> triggered lazy onboard.
-        </p>
-        <p className="mt-1 text-slate-400">
-          Not a second identity key. Real identity is always{" "}
-          <code className="text-emerald-200">ownerId</code> on the wallet.
-        </p>
-      </>
-    ),
-  },
-  namePrefix: {
-    title: "Name prefix",
-    body: (
-      <>
-        <p>
-          Display name prefix for auto wallets, e.g.{" "}
-          <code className="text-emerald-200">Sim </code> + ownerId →{" "}
-          <code className="text-emerald-200">Sim 01A12345678</code>.
-        </p>
-        <p className="mt-1 text-slate-400">Cosmetic only — does not affect balances or joins.</p>
-      </>
-    ),
-  },
-  autoCoa: {
-    title: "autoWalletCoaProfileCode",
-    body: (
-      <>
-        <p>
-          COA profile code when Door lazy-creates a wallet. Blank = DEFAULT.
-        </p>
-        <p className="mt-1 text-slate-400">
-          Event can override with metadata.coaProfileCode.
-        </p>
-      </>
-    ),
+    title: "Ensure currency",
+    body: "Second book on auto-create — almost always LP. Earn/burn posts here.",
   },
 } as const;
 
+const GATE_PRESETS: Record<string, FactorGate> = {
+  demoCc: { mccs: "101", currencies: "HKD", ageLte: "30", amtMin: "1", amtMax: "", channel: "" },
+  grocery: {
+    mccs: "5411,5412",
+    currencies: "HKD,USD",
+    ageLte: "30",
+    amtMin: "100",
+    amtMax: "999999",
+    channel: "",
+  },
+  pos: { ...EMPTY_FACTOR_GATE, channel: "POS" },
+  hkdPos: { ...EMPTY_FACTOR_GATE, currencies: "HKD", channel: "POS" },
+};
+
+function Choice({
+  active,
+  onClick,
+  title,
+  sub,
+  tone = "emerald",
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  sub: string;
+  tone?: "emerald" | "rose";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "flex-1 rounded-xl border px-4 py-3 text-left transition",
+        active
+          ? tone === "rose"
+            ? "border-rose-300 bg-rose-50 shadow-sm"
+            : "border-emerald-300 bg-emerald-50 shadow-sm"
+          : "border-slate-200 bg-white hover:border-slate-300",
+      )}
+    >
+      <div
+        className={clsx(
+          "text-sm font-semibold",
+          active ? (tone === "rose" ? "text-rose-900" : "text-emerald-900") : "text-slate-800",
+        )}
+      >
+        {title}
+      </div>
+      <div className="mt-0.5 text-[11px] leading-snug text-slate-500">{sub}</div>
+    </button>
+  );
+}
+
+function policySentence(p: IngestPolicy, gate: FactorGate, gatesLive: boolean): string {
+  if (!p.isEnabled) return "Every webhook is SKIPPED / DISABLED. Brain never runs.";
+  const who = !gatesLive
+    ? "a custom FactorSet"
+    : gateIsOpen(gate)
+      ? "every webhook"
+      : gateBits(gate)
+          .filter((b) => !b.startsWith("any "))
+          .join(" AND ") || "every webhook";
+  const wallet = p.isAutoCreateWallet
+    ? `Missing wallet → open ${p.autoWalletSettlementCurrency || "HKD"} + ${p.autoWalletEnsureCurrency || "LP"} books.`
+    : "Missing wallet → NO_WALLET (CRM onboard first).";
+  return `Admit ${who}. Brain scores after. ${wallet}`;
+}
+
 export default function IngestPolicyPage() {
   const [policy, setPolicy] = useState<IngestPolicy | null>(null);
+  const [saved, setSaved] = useState<IngestPolicy | null>(null);
   const [entryFactorsText, setEntryFactorsText] = useState("[]");
+  const [gate, setGate] = useState<FactorGate>({ ...EMPTY_FACTOR_GATE });
+  const [gatesLive, setGatesLive] = useState(true);
+  const [advanced, setAdvanced] = useState(false);
+  const [showJson, setShowJson] = useState(false);
+  const [onboardExtra, setOnboardExtra] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+
+  const applyLoadedFactors = (raw: unknown) => {
+    const parsed = parseAndGates(raw);
+    if (parsed) {
+      setGatesLive(true);
+      setGate(parsed);
+      setEntryFactorsText(JSON.stringify(factorsFromGate(parsed), null, 2));
+    } else {
+      setGatesLive(false);
+      setAdvanced(true);
+      setEntryFactorsText(JSON.stringify(raw ?? [], null, 2));
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -158,7 +136,8 @@ export default function IngestPolicyPage() {
     try {
       const r = await engine.ingestPolicyGet();
       setPolicy(r.data);
-      setEntryFactorsText(JSON.stringify(r.data?.entryFactors ?? [], null, 2));
+      setSaved(r.data);
+      applyLoadedFactors(r.data?.entryFactors);
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -167,8 +146,19 @@ export default function IngestPolicyPage() {
   };
 
   useEffect(() => {
-    load();
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!gatesLive) return;
+    setEntryFactorsText(JSON.stringify(factorsFromGate(gate), null, 2));
+  }, [gate, gatesLive]);
+
+  const patchGate = (patch: Partial<FactorGate>) => {
+    setGatesLive(true);
+    setGate((g) => ({ ...g, ...patch }));
+  };
 
   const save = async () => {
     if (!policy) return;
@@ -186,8 +176,9 @@ export default function IngestPolicyPage() {
       }
       const r = await engine.ingestPolicyPut({ ...policy, entryFactors });
       setPolicy(r.data);
-      setEntryFactorsText(JSON.stringify(r.data?.entryFactors ?? [], null, 2));
-      setOk("Saved to DB — effective immediately (no restart)");
+      setSaved(r.data);
+      applyLoadedFactors(r.data?.entryFactors);
+      setOk("Saved — effective on the next webhook (no restart)");
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -195,260 +186,434 @@ export default function IngestPolicyPage() {
     }
   };
 
+  const admitBits = useMemo(() => (gatesLive ? gateBits(gate) : []), [gate, gatesLive]);
+  const sentence = policy ? policySentence(policy, gate, gatesLive) : "";
+
   return (
     <div>
       <FlowStrip active="ops" />
       <EngineStatusBanner />
       <PageHeader
         title="1 · Door — Ingest policy"
-        description="Webhook admission + lazy wallet + entryFactors (FactorSet). Not scoring. GET/PUT /ingest-policies"
+        description="First gate: accept the webhook at all? Brain scores after. One global row for the engine."
         api={[
           { method: "GET", path: "/ingest-policies" },
           { method: "PUT", path: "/ingest-policies" },
         ]}
       />
 
-      <div className="mb-4 grid gap-3 lg:grid-cols-3">
-        <ExplainBox title="What is the Door?" tone="ops">
-          <p>
-            First gate inside LedgeRX after upstream POS/OMS posts a webhook. Answers:{" "}
-            <em>“Do we accept traffic at all?”</em> and{" "}
-            <em>“If this customer has no wallet yet, may we create one?”</em>
-          </p>
-        </ExplainBox>
-        <ExplainBox title="What it is NOT">
-          <p>
-            Does <strong>not</strong> choose how many LP to award. That is{" "}
-            <Link href="/digestion-rules" className="font-medium underline">
-              Digestion rules (Brain)
-            </Link>
-            . Door open + no matching brain rule → still no earn.
-          </p>
-        </ExplainBox>
-        <ExplainBox title="Happy path (adopt)" tone="info">
-          <p className="font-mono text-[11px] leading-relaxed">
-            webhook → Door on → Brain match → no wallet?
-            <br />
-            → auto-create (settlement + ensure LP)
-            <br />
-            → Books: DE earn vs PROGRAM pool
-          </p>
-        </ExplainBox>
-      </div>
-
       {!policy ? (
         <ActionBar loading={loading} error={error}>
-          <button type="button" className="btn-secondary" onClick={load}>
+          <button type="button" className="btn-secondary" onClick={() => void load()}>
             Load
           </button>
         </ActionBar>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card title="Edit policy" description="Usually one global row for the whole engine">
-            <div className="space-y-4">
-              <label className="flex items-start gap-2.5 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={!!policy.isEnabled}
-                  onChange={(e) => setPolicy({ ...policy, isEnabled: e.target.checked })}
-                />
-                <span>
-                  <span className="inline-flex items-center gap-1.5 font-medium">
-                    isEnabled (master switch)
-                    <HelpTip title={TIPS.isEnabled.title} wide>
-                      {TIPS.isEnabled.body}
-                    </HelpTip>
-                  </span>
-                  <span className="mt-0.5 block text-xs text-slate-500">
-                    Off = all webhooks SKIPPED DISABLED (kill-switch).
-                  </span>
-                </span>
-              </label>
+        <>
+          <div
+            className={clsx(
+              "mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border px-4 py-3",
+              policy.isEnabled
+                ? "border-emerald-200 bg-emerald-50/70"
+                : "border-rose-200 bg-rose-50/70",
+            )}
+          >
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone={policy.isEnabled ? "ok" : "error"}>{policy.isEnabled ? "OPEN" : "CLOSED"}</Badge>
+                {policy.isAutoCreateWallet ? (
+                  <Badge tone="info">
+                    auto-wallet {policy.autoWalletSettlementCurrency || "HKD"}+
+                    {policy.autoWalletEnsureCurrency || "LP"}
+                  </Badge>
+                ) : (
+                  <Badge tone="warn">CRM onboard required</Badge>
+                )}
+              </div>
+              <p className="mt-1.5 max-w-2xl text-sm text-slate-700">{sentence}</p>
+            </div>
+            <Link href="/digestion-rules" className="text-xs font-medium text-emerald-700 hover:underline">
+              Brain scores next →
+            </Link>
+          </div>
 
-              <label className="flex items-start gap-2.5 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={!!policy.isAutoCreateWallet}
-                  onChange={(e) =>
-                    setPolicy({ ...policy, isAutoCreateWallet: e.target.checked })
-                  }
-                />
-                <span>
-                  <span className="inline-flex items-center gap-1.5 font-medium">
-                    isAutoCreateWallet
-                    <HelpTip title={TIPS.isAutoCreateWallet.title} wide>
-                      {TIPS.isAutoCreateWallet.body}
-                    </HelpTip>
-                  </span>
-                  <span className="mt-0.5 block text-xs text-slate-500">
-                    Lazy onboard after digestion qualifies the event.
-                  </span>
-                </span>
-              </label>
+          <Card
+            className="mb-4"
+            title="Edit door"
+            description="Empty gate = admit anyone. Chips write entryFactors live — no Apply."
+          >
+            <div className="mb-3">
+              <StepHead n={1} title="Master switch" sub="Kill-switch for all inbound webhooks" tone="emerald" />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Choice
+                active={!!policy.isEnabled}
+                onClick={() => setPolicy({ ...policy, isEnabled: true })}
+                title="Open"
+                sub="Accept webhooks. Brain may score."
+                tone="emerald"
+              />
+              <Choice
+                active={!policy.isEnabled}
+                onClick={() => setPolicy({ ...policy, isEnabled: false })}
+                title="Closed"
+                sub="SKIPPED / DISABLED — nothing lands."
+                tone="rose"
+              />
+            </div>
+            <p className="mt-2 text-[11px] text-slate-500">
+              Scoring never happens here — that is digestion rules. Off = incident kill-switch.
+            </p>
 
-              <label className="field">
-                <FieldLabel tipTitle={TIPS.settlement.title} tip={TIPS.settlement.body}>
-                  Settlement ccy (primary book)
-                </FieldLabel>
-                <input
-                  className="field-input font-mono"
-                  value={String(policy.autoWalletSettlementCurrency ?? "")}
-                  onChange={(e) =>
-                    setPolicy({
-                      ...policy,
-                      autoWalletSettlementCurrency: e.target.value.toUpperCase(),
-                    })
-                  }
-                  placeholder="HKD"
-                />
-                <span className="text-[11px] text-slate-400">
-                  Auto-wallet primary account currency (cash side).
-                </span>
-              </label>
+            <hr className="my-5 border-slate-100" />
 
-              <label className="field">
-                <FieldLabel tipTitle={TIPS.ensure.title} tip={TIPS.ensure.body}>
-                  Ensure ccy (extra book · usually LP)
-                </FieldLabel>
-                <input
-                  className="field-input font-mono"
-                  value={String(policy.autoWalletEnsureCurrency ?? "")}
-                  onChange={(e) =>
-                    setPolicy({
-                      ...policy,
-                      autoWalletEnsureCurrency: e.target.value.toUpperCase(),
-                    })
-                  }
-                  placeholder="LP"
-                />
-                <span className="text-[11px] text-slate-400">
-                  Second book opened on auto-create — points land here.
-                </span>
-              </label>
-
-              <label className="field">
-                <FieldLabel tipTitle={TIPS.associatedFrom.title} tip={TIPS.associatedFrom.body}>
-                  associatedFrom label
-                </FieldLabel>
-                <input
-                  className="field-input"
-                  value={String(policy.autoWalletAssociatedFrom ?? "")}
-                  onChange={(e) =>
-                    setPolicy({ ...policy, autoWalletAssociatedFrom: e.target.value })
-                  }
-                  placeholder="CRM"
-                />
-              </label>
-
-              <label className="field">
-                <FieldLabel tipTitle={TIPS.namePrefix.title} tip={TIPS.namePrefix.body}>
-                  Name prefix
-                </FieldLabel>
-                <input
-                  className="field-input"
-                  value={String(policy.autoWalletNamePrefix ?? "")}
-                  onChange={(e) =>
-                    setPolicy({ ...policy, autoWalletNamePrefix: e.target.value })
-                  }
-                  placeholder="Sim "
-                />
-              </label>
-
-              <label className="field">
-                <FieldLabel tipTitle={TIPS.autoCoa.title} tip={TIPS.autoCoa.body}>
-                  autoWalletCoaProfileCode
-                </FieldLabel>
-                <input
-                  className="field-input font-mono"
-                  value={String(policy.autoWalletCoaProfileCode ?? "")}
-                  onChange={(e) =>
-                    setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })
-                  }
-                  placeholder="DEFAULT or profile code"
-                />
-              </label>
-
-              <label className="field sm:col-span-2">
-                <FactorJsonEditor
-                  label="entryFactors — Door isEntered"
-                  hint="Empty [] = only isEnabled. FactorSet: any / atLeast / not / anyGroup…"
-                  value={entryFactorsText}
-                  onChange={setEntryFactorsText}
-                  presets={DOOR_FACTOR_PRESETS}
-                  rows={11}
-                />
-              </label>
-
-              <ActionBar loading={loading} error={error} ok={ok}>
-                <button type="button" className="btn-primary" onClick={save}>
-                  Save
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <StepHead n={2} title="Who may enter" sub="AND — skip a gate to allow any" tone="emerald" />
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => {
+                    setGatesLive(true);
+                    setGate(GATE_PRESETS.demoCc);
+                  }}
+                >
+                  Demo CC
                 </button>
-                <button type="button" className="btn-secondary" onClick={load}>
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => {
+                    setGatesLive(true);
+                    setGate(GATE_PRESETS.grocery);
+                  }}
+                >
+                  Grocery
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary text-xs"
+                  onClick={() => {
+                    setGatesLive(true);
+                    setGate(GATE_PRESETS.hkdPos);
+                  }}
+                >
+                  HKD + POS
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost text-xs"
+                  onClick={() => {
+                    setGatesLive(true);
+                    setGate({ ...EMPTY_FACTOR_GATE });
+                  }}
+                >
+                  Anyone
+                </button>
+              </div>
+            </div>
+
+            <AndGateGrid gate={gate} onChange={patchGate} tone="emerald" />
+
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Channel</div>
+              <div className="mt-1 truncate font-mono text-lg font-semibold text-slate-900">
+                {gate.channel?.trim() || "any"}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {["POS", "CRM", "OMS"].map((v) => (
+                  <Chip
+                    key={v}
+                    tone="emerald"
+                    active={gate.channel === v}
+                    onClick={() => patchGate({ channel: v })}
+                  >
+                    {v}
+                  </Chip>
+                ))}
+                <Chip
+                  tone="emerald"
+                  active={!gate.channel?.trim()}
+                  onClick={() => patchGate({ channel: "" })}
+                >
+                  any
+                </Chip>
+              </div>
+              <input
+                className="field-input mt-2 font-mono text-xs"
+                value={gate.channel ?? ""}
+                onChange={(e) => patchGate({ channel: e.target.value })}
+                placeholder="metadata.channel"
+              />
+            </div>
+
+            <div
+              className={clsx(
+                "mt-3 rounded-lg px-3 py-2 text-sm font-medium",
+                gatesLive ? "bg-emerald-50 text-emerald-950" : "bg-amber-50 text-amber-950",
+              )}
+            >
+              {gatesLive ? (
+                gateIsOpen(gate) ? (
+                  <span>Admits every webhook — only the master switch applies.</span>
+                ) : (
+                  <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
+                      Admits when
+                    </span>
+                    {admitBits
+                      .filter((b) => !b.startsWith("any "))
+                      .map((bit, i) => (
+                        <span key={bit} className="inline-flex items-center gap-1.5">
+                          {i > 0 ? <span className="text-[10px] font-bold text-emerald-400">AND</span> : null}
+                          <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-[12px] ring-1 ring-emerald-200">
+                            {bit}
+                          </span>
+                        </span>
+                      ))}
+                  </span>
+                )
+              ) : (
+                <span>Custom FactorSet — chips paused until you pick a gate or Anyone.</span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
+              onClick={() => setAdvanced((v) => !v)}
+            >
+              {advanced ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              Advanced JSON
+            </button>
+            {advanced ? (
+              <div className="mt-2 rounded-xl border border-dashed border-slate-200 p-3">
+                <FactorJsonEditor
+                  label="entryFactors"
+                  hint="Editing JSON pauses the gates. Pick a chip to resume."
+                  value={entryFactorsText}
+                  onChange={(next) => {
+                    setGatesLive(false);
+                    setEntryFactorsText(next);
+                  }}
+                  presets={DOOR_FACTOR_PRESETS}
+                  rows={8}
+                />
+              </div>
+            ) : null}
+
+            <hr className="my-5 border-slate-100" />
+
+            <div className="mb-3">
+              <StepHead
+                n={3}
+                title="No wallet yet"
+                sub="Only after Brain already matched"
+                tone="emerald"
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Choice
+                active={!!policy.isAutoCreateWallet}
+                onClick={() => setPolicy({ ...policy, isAutoCreateWallet: true })}
+                title="Create wallet"
+                sub="Adopt / POS-first — same txn as earn"
+                tone="emerald"
+              />
+              <Choice
+                active={!policy.isAutoCreateWallet}
+                onClick={() => setPolicy({ ...policy, isAutoCreateWallet: false })}
+                title="CRM must onboard"
+                sub="Fail NO_WALLET until POST /wallets"
+                tone="rose"
+              />
+            </div>
+            <p className="mt-2 text-[11px] text-slate-500">
+              Junk events never open wallets — digestion has to match first.
+            </p>
+
+            {policy.isAutoCreateWallet ? (
+              <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-3">
+                <p className="font-mono text-sm font-semibold text-emerald-900">
+                  {(policy.autoWalletNamePrefix || "") + "01A…"} → {policy.autoWalletSettlementCurrency || "HKD"} cash +{" "}
+                  {policy.autoWalletEnsureCurrency || "LP"} points
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel tipTitle={TIPS.settlement.title} tip={TIPS.settlement.body}>
+                      Settlement (cash)
+                    </FieldLabel>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {["HKD", "USD"].map((c) => (
+                        <Chip
+                          key={c}
+                          tone="emerald"
+                          active={policy.autoWalletSettlementCurrency === c}
+                          onClick={() => setPolicy({ ...policy, autoWalletSettlementCurrency: c })}
+                        >
+                          {c}
+                        </Chip>
+                      ))}
+                    </div>
+                    <input
+                      className="field-input mt-2 font-mono text-xs"
+                      value={String(policy.autoWalletSettlementCurrency ?? "")}
+                      onChange={(e) =>
+                        setPolicy({
+                          ...policy,
+                          autoWalletSettlementCurrency: e.target.value.toUpperCase(),
+                        })
+                      }
+                      placeholder="HKD"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel tipTitle={TIPS.ensure.title} tip={TIPS.ensure.body}>
+                      Ensure (points)
+                    </FieldLabel>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {["LP", "HKD"].map((c) => (
+                        <Chip
+                          key={c}
+                          tone="emerald"
+                          active={policy.autoWalletEnsureCurrency === c}
+                          onClick={() => setPolicy({ ...policy, autoWalletEnsureCurrency: c })}
+                        >
+                          {c}
+                        </Chip>
+                      ))}
+                    </div>
+                    <input
+                      className="field-input mt-2 font-mono text-xs"
+                      value={String(policy.autoWalletEnsureCurrency ?? "")}
+                      onChange={(e) =>
+                        setPolicy({
+                          ...policy,
+                          autoWalletEnsureCurrency: e.target.value.toUpperCase(),
+                        })
+                      }
+                      placeholder="LP"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800/70 hover:text-emerald-950"
+                  onClick={() => setOnboardExtra((v) => !v)}
+                >
+                  {onboardExtra ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  Name, source label, COA
+                </button>
+                {onboardExtra ? (
+                  <div className="mt-2 grid gap-2.5 sm:grid-cols-3">
+                    <label className="field">
+                      <span className="field-label">name prefix</span>
+                      <input
+                        className="field-input text-xs"
+                        value={String(policy.autoWalletNamePrefix ?? "")}
+                        onChange={(e) => setPolicy({ ...policy, autoWalletNamePrefix: e.target.value })}
+                        placeholder="Demo "
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">associatedFrom</span>
+                      <input
+                        className="field-input text-xs"
+                        value={String(policy.autoWalletAssociatedFrom ?? "")}
+                        onChange={(e) => setPolicy({ ...policy, autoWalletAssociatedFrom: e.target.value })}
+                        placeholder="POS"
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">COA on auto-create</span>
+                      <input
+                        className="field-input font-mono text-xs"
+                        value={String(policy.autoWalletCoaProfileCode ?? "")}
+                        onChange={(e) => setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })}
+                        placeholder="DEFAULT"
+                      />
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {["DEFAULT", "CC_TXN_LP"].map((c) => (
+                          <Chip
+                            key={c}
+                            tone="emerald"
+                            active={policy.autoWalletCoaProfileCode === c}
+                            onClick={() => setPolicy({ ...policy, autoWalletCoaProfileCode: c })}
+                          >
+                            {c}
+                          </Chip>
+                        ))}
+                      </div>
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="mt-4">
+              <ActionBar loading={loading} error={error} ok={ok}>
+                <button type="button" className="btn-primary" onClick={() => void save()}>
+                  Save policy
+                </button>
+                <button type="button" className="btn-secondary" onClick={() => void load()}>
                   Reload
                 </button>
               </ActionBar>
-
-              <Alert tone="info">
-                Changes apply on next webhook — no deploy. Pair with{" "}
-                <Link href="/digestion-rules" className="underline">
-                  Brain rules
-                </Link>{" "}
-                then{" "}
-                <Link href="/simulator" className="underline">
-                  shoot
-                </Link>
-                .
-              </Alert>
             </div>
           </Card>
 
-          <div className="space-y-4">
-            <Card title="Saved in DB (GET /ingest-policies)" description="Persisted row — not only form draft">
-              <JsonBlock value={policy} />
-              <p className="mt-2 text-[11px] text-slate-500">
-                <Link href="/records" className="underline">
-                  All DB records →
-                </Link>
-              </p>
-            </Card>
-            <ExplainBox title="Field cheat-sheet" tone="info">
-              <table className="w-full text-left text-[12px]">
-                <tbody className="align-top">
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">isEnabled</td>
-                    <td className="py-1">Accept webhooks at all?</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">isAutoCreateWallet</td>
-                    <td className="py-1">Create wallet if missing (after brain match)?</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">settlement ccy</td>
-                    <td className="py-1">Primary book e.g. HKD</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">ensure ccy</td>
-                    <td className="py-1">Extra book e.g. LP for points</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">associatedFrom</td>
-                    <td className="py-1">Ops label only</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">namePrefix</td>
-                    <td className="py-1">Display name prefix</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-2 font-mono text-[11px]">coaProfile</td>
-                    <td className="py-1">Lazy onboard product stream</td>
-                  </tr>
-                </tbody>
-              </table>
-            </ExplainBox>
-          </div>
-        </div>
+          <Card
+            title="In engine"
+            description="Last saved GET /ingest-policies — live after Save"
+            right={
+              <span className="font-mono text-[11px] text-slate-500">
+                {humanizeWhenFactors((saved ?? policy).entryFactors)}
+              </span>
+            }
+          >
+            <div className="flex flex-wrap gap-1.5">
+              <Badge tone={(saved ?? policy).isEnabled ? "ok" : "error"}>
+                {(saved ?? policy).isEnabled ? "isEnabled" : "disabled"}
+              </Badge>
+              <Badge tone={(saved ?? policy).isAutoCreateWallet ? "info" : "neutral"}>
+                {(saved ?? policy).isAutoCreateWallet ? "auto-wallet" : "no auto-wallet"}
+              </Badge>
+              {(saved ?? policy).autoWalletSettlementCurrency ? (
+                <span className="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] text-slate-700 ring-1 ring-slate-200">
+                  {(saved ?? policy).autoWalletSettlementCurrency} + {(saved ?? policy).autoWalletEnsureCurrency || "—"}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
+              onClick={() => setShowJson((v) => !v)}
+            >
+              {showJson ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              DB JSON
+            </button>
+            {showJson ? (
+              <div className="mt-2">
+                <JsonBlock value={saved ?? policy} maxHeight={240} />
+              </div>
+            ) : null}
+            <Alert tone="info">
+              Pair with{" "}
+              <Link href="/digestion-rules" className="underline">
+                Brain rules
+              </Link>{" "}
+              then{" "}
+              <Link href="/simulator" className="underline">
+                shoot
+              </Link>
+              .{" "}
+              <Link href="/records" className="underline">
+                All DB records →
+              </Link>
+            </Alert>
+          </Card>
+        </>
       )}
     </div>
   );

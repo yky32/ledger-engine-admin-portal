@@ -19,7 +19,7 @@ export default function ReviewPage() {
   const [fails, setFails] = useState<FailedIngest[]>([]);
   const [asOf, setAsOf] = useState<unknown>(null);
   const [legs, setLegs] = useState<LedgerLeg[]>([]);
-  const [selectedMovementId, setSelectedMovementId] = useState<number | null>(null);
+  const [selectedMovementId, setSelectedMovementId] = useState<number | string | null>(null);
 
   useEffect(() => {
     try {
@@ -62,7 +62,7 @@ export default function ReviewPage() {
     }
   }, [ownerId]);
 
-  const loadLegs = async (movementId: number) => {
+  const loadLegs = async (movementId: number | string) => {
     setSelectedMovementId(movementId);
     try {
       const r = await engine.legs({ movementId });

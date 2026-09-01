@@ -42,13 +42,26 @@ export type ResultEnvelope<T> = {
   pagination?: Pagination | null;
 };
 
+/**
+ * Snowflake ids (16+ digits) overflow Number.MAX_SAFE_INTEGER and round in JSON.parse.
+ * Quote standalone JSON integers only — not the fractional tail of 1.000000000000000000.
+ */
+function parseJsonPreserveLongs(text: string): unknown {
+  const rewritten = text.replace(/(?<=[:\[{,]\s*)(-?\d{16,})(?=\s*[,}\]])/g, '"$1"');
+  return JSON.parse(rewritten);
+}
+
 async function parseBody(res: Response): Promise<unknown> {
   const text = await res.text();
   if (!text) return null;
   try {
-    return JSON.parse(text);
+    return parseJsonPreserveLongs(text);
   } catch {
-    return text;
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
 }
 
