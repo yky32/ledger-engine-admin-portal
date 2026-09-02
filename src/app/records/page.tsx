@@ -24,13 +24,7 @@ import {
   rememberOwnerId,
 } from "@/lib/owner-memory";
 
-type Tab =
-  | "door"
-  | "brain"
-  | "wallets"
-  | "movements"
-  | "failed"
-  | "ledger-wallets";
+type Tab = "door" | "brain" | "wallets" | "movements" | "failed";
 
 export default function DbRecordsPage() {
   const [tab, setTab] = useState<Tab>("door");
@@ -42,7 +36,6 @@ export default function DbRecordsPage() {
   const [brain, setBrain] = useState<DigestionRule[]>([]);
   const [coa, setCoa] = useState<Record<string, unknown>[]>([]);
   const [failed, setFailed] = useState<FailedIngest[]>([]);
-  const [ledgerWallets, setLedgerWallets] = useState<unknown[]>([]);
   const [ownerInput, setOwnerInput] = useState("");
   const [ownerIds, setOwnerIds] = useState<string[]>([]);
   const [walletByOwner, setWalletByOwner] = useState<Record<string, WalletView | null>>({});
@@ -59,28 +52,25 @@ export default function DbRecordsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [d, b, c, f, lw] = await Promise.all([
+      const [d, b, c, f] = await Promise.all([
         engine.ingestPolicyGet().catch((e) => {
           throw e;
         }),
         engine.digestionRules(),
         engine.coaProfiles().catch(() => ({ data: [] as unknown[] })),
         engine.failedList({ page: 1, size: 100 }).catch(() => ({ data: [] as FailedIngest[] })),
-        engine.ledgerWalletsList(1, 100).catch(() => ({ data: [] as unknown[] })),
       ]);
       setDoor((d.data as IngestPolicy) ?? null);
       const br = b.data;
       setBrain(Array.isArray(br) ? br : br ? [br] : []);
       setCoa(Array.isArray(c.data) ? (c.data as Record<string, unknown>[]) : []);
       setFailed(Array.isArray(f.data) ? f.data : []);
-      setLedgerWallets(Array.isArray(lw.data) ? lw.data : []);
       setLoadedAt(new Date().toISOString());
       setRawDump({
         door: d.data,
         brain: b.data,
         coa: c.data,
         failedCount: Array.isArray(f.data) ? f.data.length : 0,
-        ledgerWalletsCount: Array.isArray(lw.data) ? lw.data.length : 0,
       });
     } catch (e) {
       setError(errMsg(e));
@@ -146,9 +136,8 @@ export default function DbRecordsPage() {
       { id: "wallets", label: "Wallets by ownerId", count: ownerIds.length },
       { id: "movements", label: "Movements", count: Object.values(movementsByOwner).reduce((n, a) => n + a.length, 0) },
       { id: "failed", label: "Fail queue", count: failed.length },
-      { id: "ledger-wallets", label: "ledger_wallets list", count: ledgerWallets.length },
     ],
-    [brain.length, coa.length, ownerIds.length, movementsByOwner, failed.length, ledgerWallets.length],
+    [brain.length, coa.length, ownerIds.length, movementsByOwner, failed.length],
   );
 
   return (
@@ -180,7 +169,7 @@ export default function DbRecordsPage() {
     >
 
       <Alert tone="info">
-        Door/Brain/Fail/ledger-wallets load automatically. Customer wallets & movements need{" "}
+        Door/Brain/Fail load automatically. Customer wallets & movements need{" "}
         <strong>ownerId</strong> (add below — also auto-remembered from Simulator when you run).
         {loadedAt ? (
           <span className="mt-1 block font-mono text-[10px] text-slate-500">last load {loadedAt}</span>
@@ -551,16 +540,6 @@ export default function DbRecordsPage() {
                 </tbody>
               </table>
             </div>
-          )}
-        </Card>
-      )}
-
-      {tab === "ledger-wallets" && (
-        <Card title="GET /ledger-wallets (internal list)" description="All wallet rows if engine exposes list">
-          {ledgerWallets.length === 0 ? (
-            <Empty>Empty or API unavailable</Empty>
-          ) : (
-            <JsonBlock value={ledgerWallets} maxHeight={420} />
           )}
         </Card>
       )}

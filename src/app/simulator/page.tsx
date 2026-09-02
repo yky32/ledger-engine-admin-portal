@@ -378,10 +378,7 @@ function parseHoldAmounts(csv: string): number[] {
 /* ───────── page ───────── */
 
 export default function SimulatorPage() {
-  const [customers, setCustomers] = useState<SimCustomer[]>(() => [
-    newCustomer(1, "ccy-matrix"),
-    newCustomer(2, "smoke"),
-  ]);
+  const [customers, setCustomers] = useState<SimCustomer[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const active =
     customers.find((c) => c.id === (activeId || customers[0]?.id)) || customers[0];
@@ -402,7 +399,10 @@ export default function SimulatorPage() {
   const [filter, setFilter] = useState<"all" | "ok" | "fail">("all");
   const [logCustomer, setLogCustomer] = useState<string>("all");
 
-  // ensure activeId
+  useEffect(() => {
+    setCustomers([newCustomer(1, "ccy-matrix"), newCustomer(2, "smoke")]);
+  }, []);
+
   useEffect(() => {
     if (!activeId && customers[0]) setActiveId(customers[0].id);
   }, [activeId, customers]);
@@ -810,6 +810,17 @@ export default function SimulatorPage() {
 
   const activeCases = active ? casesForCustomer(active) : [];
   const activeEnabled = activeCases.filter((c) => c.enabled).length;
+
+  if (!active) {
+    return (
+      <PageShell
+        title="Simulator"
+        description="SDK webhook per customer: ownerId (01A…) · optional mainAccount (9089/9088) · metadata hashmap."
+      >
+        <p className="text-sm text-slate-500">Preparing roster…</p>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell

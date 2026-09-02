@@ -273,6 +273,10 @@ export const engine = {
   transferInWallet: (body: TransferBody) =>
     ledger.post("/movements/transfers/in-wallet", body),
 
+  /** POST /movements/{id}/refund — reverse DR/CR of a settled EARN/BURN. */
+  refundMovement: (id: number | string) =>
+    ledger.post<MovementView>(`/movements/${id}/refund`, {}),
+
   /* ─── Config ─── */
   /** GET /configurations?target&scope=global */
   configGet: (target: string, scope = "global") =>
@@ -285,11 +289,4 @@ export const engine = {
     scope?: string;
     value: unknown;
   }) => ledger.put("/configurations", body),
-
-  /**
-   * @deprecated catalog — only used by /records optional tab.
-   * Prefer product GET /wallets/{ownerId}.
-   */
-  ledgerWalletsList: (page = 1, size = 50) =>
-    ledger.get(`/ledger-wallets${qs({ page, size })}`),
 };

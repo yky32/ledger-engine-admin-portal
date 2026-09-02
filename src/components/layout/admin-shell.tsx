@@ -19,7 +19,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="scrollbar-thin flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl px-6 py-6">{children}</div>
+          <div className="w-full px-4 py-5">{children}</div>
         </main>
       </div>
     </div>

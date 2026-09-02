@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
@@ -10,7 +10,10 @@ import { errMsg, randomOwnerId } from "@/lib/format";
 import { PageShell } from "@/components/layout/page-shell";
 
 export default function WalletsPage() {
-  const [ownerId, setOwnerId] = useState(randomOwnerId());
+  const [ownerId, setOwnerId] = useState("");
+  useEffect(() => {
+    setOwnerId(randomOwnerId());
+  }, []);
   const [name, setName] = useState("");
   const [settlement, setSettlement] = useState("HKD");
   const [vanityCode, setVanityCode] = useState("");

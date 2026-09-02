@@ -96,6 +96,8 @@ export type MovementView = {
   type?: string;
   remarks?: string;
   metadata?: string;
+  mainAccount?: string;
+  associatedLedgerMovementId?: number | string;
   createDt?: string;
   updateDt?: string;
 };

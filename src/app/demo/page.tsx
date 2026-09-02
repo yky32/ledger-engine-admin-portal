@@ -182,8 +182,8 @@ export default function DemoPage() {
   const [wallet, setWallet] = useState<WalletView | null>(null);
   const [comboSeed, setComboSeed] = useState(1);
   const [comboId, setComboId] = useState("1");
-  const [eventId, setEventId] = useState(() => randomEventId());
-  const [mainAccount, setMainAccount] = useState(() => genMainAccount("9089"));
+  const [eventId, setEventId] = useState("");
+  const [mainAccount, setMainAccount] = useState("");
   const [extraMetaJson, setExtraMetaJson] = useState(
     '{\n  "channel": "UAF_CC",\n  "posId": "HKG-001"\n}',
   );
@@ -194,6 +194,8 @@ export default function DemoPage() {
   );
 
   useEffect(() => {
+    setEventId(randomEventId());
+    setMainAccount(genMainAccount("9089"));
     try {
       const s = sessionStorage.getItem("review.ownerId");
       if (s && s.startsWith("01A")) setOwnerId(s);

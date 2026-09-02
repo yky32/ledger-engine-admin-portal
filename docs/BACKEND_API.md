@@ -78,17 +78,9 @@ Webhook MCC: `metadata.mcc` | `mccCode` | `merchantCategoryCode`.
 | GET/POST | `/accounting-rules` | accounting catalog |
 | GET/POST | `/accounting-rule-executions` | |
 
-## Legacy parallel APIs (still on engine)
-
-| Path | |
-|------|--|
-| `/ledger-wallets` | GET list, POST create, GET `/{id}` |
-| `/ledger-accounts` | GET list, POST, GET `/{id}` |
-| `/ledger-accounts/movements` | |
-| `/ledger/deposits` | alternate deposit path (usecase) |
-| `/accounts/{id}` | COA |
-
 Prefer **product** `/wallets` + `/movements` + `/integrations/*` for LedgeRX Admin loyalty desk.
+
+Alternate money rails still on engine: `/ledger/deposits`, `/ledger/withdrawals`, `/ledger/wallet-transfers/in-wallet`.
 
 ## Pagination
 

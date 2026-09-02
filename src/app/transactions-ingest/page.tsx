@@ -14,14 +14,14 @@ const DEMO_OWNER = "01A81267065";
 
 export default function WebhookPage() {
   const [ownerId, setOwnerId] = useState(DEMO_OWNER);
-  const [eventId, setEventId] = useState(randomEventId());
+  const [eventId, setEventId] = useState("");
   const [eventType, setEventType] = useState("CC_TXN");
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState("HKD");
   const [mcc, setMcc] = useState("");
   const [coaProfileCode, setCoaProfileCode] = useState("");
-  const [occurredAt, setOccurredAt] = useState(nowIso());
-  const [mainAccount, setMainAccount] = useState(() => randomMainAccount("9089"));
+  const [occurredAt, setOccurredAt] = useState("");
+  const [mainAccount, setMainAccount] = useState("");
   const [extraMetaJson, setExtraMetaJson] = useState(
     '{\n  "channel": "UAF_CC",\n  "posId": "HKG-001"\n}',
   );
@@ -30,6 +30,9 @@ export default function WebhookPage() {
   const [result, setResult] = useState<IngestResult | null>(null);
 
   useEffect(() => {
+    setEventId(randomEventId());
+    setOccurredAt(nowIso());
+    setMainAccount(randomMainAccount("9089"));
     try {
       const s = sessionStorage.getItem("review.ownerId");
       if (s && s.startsWith("01A")) setOwnerId(s);

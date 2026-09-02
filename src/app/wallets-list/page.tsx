@@ -59,6 +59,7 @@ const OUT_TYPES = new Set([
   "CHARGE",
   "BANK_CHARGE",
   "HANDLING_CHARGE",
+  "ADJUSTMENT_REFUND",
 ]);
 
 function isHouse(ownerId?: string | null): boolean {
@@ -142,6 +143,7 @@ export default function WalletsQueryListPage() {
   const [showJson, setShowJson] = useState(false);
   const [walletTypeFilter, setWalletTypeFilter] = useState<string>("");
   const [walletTypeQuery, setWalletTypeQuery] = useState("");
+  const [refunding, setRefunding] = useState(false);
 
   const loadLegs = async (movementId: number | string) => {
     setSelectedMovementId(movementId);
@@ -151,6 +153,25 @@ export default function WalletsQueryListPage() {
     } catch (e) {
       setLegs([]);
       setError(errMsg(e));
+    }
+  };
+
+  const refundSelected = async () => {
+    if (selectedMovementId == null || !selected?.ownerId) return;
+    setRefunding(true);
+    setError(null);
+    try {
+      const r = await engine.refundMovement(selectedMovementId);
+      const refund = r.data as MovementView | undefined;
+      await openWallet(selected);
+      if (refund?.id != null) {
+        await loadLegs(refund.id);
+        setTab("all");
+      }
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setRefunding(false);
     }
   };
 
@@ -531,14 +552,20 @@ export default function WalletsQueryListPage() {
                             <td
                               className={clsx(
                                 "font-mono text-xs font-semibold",
-                                flow === "in"
-                                  ? "text-emerald-700"
-                                  : flow === "out"
-                                    ? "text-rose-700"
+                                Number(m.amount) < 0 || flow === "out"
+                                  ? "text-rose-700"
+                                  : flow === "in"
+                                    ? "text-emerald-700"
                                     : "text-slate-700",
                               )}
                             >
-                              {flow === "in" ? "+" : flow === "out" ? "−" : ""}
+                              {Number(m.amount) < 0
+                                ? ""
+                                : flow === "in"
+                                  ? "+"
+                                  : flow === "out"
+                                    ? "−"
+                                    : ""}
                               {money(m.amount)} {m.currency}
                             </td>
                             <td>
@@ -573,10 +600,23 @@ export default function WalletsQueryListPage() {
               className="lg:col-span-2"
             >
               {selectedMv ? (
-                <p className="mb-2 text-[11px] text-slate-500">
-                  {selectedMv.orderType} · {money(selectedMv.amount)} {selectedMv.currency}
-                  {selectedMv.remarks ? ` · ${selectedMv.remarks}` : ""}
-                </p>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] text-slate-500">
+                    {selectedMv.orderType} · {money(selectedMv.amount)} {selectedMv.currency}
+                    {selectedMv.remarks ? ` · ${selectedMv.remarks}` : ""}
+                  </p>
+                  {(selectedMv.orderType === "EARN" || selectedMv.orderType === "BURN") &&
+                  selectedMv.status === "SETTLED" ? (
+                    <button
+                      type="button"
+                      className="btn-secondary text-[11px]"
+                      disabled={refunding}
+                      onClick={() => void refundSelected()}
+                    >
+                      {refunding ? "Refunding…" : "Refund · reverse DR/CR"}
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
               {legs.length === 0 ? (
                 <Empty>{selectedMovementId ? "No DE legs on this movement" : "Click a history row"}</Empty>
