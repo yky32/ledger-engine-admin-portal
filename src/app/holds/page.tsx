@@ -38,7 +38,7 @@ export default function HoldsPage() {
 
   return (
     <PageShell
-      flow="engine"
+      flow="ledger"
       title="Hold / Release LP"
       description="Locks spendable (available) balance only — ledger/total balance unchanged. POST /wallets/holds · /releases"
       api={[

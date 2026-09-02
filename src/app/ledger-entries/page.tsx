@@ -34,8 +34,8 @@ export default function LegsPage() {
 
   return (
     <PageShell
-      flow="books"
-      title="3 · Books — DE legs"
+      flow="ledger"
+      title="Double-entry"
       description="GET /integrations/ledger-entries?eventId= | movementId="
       api={[{ method: "GET", path: "/integrations/ledger-entries" }]}
     >
@@ -66,7 +66,7 @@ export default function LegsPage() {
               <thead>
                 <tr>
                   <th>entryId</th>
-                  <th>accountId</th>
+                  <th>fullNumber</th>
                   <th>dir</th>
                   <th>amount</th>
                   <th>ccy</th>
@@ -76,7 +76,7 @@ export default function LegsPage() {
                 {rows.map((e, i) => (
                   <tr key={e.entryId ?? i}>
                     <td className="font-mono text-[10px]">{e.entryId}</td>
-                    <td className="font-mono text-[10px]">{e.accountId}</td>
+                    <td className="font-mono text-[10px]">{e.fullNumber || "—"}</td>
                     <td>
                       <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
                         {e.direction}

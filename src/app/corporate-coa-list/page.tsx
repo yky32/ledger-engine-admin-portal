@@ -65,9 +65,9 @@ export default function CorporateCoaListPage() {
 
   return (
     <PageShell
-      flow="books"
+      flow="ledger"
       title="House COA — company books"
-      description="UAF finance wallet (ownerId HOUSE). Operating 01-02 and expense 01-04 only — not customer 01-01-01. Edit under 0 · House — Corporate COA."
+      description="UAF finance wallet (ownerId HOUSE). Operating 01-02 and expense 01-04 only — not customer 01-01-01. Edit under House COA."
       api={[{ method: "GET", path: "/coa-profiles" }]}
       actions={
         <Link href="/corporate-coa" className="btn-secondary text-xs">

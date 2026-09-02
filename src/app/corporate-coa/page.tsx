@@ -223,8 +223,8 @@ export default function CorporateCoaPage() {
 
   return (
     <PageShell
-      flow="ops"
-      title="0 · House — Corporate COA"
+      flow="ledger"
+      title="House COA"
       description="createIfNotFound one company wallet per client (UAF = this install). HOUSE_* share that walletId; accounts open under it."
       api={[
         { method: "GET", path: "/coa-profiles" },
@@ -235,7 +235,7 @@ export default function CorporateCoaPage() {
       ]}
       actions={
         <Link href="/coa" className="btn-secondary text-xs">
-          Brain COA (member events) →
+          Customer COA →
         </Link>
       }
     >
@@ -271,7 +271,7 @@ export default function CorporateCoaPage() {
           UA sheet: entity <span className="font-mono">01 CC</span> · type{" "}
           <span className="font-mono">02 Operating</span> / <span className="font-mono">04 Expense</span> · subType{" "}
           <span className="font-mono">02 Corporate</span> · main <span className="font-mono">9999</span>. Member
-          custodian <span className="font-mono">01-01-01</span> stays on Brain COA.
+          custodian <span className="font-mono">01-01-01</span> stays on Customer COA.
         </p>
       </Card>
 
@@ -312,7 +312,7 @@ export default function CorporateCoaPage() {
         <Card
           title={selected ? `Edit · ${selected.code}` : "New house book"}
           className="lg:col-span-3"
-          description="Same four segments as Brain COA — company numbers."
+          description="Same four segments as Customer COA — company numbers."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="field sm:col-span-2">

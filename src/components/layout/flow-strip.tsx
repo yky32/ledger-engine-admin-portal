@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { clsx } from "@/lib/format";
 
-/** Compact flow strip — SYSTEM_BUSINESS_FLOW §3 */
-export function FlowStrip({ active }: { active?: "ops" | "shoot" | "engine" | "books" }) {
+/** Compact flow strip — engine pipeline Door → Brain → Accounting → Ledger */
+export function FlowStrip({ active }: { active?: "door" | "brain" | "accounting" | "ledger" }) {
   const steps: {
-    id: "ops" | "shoot" | "engine" | "books";
+    id: "door" | "brain" | "accounting" | "ledger";
     n: string;
     title: string;
     href: string;
   }[] = [
-    { id: "ops", n: "1", title: "Ops config", href: "/ingest-policies" },
-    { id: "shoot", n: "2", title: "Shoot txn", href: "/simulator" },
-    { id: "engine", n: "3", title: "Engine digest", href: "/review" },
-    { id: "books", n: "4", title: "Books / audit", href: "/ledger-entries" },
+    { id: "door", n: "1", title: "Door", href: "/ingest-policies" },
+    { id: "brain", n: "2", title: "Brain", href: "/digestion-rules" },
+    { id: "accounting", n: "3", title: "Accounting", href: "/accounting-rules" },
+    { id: "ledger", n: "4", title: "Ledger", href: "/wallets-list" },
   ];
 
   return (

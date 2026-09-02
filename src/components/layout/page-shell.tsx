@@ -5,7 +5,7 @@ import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 import { PageHeader, Alert } from "@/components/ui/kit";
 import type { ApiRef } from "@/components/ui/api-path";
 
-export type FlowStep = "ops" | "shoot" | "engine" | "books";
+export type FlowStep = "door" | "brain" | "accounting" | "ledger";
 
 /**
  * Standard page chrome for every Admin surface:
@@ -21,7 +21,7 @@ export function PageShell({
   error,
   children,
 }: {
-  /** Highlight on the shared Door → Shoot → Engine → Books strip. Omit = strip still shows, none selected. */
+  /** Highlight on Door → Brain → Accounting → Ledger. Omit = strip still shows, none selected. */
   flow?: FlowStep;
   title: string;
   description?: string;

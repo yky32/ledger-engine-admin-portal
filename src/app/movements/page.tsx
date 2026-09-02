@@ -50,8 +50,8 @@ export default function MovementsPage() {
 
   return (
     <PageShell
-      flow="engine"
-      title="4 · Audit — Movements"
+      flow="ledger"
+      title="Movements"
       description="Prefer GET /wallets/{ownerId}/movements. GET /movements requires walletId query."
       api={[
         { method: "GET", path: "/wallets/{ownerId}/movements" },

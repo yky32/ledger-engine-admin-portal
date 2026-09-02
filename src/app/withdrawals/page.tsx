@@ -11,7 +11,7 @@ export default function Page() {
       createPath="/movements/withdrawals"
       pageable={false}
       autoload={false}
-      showFlow="engine"
+      showFlow="ledger"
       sample={{
         movementKey: "wd-demo-1",
         ownerId: "01A12345678",

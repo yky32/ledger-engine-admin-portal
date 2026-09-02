@@ -317,17 +317,6 @@ function TAccount({ book }: { book: BookCell }) {
       </div>
       <div className="grid grid-cols-2 divide-x divide-slate-200">
         <div className="px-3 py-2 text-center">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">CR</div>
-          <div
-            className={clsx(
-              "mt-2 min-h-[2.25rem] font-mono text-lg font-semibold",
-              book.credit ? "text-emerald-700" : "text-slate-300",
-            )}
-          >
-            {book.credit || "—"}
-          </div>
-        </div>
-        <div className="px-3 py-2 text-center">
           <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700">DR</div>
           <div
             className={clsx(
@@ -336,6 +325,17 @@ function TAccount({ book }: { book: BookCell }) {
             )}
           >
             {book.debit || "—"}
+          </div>
+        </div>
+        <div className="px-3 py-2 text-center">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">CR</div>
+          <div
+            className={clsx(
+              "mt-2 min-h-[2.25rem] font-mono text-lg font-semibold",
+              book.credit ? "text-emerald-700" : "text-slate-300",
+            )}
+          >
+            {book.credit || "—"}
           </div>
         </div>
       </div>
@@ -578,8 +578,8 @@ export default function AccountingRulesPage() {
 
   return (
     <PageShell
-      flow="ops"
-      title="1 · Accounting rules"
+      flow="accounting"
+      title="Accounting rules"
       description="Create reusable CR/DR legs, combine them into executions, bind one combination per eventType. Ingest uses that walk; switch anytime."
       api={[
         { method: "POST", path: "/accounting-rules" },
@@ -755,7 +755,7 @@ export default function AccountingRulesPage() {
       <Card
         className="mt-6"
         title={`Legs catalog (${rules.length})`}
-        description="Grouped by similar name. CREDIT sits next to its DEBIT pair (TXN_CR_CUST_LP ↔ TXN_DR_CUST_LP)."
+        description="Grouped by similar name. DEBIT on the left, CREDIT on the right (TXN_DR_CUST_LP ↔ TXN_CR_CUST_LP)."
       >
         {rules.length === 0 ? (
           <Empty>No AccountingRule rows yet.</Empty>
@@ -771,8 +771,8 @@ export default function AccountingRulesPage() {
                     <thead>
                       <tr>
                         <th className="w-20">ccy</th>
-                        <th>CREDIT</th>
                         <th>DEBIT</th>
+                        <th>CREDIT</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -782,10 +782,10 @@ export default function AccountingRulesPage() {
                             {row.ccy || "—"}
                           </td>
                           <td>
-                            <LegPairCell rule={row.credit} />
+                            <LegPairCell rule={row.debit} />
                           </td>
                           <td>
-                            <LegPairCell rule={row.debit} />
+                            <LegPairCell rule={row.credit} />
                           </td>
                         </tr>
                       ))}

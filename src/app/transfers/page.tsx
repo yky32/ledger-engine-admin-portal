@@ -11,7 +11,7 @@ export default function Page() {
       createPath="/movements/transfers/in-wallet"
       pageable={false}
       autoload={false}
-      showFlow="engine"
+      showFlow="ledger"
       sample={{
         movementKey: "xfer-demo-1",
         fromOwnerId: "01A12345678",

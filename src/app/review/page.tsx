@@ -74,8 +74,8 @@ export default function ReviewPage() {
 
   return (
     <PageShell
-      flow="engine"
-      title="3 · Customer LP books"
+      flow="ledger"
+      title="Wallet books"
       description="Lookup by ownerId — wallet books, movements, as-of balances, failed ingest, DE legs."
       api={[
         { method: "GET", path: "/wallets/{ownerId}" },
@@ -254,7 +254,7 @@ export default function ReviewPage() {
               <thead>
                 <tr>
                   <th>entryId</th>
-                  <th>accountId</th>
+                  <th>fullNumber</th>
                   <th>dir</th>
                   <th>amount</th>
                   <th>ccy</th>
@@ -264,7 +264,7 @@ export default function ReviewPage() {
                 {legs.map((e, i) => (
                   <tr key={e.entryId ?? i}>
                     <td className="font-mono text-[10px]">{e.entryId}</td>
-                    <td className="font-mono text-[10px]">{e.accountId}</td>
+                    <td className="font-mono text-[10px]">{e.fullNumber || "—"}</td>
                     <td>
                       <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
                         {e.direction}

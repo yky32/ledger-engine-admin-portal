@@ -290,7 +290,6 @@ export default function UseCasesPage() {
 
   return (
     <PageShell
-      flow="ops"
       title="Use cases"
       description="UA sheet: CC Transaction → HKD (cashback) and CC Transaction → LP (loyalty). Same webhook eventType=CC_TXN; Brain resultCurrency picks the books."
       api={[

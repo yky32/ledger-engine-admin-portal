@@ -62,8 +62,8 @@ export default function FailedPage() {
 
   return (
     <PageShell
-      flow="engine"
-      title="3 · Fail queue"
+      flow="ledger"
+      title="Fail queue"
       description="GET/POST /integrations/failed-transactions — review ack or replay pipeline."
       api={[
         { method: "GET", path: "/integrations/failed-transactions" },

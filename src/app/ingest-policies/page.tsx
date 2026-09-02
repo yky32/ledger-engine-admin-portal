@@ -217,8 +217,8 @@ export default function IngestPolicyPage() {
 
   return (
     <PageShell
-      flow="ops"
-      title="1 · Door — Ingest policy"
+      flow="door"
+      title="Door"
       description="First gate: accept the webhook at all? Brain scores after. One global row for the engine."
       api={[
         { method: "GET", path: "/ingest-policies" },

@@ -813,8 +813,7 @@ export default function SimulatorPage() {
 
   return (
     <PageShell
-      flow="shoot"
-      title="2 · Shoot — Simulator"
+      title="Simulator"
       description="SDK webhook per customer: ownerId (01A…) · optional mainAccount (9089/9088) · metadata hashmap."
       api={[
         { method: "POST", path: "/integrations/webhooks/transactions" },

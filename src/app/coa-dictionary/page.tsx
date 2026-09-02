@@ -192,7 +192,7 @@ export default function CoaDictionaryPage() {
 
   return (
     <PageShell
-      flow="books"
+      flow="ledger"
       title="COA dictionary"
       description="Stored meanings of chart digits and stems. 01-02 = house operating. Profiles are the live books; this is the definition list."
       api={[

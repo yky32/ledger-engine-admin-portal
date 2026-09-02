@@ -258,7 +258,7 @@ export default function HomePage() {
             <div className="mt-3 flex flex-col gap-2">
               <Link href="/simulator" className="btn-primary w-full justify-center text-xs">
                 <FlaskConical className="h-3.5 w-3.5" />
-                1 · Simulator shoot matrix
+                Simulator
               </Link>
               <Link href="/transactions-ingest" className="btn-secondary w-full justify-center text-xs">
                 <Webhook className="h-3.5 w-3.5" />
@@ -400,31 +400,31 @@ export default function HomePage() {
           {[
             {
               n: "1",
-              t: "Ops configures",
-              d: "Use cases CC Transaction → HKD / LP · Door gates · Brain eventType rule · accounting legs.",
-              href: "/use-cases",
-              cta: "Use cases",
+              t: "Rules",
+              d: "Door gates · Brain eventType rule · Accounting CR/DR walk. Same eventType on all three.",
+              href: "/ingest-policies",
+              cta: "Door",
             },
             {
               n: "2",
-              t: "Simulator shoots transactions",
+              t: "Ingest",
               d: "Act as POS/OMS — multi-dimension event matrix into webhook.",
               href: "/simulator",
-              cta: "Open simulator",
+              cta: "Simulator",
             },
             {
               n: "3",
-              t: "See how engine digests",
-              d: "Customer review: status EARNED/SKIPPED, movements, fail queue.",
+              t: "Ledger",
+              d: "Wallet books, movements, fail queue — status EARNED / SKIPPED.",
               href: "/review",
-              cta: "Customer review",
+              cta: "Wallet books",
             },
             {
               n: "4",
-              t: "Inspect booking (double-entry)",
+              t: "Double-entry",
               d: "Legs by eventId — house operating vs this customer's 01-01-01.",
               href: "/ledger-entries",
-              cta: "DE legs",
+              cta: "Double-entry",
             },
           ].map((s) => (
             <li

@@ -537,8 +537,8 @@ export default function DigestionRulesPage() {
 
   return (
     <PageShell
-      flow="ops"
-      title="1 · Brain — Digestion rules"
+      flow="brain"
+      title="Brain"
       description="Walk is one list: lower priority is 1st. Wrong eventType is skipped, not a fail. First bingo stops. Else SKIPPED / NO_RULE."
       api={[
         { method: "GET", path: "/digestion-rules" },

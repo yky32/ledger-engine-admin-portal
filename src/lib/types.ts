@@ -196,6 +196,7 @@ export type EligibilityTraceEntry = {
 export type LedgerLeg = {
   entryId?: number | string;
   accountId?: number | string;
+  fullNumber?: string;
   direction?: string;
   amount?: number | string;
   currency?: CurrencyCode;

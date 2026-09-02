@@ -52,7 +52,7 @@ export function Sidebar() {
             <EngineBadge state={engineState} />
           </div>
           <div className="truncate text-[11px] text-slate-400">
-            Admin · Door · Brain · Books
+            Door · Brain · Accounting · Ledger
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function Sidebar() {
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{item.label}</span>
-                        {g.name === "Query" && item.blurb ? (
+                        {item.blurb ? (
                           <span
                             className={clsx(
                               "block truncate text-[10px] leading-tight",

@@ -161,8 +161,7 @@ client.events().submit(event);`;
 
   return (
     <PageShell
-      flow="shoot"
-      title="2 · Shoot — Single webhook"
+      title="Webhook"
       description="SDK TransactionalEvent — ownerId + optional mainAccount + metadata hashmap. Dry-run or live."
       api={[
         { method: "POST", path: "/integrations/webhooks/transactions" },

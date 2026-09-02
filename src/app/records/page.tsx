@@ -153,7 +153,7 @@ export default function DbRecordsPage() {
 
   return (
     <PageShell
-      flow="engine"
+      flow="ledger"
       title="DB records"
       description="Reload from engine APIs — shows what is persisted (not local form state)."
       api={[
@@ -359,8 +359,8 @@ export default function DbRecordsPage() {
           <Card
             title={`Brain · coa_profile (${coa.length}) — GET /coa-profiles`}
             right={
-              <Link href="/coa-list" className="text-xs text-emerald-700 hover:underline">
-                COA list →
+              <Link href="/coa" className="text-xs text-emerald-700 hover:underline">
+                Customer COA →
               </Link>
             }
           >

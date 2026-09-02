@@ -57,8 +57,8 @@ export default function WalletsPage() {
 
   return (
     <PageShell
-      flow="ops"
-      title="Wallet onboard (CRM)"
+      flow="ledger"
+      title="Onboard"
       description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode selects COA profile."
       api={[
         { method: "POST", path: "/wallets" },

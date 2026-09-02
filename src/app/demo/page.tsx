@@ -462,7 +462,6 @@ client.events().submit(event);`;
 
   return (
     <PageShell
-      flow="shoot"
       title="Demo · Earn 5 LP"
       description="Base: credit card · HKD 1000 · 15 Aug 2026 14:30 HKT · MCC 101. Brain RATE 1% → 10 LP when MCC+ccy+age match."
       api={[
@@ -500,9 +499,9 @@ client.events().submit(event);`;
           <Brain className="h-4 w-4 text-violet-600" />
           Brain · rules
         </Link>
-        <Link href="/coa-list" className="btn-secondary justify-start text-xs">
+        <Link href="/coa" className="btn-secondary justify-start text-xs">
           <BookOpen className="h-4 w-4 text-violet-600" />
-          Brain · COA
+          Customer COA
         </Link>
         <Link href="/wallets" className="btn-secondary justify-start text-xs">
           <Wallet className="h-4 w-4 text-sky-600" />

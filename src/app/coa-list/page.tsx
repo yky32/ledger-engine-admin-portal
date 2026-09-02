@@ -67,9 +67,9 @@ export default function CoaQueryListPage() {
 
   return (
     <PageShell
-      flow="books"
+      flow="ledger"
       title="Customer COA — 01-01-01"
-      description="Custodian chart for member wallets (CUSTOMER_CUST_HKD / LP). Not house 01-02 / 01-04. Edit under Brain — Customer COA."
+      description="Custodian chart for member wallets (CUSTOMER_CUST_HKD / LP). Not house 01-02 / 01-04. Edit under Customer COA."
       api={[
         { method: "GET", path: "/coa-profiles" },
         { method: "GET", path: "/coa-profiles/default" },

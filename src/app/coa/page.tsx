@@ -156,8 +156,8 @@ export default function CoaPage() {
 
   return (
     <PageShell
-      flow="ops"
-      title="1 · Brain — Customer COA"
+      flow="ledger"
+      title="Customer COA"
       description="Chart of accounts only (entity / type / subType / currency). Posting sequences bind eventType on Accounting rules."
       api={[
         { method: "GET", path: "/coa-profiles" },

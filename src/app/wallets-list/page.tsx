@@ -283,7 +283,7 @@ export default function WalletsQueryListPage() {
 
   return (
     <PageShell
-      flow="books"
+      flow="ledger"
       title="Wallets"
       description="Click a row for books, incoming history, and DE legs. GET /wallets · /wallets/{ownerId}/movements · ledger-entries."
       api={[
@@ -619,10 +619,11 @@ export default function WalletsQueryListPage() {
                             </td>
                             <td>
                               <div className="font-mono text-[10px] text-slate-600">
-                                {book?.fullNumber || e.accountId || "—"}
+                                {e.fullNumber || book?.fullNumber || "—"}
                               </div>
                               <div className="text-[10px] text-slate-400">
-                                {book?.currency || e.currency} {book?.name || ""}
+                                {book?.currency || e.currency}
+                                {book?.name ? ` ${book.name}` : ""}
                               </div>
                             </td>
                           </tr>
