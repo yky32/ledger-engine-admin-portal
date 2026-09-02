@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, Empty, Alert, JsonBlock } from "@/components/ui/kit";
+import { Card, Badge, Empty, Alert, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel } from "@/components/ui/help";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
-import { errMsg, money } from "@/lib/format";
-import { HOUSE_COA_PRESETS, isHouseCoaCode } from "@/lib/recipes";
+import { errMsg } from "@/lib/format";
+import { HOUSE_COA_PRESETS, HOUSE_OWNER_ID, isHouseCoaCode } from "@/lib/recipes";
 import type { WalletAccount } from "@/lib/types";
+import { AccountBooksTable } from "@/components/books/account-books-table";
 
 type CoaRow = {
   id?: number | string;
@@ -86,7 +86,7 @@ export default function CorporateCoaPage() {
     setError(null);
     try {
       try {
-        const h = await engine.houseEnsure("PROGRAM");
+        const h = await engine.houseEnsure(HOUSE_OWNER_ID);
         applyHouse((h.data as HouseBooks) ?? null);
         const data = h.data as HouseBooks;
         if (data?.walletId) {
@@ -206,7 +206,7 @@ export default function CorporateCoaPage() {
     setError(null);
     setOk(null);
     try {
-      const r = await engine.houseEnsure("PROGRAM");
+      const r = await engine.houseEnsure(HOUSE_OWNER_ID);
       const data = r.data as HouseBooks;
       applyHouse(data);
       setOk(`Company wallet ready · walletId ${data.walletId} · ${data.accounts?.length ?? 0} account(s)`);
@@ -222,25 +222,23 @@ export default function CorporateCoaPage() {
   const walletId = house?.walletId ?? selected?.walletId ?? null;
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="0 · House — Corporate COA"
-        description="createIfNotFound one company wallet per client (UAF = this install). HOUSE_* share that walletId; accounts open under it."
-        api={[
-          { method: "GET", path: "/coa-profiles" },
-          { method: "POST", path: "/coa-profiles" },
-          { method: "PUT", path: "/coa-profiles/{id}" },
-          { method: "GET", path: "/corporate-coa" },
-          { method: "POST", path: "/corporate-coa" },
-        ]}
-        actions={
-          <Link href="/coa" className="btn-secondary text-xs">
-            Brain COA (member events) →
-          </Link>
-        }
-      />
+    <PageShell
+      flow="ops"
+      title="0 · House — Corporate COA"
+      description="createIfNotFound one company wallet per client (UAF = this install). HOUSE_* share that walletId; accounts open under it."
+      api={[
+        { method: "GET", path: "/coa-profiles" },
+        { method: "POST", path: "/coa-profiles" },
+        { method: "PUT", path: "/coa-profiles/{id}" },
+        { method: "GET", path: "/corporate-coa" },
+        { method: "POST", path: "/corporate-coa" },
+      ]}
+      actions={
+        <Link href="/coa" className="btn-secondary text-xs">
+          Brain COA (member events) →
+        </Link>
+      }
+    >
 
       <Alert tone="info">
         House profiles are chart codes (<code className="text-xs">HOUSE_*</code>), not webhook{" "}
@@ -391,7 +389,7 @@ export default function CorporateCoaPage() {
                 checked={form.poolAllowNegative}
                 onChange={(e) => setForm({ ...form, poolAllowNegative: e.target.checked })}
               />
-              poolAllowNegative (PROGRAM may go negative)
+              poolAllowNegative (HOUSE may go negative)
             </label>
             <div className="sm:col-span-2">
               <ActionBar loading={loading} error={error} ok={ok}>
@@ -432,15 +430,15 @@ export default function CorporateCoaPage() {
       <Card
         className="mt-4"
         title="Company wallet + accounts"
-        description="POST /corporate-coa — createIfNotFound ownerId=PROGRAM. Same walletId on every HOUSE_* book."
+        description="POST /corporate-coa — createIfNotFound ownerId=HOUSE. Same walletId on every HOUSE_* book."
       >
         {walletId != null ? (
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Badge tone="ok">wallet assigned</Badge>
             <span className="font-mono text-xs text-slate-700">walletId {walletId}</span>
-            <span className="text-xs text-slate-500">ownerId {house?.ownerId || "PROGRAM"}</span>
+            <span className="text-xs text-slate-500">ownerId {house?.ownerId || HOUSE_OWNER_ID}</span>
             <Link
-              href={`/wallets-list?ownerId=${encodeURIComponent(house?.ownerId || "PROGRAM")}`}
+              href={`/wallets-list?ownerId=${encodeURIComponent(house?.ownerId || HOUSE_OWNER_ID)}`}
               className="text-xs text-emerald-700 hover:underline"
             >
               Incoming history →
@@ -448,34 +446,13 @@ export default function CorporateCoaPage() {
           </div>
         ) : (
           <p className="mb-3 text-sm text-slate-600">
-            This page createIfNotFound the singleton company wallet (ownerId PROGRAM — UAF in this install).
+            This page createIfNotFound the singleton company wallet (ownerId HOUSE — UAF finance).
             Restart ledger-engine if ensure 404s, then Reload.
           </p>
         )}
         {books.length > 0 ? (
-          <div className="table-wrap mb-3">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ccy</th>
-                  <th>fullNumber</th>
-                  <th>walletId</th>
-                  <th>ledger</th>
-                  <th>available</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((a, i) => (
-                  <tr key={a.id ?? i}>
-                    <td className="font-medium">{a.currency}</td>
-                    <td className="font-mono text-[10px]">{a.fullNumber || "—"}</td>
-                    <td className="font-mono text-[10px]">{a.walletId ?? walletId ?? "—"}</td>
-                    <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
-                    <td className="font-mono text-xs">{money(a.availableBalance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mb-3">
+            <AccountBooksTable accounts={books} showWalletId showName={false} />
           </div>
         ) : null}
         <ActionBar loading={loading} error={error} ok={ok}>
@@ -497,6 +474,6 @@ export default function CorporateCoaPage() {
           </div>
         ) : null}
       </Card>
-    </div>
+    </PageShell>
   );
 }

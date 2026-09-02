@@ -5,10 +5,9 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, JsonBlock, Empty, Alert } from "@/components/ui/kit";
+import { Card, Badge, JsonBlock, Empty, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { FlowStrip } from "@/components/layout/flow-strip";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg, money, shortId } from "@/lib/format";
 import type {
@@ -18,6 +17,7 @@ import type {
   MovementView,
   WalletView,
 } from "@/lib/types";
+import { AccountBooksTable } from "@/components/books/account-books-table";
 import {
   clearRememberedOwnerIds,
   loadRememberedOwnerIds,
@@ -152,34 +152,32 @@ export default function DbRecordsPage() {
   );
 
   return (
-    <div>
-      <FlowStrip active="engine" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="DB records"
-        description="Reload from engine APIs — shows what is persisted (not local form state)."
-        api={[
-          { method: "GET", path: "/ingest-policies" },
-          { method: "GET", path: "/digestion-rules" },
-          { method: "GET", path: "/coa-profiles" },
-          { method: "GET", path: "/wallets/{ownerId}" },
-          { method: "GET", path: "/integrations/failed-transactions" },
-        ]}
-        actions={
-          <ActionBar loading={loading} error={error}>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => {
-                void refreshConfig();
-                if (ownerIds.length) void refreshOwners(ownerIds);
-              }}
-            >
-              Reload all from DB
-            </button>
-          </ActionBar>
-        }
-      />
+    <PageShell
+      flow="engine"
+      title="DB records"
+      description="Reload from engine APIs — shows what is persisted (not local form state)."
+      api={[
+        { method: "GET", path: "/ingest-policies" },
+        { method: "GET", path: "/digestion-rules" },
+        { method: "GET", path: "/coa-profiles" },
+        { method: "GET", path: "/wallets/{ownerId}" },
+        { method: "GET", path: "/integrations/failed-transactions" },
+      ]}
+      actions={
+        <ActionBar loading={loading} error={error}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              void refreshConfig();
+              if (ownerIds.length) void refreshOwners(ownerIds);
+            }}
+          >
+            Reload all from DB
+          </button>
+        </ActionBar>
+      }
+    >
 
       <Alert tone="info">
         Door/Brain/Fail/ledger-wallets load automatically. Customer wallets & movements need{" "}
@@ -447,29 +445,11 @@ export default function DbRecordsPage() {
                         <dt className="text-slate-500">vanity</dt>
                         <dd className="font-mono text-xs">{w.vanityCode || "—"}</dd>
                       </dl>
-                      <div className="table-wrap mb-2">
-                        <table className="data-table">
-                          <thead>
-                            <tr>
-                              <th>ccy</th>
-                              <th>fullNumber</th>
-                              <th>ledger</th>
-                              <th>available</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(w.accounts?.length ? w.accounts : w.account ? [w.account] : []).map(
-                              (a, i) => (
-                                <tr key={a.id ?? i}>
-                                  <td>{a.currency}</td>
-                                  <td className="font-mono text-[10px]">{a.fullNumber}</td>
-                                  <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
-                                  <td className="font-mono text-xs">{money(a.availableBalance)}</td>
-                                </tr>
-                              ),
-                            )}
-                          </tbody>
-                        </table>
+                      <div className="mb-2">
+                        <AccountBooksTable
+                          accounts={w.accounts?.length ? w.accounts : w.account ? [w.account] : []}
+                          showName={false}
+                        />
                       </div>
                       <details>
                         <summary className="cursor-pointer text-xs text-slate-500">Raw wallet JSON</summary>
@@ -588,6 +568,6 @@ export default function DbRecordsPage() {
       <Card className="mt-4" title="Last config raw dump">
         {rawDump ? <JsonBlock value={rawDump} maxHeight={200} /> : <Empty>—</Empty>}
       </Card>
-    </div>
+    </PageShell>
   );
 }

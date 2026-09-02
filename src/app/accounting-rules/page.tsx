@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, Empty, Alert, Spinner } from "@/components/ui/kit";
+import { Card, Badge, Empty, Alert, Spinner } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg, clsx } from "@/lib/format";
 import { EVENT_TYPES, EVENT_TYPE_LABELS, HOUSE_MAIN_ACCOUNT } from "@/lib/recipes";
@@ -49,7 +48,7 @@ type SequenceView = {
 const SPEC: SequenceView[] = [
   {
     key: "spec-hkd",
-    title: "Cashback · HKD",
+    title: "CC Transaction → HKD",
     eventType: "CC_TXN_HKD",
     orderType: "EARN",
     description: "e.g. customer has made a credit card txn of $100",
@@ -57,7 +56,7 @@ const SPEC: SequenceView[] = [
     walk: [],
     books: [
       {
-        code: "MEMBER_CUST_HKD",
+        code: "CUSTOMER_CUST_HKD",
         title: "Customer reward account (HKD)",
         path: "01-01-01-xxxxxxxx-HKD",
         house: false,
@@ -74,7 +73,7 @@ const SPEC: SequenceView[] = [
   },
   {
     key: "spec-lp",
-    title: "Loyalty · LP",
+    title: "CC Transaction → LP",
     eventType: "CC_TXN_LP",
     orderType: "EARN",
     description: "e.g. customer has made a credit card txn of $100 — same-currency DE (LP/LP)",
@@ -82,7 +81,7 @@ const SPEC: SequenceView[] = [
     walk: [],
     books: [
       {
-        code: "MEMBER_CUST_LP",
+        code: "CUSTOMER_CUST_LP",
         title: "Customer reward account (LP)",
         path: "01-01-01-xxxxxxxx-LP",
         house: false,
@@ -98,6 +97,111 @@ const SPEC: SequenceView[] = [
     ],
   },
 ];
+
+/** TXN_CR_CUST_LP → family CUST, ccy LP, dir CR. Pair CR with the matching DR. */
+function parseLegName(name?: string): {
+  raw: string;
+  family: string;
+  ccy: string;
+  dir: "CR" | "DR" | null;
+  stem: string;
+} {
+  const raw = (name || "").trim();
+  const n = raw.toUpperCase();
+  const m = n.match(/^(?:TXN_)?(CR|DR)_(.+)$/);
+  if (!m) {
+    return { raw, family: "OTHER", ccy: "", dir: null, stem: n || raw };
+  }
+  const dir = m[1] as "CR" | "DR";
+  const rest = m[2];
+  const segs = rest.split("_").filter(Boolean);
+  const ccy = segs.length > 1 ? segs[segs.length - 1] : "";
+  const family = segs.length > 1 ? segs.slice(0, -1).join("_") : rest;
+  return { raw, family, ccy, dir, stem: rest };
+}
+
+type LegPairRow = {
+  family: string;
+  ccy: string;
+  stem: string;
+  credit?: AccountingRule;
+  debit?: AccountingRule;
+};
+
+const FAMILY_ORDER = ["CUST", "OP", "OTHER"];
+
+function groupLegPairs(rules: AccountingRule[]): { family: string; rows: LegPairRow[] }[] {
+  const map = new Map<string, LegPairRow>();
+  const unmatched: AccountingRule[] = [];
+  for (const r of rules) {
+    const p = parseLegName(r.name);
+    if (!p.dir) {
+      unmatched.push(r);
+      continue;
+    }
+    const key = `${p.family}\0${p.ccy || p.stem}`;
+    let row = map.get(key);
+    if (!row) {
+      row = { family: p.family, ccy: p.ccy, stem: p.stem };
+      map.set(key, row);
+    }
+    if (p.dir === "CR") row.credit = r;
+    else row.debit = r;
+  }
+  const byFamily = new Map<string, LegPairRow[]>();
+  for (const row of map.values()) {
+    const list = byFamily.get(row.family) ?? [];
+    list.push(row);
+    byFamily.set(row.family, list);
+  }
+  const families = [...byFamily.keys()].sort((a, b) => {
+    const ra = FAMILY_ORDER.indexOf(a);
+    const rb = FAMILY_ORDER.indexOf(b);
+    return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb) || a.localeCompare(b);
+  });
+  const out = families.map((family) => ({
+    family,
+    rows: (byFamily.get(family) ?? []).sort(
+      (a, b) => a.ccy.localeCompare(b.ccy) || a.stem.localeCompare(b.stem),
+    ),
+  }));
+  if (unmatched.length) {
+    out.push({
+      family: "OTHER",
+      rows: unmatched.map((r) => {
+        const dir = String(r.direction ?? "").toUpperCase();
+        return {
+          family: "OTHER",
+          ccy: "",
+          stem: r.name || "",
+          credit: dir === "CREDIT" ? r : undefined,
+          debit: dir === "DEBIT" ? r : undefined,
+        };
+      }),
+    });
+  }
+  return out;
+}
+
+function LegPairCell({ rule }: { rule?: AccountingRule }) {
+  if (!rule) {
+    return <span className="text-[11px] text-slate-300">—</span>;
+  }
+  const dir = String(rule.direction ?? "").toUpperCase();
+  return (
+    <div className="min-w-[12rem]">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="font-mono text-xs font-semibold">{rule.name}</span>
+        <Badge tone={dir === "CREDIT" ? "ok" : "error"}>{rule.direction}</Badge>
+      </div>
+      <div className="mt-0.5 font-mono text-[11px] text-emerald-800">{rule.targetAccount || "—"}</div>
+      <div className="text-[11px] text-slate-500">
+        ×{String(rule.multiplier ?? "1")}
+        {rule.description ? ` · ${rule.description}` : ""}
+      </div>
+    </div>
+  );
+}
 
 function parseMeta(metadata: AccountingRuleExecution["metadata"]): MetaDetail[] {
   if (!metadata) return [];
@@ -180,10 +284,10 @@ function toSequence(
 
   const et = (ex.eventType || "").trim().toUpperCase();
   const title =
-    et === "CC_TXN_HKD"
-      ? "Cashback · HKD"
-      : et === "CC_TXN_LP"
-        ? "Loyalty · LP"
+    et === "CC_TXN_HKD" || (ex.name || "").toUpperCase() === "EARN_HKD"
+      ? "CC Transaction → HKD"
+      : et === "CC_TXN_LP" || (ex.name || "").toUpperCase() === "CC_TXN_LP"
+        ? "CC Transaction → LP"
         : EVENT_TYPE_LABELS[et as keyof typeof EVENT_TYPE_LABELS]
           ? `${et} · ${EVENT_TYPE_LABELS[et as keyof typeof EVENT_TYPE_LABELS]}`
           : ex.name || et || "Default EARN";
@@ -208,7 +312,7 @@ function TAccount({ book }: { book: BookCell }) {
         <div className="text-xs font-semibold text-slate-800">{book.title}</div>
         <div className="mt-0.5 font-mono text-[10px] text-slate-500">{book.path}</div>
         <div className="mt-1">
-          <Badge tone={book.house ? "info" : "ok"}>{book.house ? "house wallet" : "member wallet · runtime"}</Badge>
+          <Badge tone={book.house ? "info" : "ok"}>{book.house ? "house wallet" : "customer wallet · runtime"}</Badge>
         </div>
       </div>
       <div className="grid grid-cols-2 divide-x divide-slate-200">
@@ -286,7 +390,7 @@ function SequenceCard({
         ))}
       </div>
       <p className="mt-3 text-[11px] text-slate-500">
-        <code className="text-[10px]">xxxxxxxx</code> is the wallet main account — member books resolve at
+        <code className="text-[10px]">xxxxxxxx</code> is the wallet main account — customer books resolve at
         runtime (different account id per CUST). House operating uses the company wallet (
         {HOUSE_MAIN_ACCOUNT}).
       </p>
@@ -362,7 +466,7 @@ export default function AccountingRulesPage() {
     setError(null);
     setOk(null);
     try {
-      await engine.houseEnsure("PROGRAM").catch(() => null);
+      await engine.houseEnsure("HOUSE").catch(() => null);
       await refresh();
       const listed = await engine.accountingRuleExecutions();
       const execs = Array.isArray(listed.data) ? listed.data : [];
@@ -473,30 +577,36 @@ export default function AccountingRulesPage() {
   }, [rules]);
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="1 · Accounting rules"
-        description="Create reusable CR/DR legs, combine them into executions, bind one combination per eventType. Ingest uses that walk; switch anytime."
-        api={[
-          { method: "POST", path: "/accounting-rules" },
-          { method: "PUT", path: "/accounting-rules/{id}" },
-          { method: "POST", path: "/accounting-rule-executions" },
-          { method: "PUT", path: "/accounting-rule-executions/{id}" },
-          { method: "POST", path: "/accounting-rules/ensure" },
-        ]}
-        actions={
-          <ActionBar loading={loading} error={error} ok={ok}>
-            <button type="button" className="btn-secondary" onClick={() => void load()}>
-              Reload
-            </button>
-          </ActionBar>
-        }
-      />
+    <PageShell
+      flow="ops"
+      title="1 · Accounting rules"
+      description="Create reusable CR/DR legs, combine them into executions, bind one combination per eventType. Ingest uses that walk; switch anytime."
+      api={[
+        { method: "POST", path: "/accounting-rules" },
+        { method: "PUT", path: "/accounting-rules/{id}" },
+        { method: "POST", path: "/accounting-rule-executions" },
+        { method: "PUT", path: "/accounting-rule-executions/{id}" },
+        { method: "POST", path: "/accounting-rules/ensure" },
+      ]}
+      actions={
+        <ActionBar loading={loading} error={error} ok={ok}>
+          <button type="button" className="btn-secondary" onClick={() => void load()}>
+            Reload
+          </button>
+        </ActionBar>
+      }
+    >
 
       <Alert tone="info">
-        Legs are reusable. An <strong>execution</strong> is an ordered combination. Binding{" "}
+        Product use cases:{" "}
+        <Link href="/use-cases" className="underline">
+          CC Transaction → HKD
+        </Link>{" "}
+        and{" "}
+        <Link href="/use-cases" className="underline">
+          CC Transaction → LP
+        </Link>
+        . Legs are reusable. An <strong>execution</strong> is an ordered combination. Binding{" "}
         <code className="text-xs">eventType</code> makes that combo live for ingest — previous binding for
         the same eventType is cleared.
       </Alert>
@@ -645,38 +755,45 @@ export default function AccountingRulesPage() {
       <Card
         className="mt-6"
         title={`Legs catalog (${rules.length})`}
-        description="Reusable templates. Combinations above pick from this list."
+        description="Grouped by similar name. CREDIT sits next to its DEBIT pair (TXN_CR_CUST_LP ↔ TXN_DR_CUST_LP)."
       >
         {rules.length === 0 ? (
           <Empty>No AccountingRule rows yet.</Empty>
         ) : (
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>name</th>
-                  <th>direction</th>
-                  <th>multiplier</th>
-                  <th>targetAccount (COA)</th>
-                  <th>description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rules.map((r) => (
-                  <tr key={String(r.id)}>
-                    <td className="font-mono text-xs font-semibold">{r.name}</td>
-                    <td>
-                      <Badge tone={String(r.direction).toUpperCase() === "CREDIT" ? "ok" : "error"}>
-                        {r.direction}
-                      </Badge>
-                    </td>
-                    <td className="font-mono text-xs">{String(r.multiplier ?? "1")}</td>
-                    <td className="font-mono text-xs text-emerald-800">{r.targetAccount}</td>
-                    <td className="text-xs text-slate-500">{r.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-4">
+            {groupLegPairs(rules).map((g) => (
+              <div key={g.family}>
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  {g.family}
+                </div>
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th className="w-20">ccy</th>
+                        <th>CREDIT</th>
+                        <th>DEBIT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.rows.map((row) => (
+                        <tr key={`${g.family}-${row.stem}`}>
+                          <td className="whitespace-nowrap font-mono text-xs font-semibold text-slate-600">
+                            {row.ccy || "—"}
+                          </td>
+                          <td>
+                            <LegPairCell rule={row.credit} />
+                          </td>
+                          <td>
+                            <LegPairCell rule={row.debit} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </Card>
@@ -684,6 +801,6 @@ export default function AccountingRulesPage() {
       {bound.length === 0 && executions.length > 0 ? (
         <p className="mt-3 text-xs text-slate-500">{executions.length} combination(s) stored, none bound to an eventType yet.</p>
       ) : null}
-    </div>
+    </PageShell>
   );
 }

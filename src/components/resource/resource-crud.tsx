@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Plus, Search, Trash2, Pencil } from "lucide-react";
 import { ApiError, ledger } from "@/lib/api";
 import { asArray, asRecord } from "@/lib/utils";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageShell } from "@/components/layout/page-shell";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/input";
@@ -259,32 +259,31 @@ export function ResourceCrud(props: Props) {
   const cols = pickColumns(rows, columns);
 
   return (
-    <div>
-      <PageHeader
-        title={title}
-        description={description}
-        api={[
-          { method: "GET", path: listPath },
-          ...(createPath ? [{ method: createMethod, path: createPath }] : []),
-          ...(updatePathTemplate
-            ? [{ method: updateMethod, path: updatePathTemplate }]
-            : []),
-        ]}
-        actions={
-          <>
-            <Button variant="secondary" onClick={() => void load()} disabled={loading}>
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-              Refresh
+    <PageShell
+      title={title}
+      description={description}
+      api={[
+        { method: "GET", path: listPath },
+        ...(createPath ? [{ method: createMethod, path: createPath }] : []),
+        ...(updatePathTemplate
+          ? [{ method: updateMethod, path: updatePathTemplate }]
+          : []),
+      ]}
+      actions={
+        <>
+          <Button variant="secondary" onClick={() => void load()} disabled={loading}>
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          {createPath ? (
+            <Button onClick={() => setShowCreate((v) => !v)}>
+              <Plus className="h-3.5 w-3.5" />
+              Create
             </Button>
-            {createPath ? (
-              <Button onClick={() => setShowCreate((v) => !v)}>
-                <Plus className="h-3.5 w-3.5" />
-                Create
-              </Button>
-            ) : null}
-          </>
-        }
-      />
+          ) : null}
+        </>
+      }
+    >
 
       {error ? (
         <div className="mb-4">
@@ -362,7 +361,7 @@ export function ResourceCrud(props: Props) {
           <CardHeader title="Records" description={`${rows.length} row(s)`} />
           <CardBody className="overflow-x-auto p-0">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50 text-xs uppercase text-zinc-500">
+              <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
                   {cols.map((c) => (
                     <th key={c} className="px-3 py-2 font-medium">
@@ -375,7 +374,7 @@ export function ResourceCrud(props: Props) {
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={cols.length + 1} className="px-3 py-8 text-center text-zinc-400">
+                    <td colSpan={cols.length + 1} className="px-3 py-8 text-center text-slate-400">
                       {loading ? "Loading…" : "No data — set filters and Load, or Create."}
                     </td>
                   </tr>
@@ -383,9 +382,9 @@ export function ResourceCrud(props: Props) {
                   rows.map((row, i) => {
                     const id = getRowId(row);
                     return (
-                      <tr key={id || i} className="border-b border-zinc-50 hover:bg-zinc-50/80">
+                      <tr key={id || i} className="border-b border-slate-50 hover:bg-slate-50/80">
                         {cols.map((c) => (
-                          <td key={c} className="max-w-[180px] truncate px-3 py-2 text-zinc-700">
+                          <td key={c} className="max-w-[180px] truncate px-3 py-2 text-slate-700">
                             {cell(row[c])}
                           </td>
                         ))}
@@ -496,6 +495,6 @@ export function ResourceCrud(props: Props) {
           </Card>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

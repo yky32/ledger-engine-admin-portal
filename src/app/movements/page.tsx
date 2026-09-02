@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
+import { Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 
@@ -50,17 +49,15 @@ export default function MovementsPage() {
   };
 
   return (
-    <div>
-      <FlowStrip active="engine" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="4 · Audit — Movements"
-        description="Prefer GET /wallets/{ownerId}/movements. GET /movements requires walletId query."
-        api={[
-          { method: "GET", path: "/wallets/{ownerId}/movements" },
-          { method: "GET", path: "/movements?walletId=" },
-        ]}
-      />
+    <PageShell
+      flow="engine"
+      title="4 · Audit — Movements"
+      description="Prefer GET /wallets/{ownerId}/movements. GET /movements requires walletId query."
+      api={[
+        { method: "GET", path: "/wallets/{ownerId}/movements" },
+        { method: "GET", path: "/movements?walletId=" },
+      ]}
+    >
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="By ownerId (recommended)">
           <label className="field">
@@ -102,6 +99,6 @@ export default function MovementsPage() {
       <div className="mt-4">
         <Card title="Data">{data ? <JsonBlock value={data} maxHeight={480} /> : null}</Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

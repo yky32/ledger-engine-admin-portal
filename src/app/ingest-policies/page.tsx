@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { PageHeader, Card, Badge, JsonBlock, Alert } from "@/components/ui/kit";
+import { Card, Badge, JsonBlock, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel } from "@/components/ui/help";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
 import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
 import {
@@ -23,16 +23,15 @@ import {
 import { engine } from "@/lib/engine";
 import { errMsg, clsx } from "@/lib/format";
 import type { IngestPolicy } from "@/lib/types";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 const TIPS = {
   settlement: {
     title: "Settlement currency",
-    body: "Primary cash book on auto-create (e.g. HKD). Loyalty points sit on the ensure book.",
+    body: "Wallet.settlementCurrency and the primary 01-01-01 book (HKD). Not Brain reward.",
   },
   ensure: {
     title: "Ensure currency",
-    body: "Second book on auto-create — almost always LP. Earn/burn posts here.",
+    body: "Second 01-01-01 book on the same mainAccount (LP). Same chart, other currency — not 10-20-00.",
   },
 } as const;
 
@@ -99,7 +98,7 @@ function policySentence(p: IngestPolicy, gate: FactorGate, gatesLive: boolean): 
           .filter((b) => !b.startsWith("any "))
           .join(" AND ") || "every webhook";
   const wallet = p.isAutoCreateWallet
-    ? `Missing wallet → open ${p.autoWalletSettlementCurrency || "HKD"} + ${p.autoWalletEnsureCurrency || "LP"} books.`
+    ? "Missing wallet → settlement HKD, 01-01-01 HKD + LP on event.mainAccount."
     : "Missing wallet → NO_WALLET (CRM onboard first).";
   return `Admit ${who}. Brain scores after. ${wallet}`;
 }
@@ -186,21 +185,52 @@ export default function IngestPolicyPage() {
     }
   };
 
+  const quickAllAny = async () => {
+    setLoading(true);
+    setError(null);
+    setOk(null);
+    try {
+      setGatesLive(true);
+      setGate({ ...EMPTY_FACTOR_GATE });
+      const r = await engine.ingestPolicyPut({
+        isEnabled: true,
+        isAutoCreateWallet: true,
+        autoWalletSettlementCurrency: "HKD",
+        autoWalletEnsureCurrency: "LP",
+        autoWalletNamePrefix: "Auto ",
+        autoWalletCoaProfileCode: "",
+        entryFactors: [],
+      });
+      setPolicy(r.data);
+      setSaved(r.data);
+      applyLoadedFactors(r.data?.entryFactors);
+      setOk("Quick action saved: Door OPEN · anyone · settlement HKD · 01-01-01 HKD + LP");
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const admitBits = useMemo(() => (gatesLive ? gateBits(gate) : []), [gate, gatesLive]);
   const sentence = policy ? policySentence(policy, gate, gatesLive) : "";
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="1 · Door — Ingest policy"
-        description="First gate: accept the webhook at all? Brain scores after. One global row for the engine."
-        api={[
-          { method: "GET", path: "/ingest-policies" },
-          { method: "PUT", path: "/ingest-policies" },
-        ]}
-      />
+    <PageShell
+      flow="ops"
+      title="1 · Door — Ingest policy"
+      description="First gate: accept the webhook at all? Brain scores after. One global row for the engine."
+      api={[
+        { method: "GET", path: "/ingest-policies" },
+        { method: "PUT", path: "/ingest-policies" },
+      ]}
+      actions={
+        <button type="button" className="btn-primary text-xs" onClick={() => void quickAllAny()} disabled={loading}>
+          Quick action · all any
+        </button>
+      }
+      ok={ok}
+    >
 
       {!policy ? (
         <ActionBar loading={loading} error={error}>
@@ -222,10 +252,7 @@ export default function IngestPolicyPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={policy.isEnabled ? "ok" : "error"}>{policy.isEnabled ? "OPEN" : "CLOSED"}</Badge>
                 {policy.isAutoCreateWallet ? (
-                  <Badge tone="info">
-                    auto-wallet {policy.autoWalletSettlementCurrency || "HKD"}+
-                    {policy.autoWalletEnsureCurrency || "LP"}
-                  </Badge>
+                  <Badge tone="info">auto-wallet HKD+LP</Badge>
                 ) : (
                   <Badge tone="warn">CRM onboard required</Badge>
                 )}
@@ -435,8 +462,7 @@ export default function IngestPolicyPage() {
             {policy.isAutoCreateWallet ? (
               <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-3">
                 <p className="font-mono text-sm font-semibold text-emerald-900">
-                  {(policy.autoWalletNamePrefix || "") + "01A…"} → {policy.autoWalletSettlementCurrency || "HKD"} cash +{" "}
-                  {policy.autoWalletEnsureCurrency || "LP"} points
+                  {(policy.autoWalletNamePrefix || "") + "01A…"} → settlement HKD · 01-01-01 HKD + LP
                 </p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
@@ -531,10 +557,10 @@ export default function IngestPolicyPage() {
                         className="field-input font-mono text-xs"
                         value={String(policy.autoWalletCoaProfileCode ?? "")}
                         onChange={(e) => setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })}
-                        placeholder="MEMBER_CUST_LP"
+                        placeholder="CUSTOMER_CUST_LP"
                       />
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {["MEMBER_CUST_LP", "MEMBER_CUST_HKD"].map((c) => (
+                        {["CUSTOMER_CUST_LP", "CUSTOMER_CUST_HKD"].map((c) => (
                           <Chip
                             key={c}
                             tone="emerald"
@@ -579,9 +605,9 @@ export default function IngestPolicyPage() {
               <Badge tone={(saved ?? policy).isAutoCreateWallet ? "info" : "neutral"}>
                 {(saved ?? policy).isAutoCreateWallet ? "auto-wallet" : "no auto-wallet"}
               </Badge>
-              {(saved ?? policy).autoWalletSettlementCurrency ? (
+              {(saved ?? policy).isAutoCreateWallet ? (
                 <span className="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] text-slate-700 ring-1 ring-slate-200">
-                  {(saved ?? policy).autoWalletSettlementCurrency} + {(saved ?? policy).autoWalletEnsureCurrency || "—"}
+                  {`${(saved ?? policy).autoWalletSettlementCurrency || "HKD"} + ${(saved ?? policy).autoWalletEnsureCurrency || "LP"}`}
                 </span>
               ) : null}
             </div>
@@ -615,6 +641,6 @@ export default function IngestPolicyPage() {
           </Card>
         </>
       )}
-    </div>
+    </PageShell>
   );
 }

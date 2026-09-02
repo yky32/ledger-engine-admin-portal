@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PageHeader, Card, Badge, Alert, JsonBlock } from "@/components/ui/kit";
+import { Card, Badge, Alert, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg, isConflictError, randomEventId, randomOwnerId } from "@/lib/format";
 import type { DigestionRule, IngestResult, WalletView } from "@/lib/types";
@@ -23,7 +23,7 @@ import {
 
 /** Guided demo: CC_TXN · HKD 1000 · 15 Aug 2026 HKT · MCC 101 · RATE 1% → 10 LP */
 const DEMO_RULE_CODE = "DEMO_CC_1PCT";
-const DEMO_COA_MEMBER = "MEMBER_CUST_LP";
+const DEMO_COA_MEMBER = "CUSTOMER_CUST_LP";
 const DEMO_EVENT_TYPE = "CC_TXN";
 
 type DemoCombo = {
@@ -265,9 +265,10 @@ export default function DemoPage() {
         autoWalletSettlementCurrency: "HKD",
         autoWalletEnsureCurrency: "LP",
         autoWalletNamePrefix: "Demo ",
-        autoWalletCoaProfileCode: DEMO_COA_MEMBER,
+        autoWalletCoaProfileCode: "",
+        entryFactors: [],
       });
-      setOk("Door open · auto-wallet HKD+LP");
+      setOk("Door open · settlement HKD · 01-01-01 HKD + LP");
       await refreshPrereqs();
     } catch (e) {
       setError(errMsg(e));
@@ -460,26 +461,25 @@ client.events().submit(event);`;
   })();
 
   return (
-    <div>
-      <FlowStrip active="shoot" />
-      <PageHeader
-        title="Demo · CC txn combinations"
-        description="Base: credit card · HKD 1000 · 15 Aug 2026 14:30 HKT · MCC 101. Brain RATE 1% → 10 LP when MCC+ccy+age match."
-        api={[
-          { method: "GET", path: "/ingest-policies" },
-          { method: "GET", path: "/digestion-rules" },
-          { method: "GET", path: "/coa-profiles" },
-          { method: "POST", path: "/coa-profiles" },
-          { method: "POST", path: "/integrations/webhooks/transactions" },
-          { method: "POST", path: "/integrations/webhooks/transactions/dry-run" },
-        ]}
-        actions={
-          <Link href="/review" className="btn-secondary text-xs">
-            <Search className="h-3.5 w-3.5" />
-            Open Review
-          </Link>
-        }
-      />
+    <PageShell
+      flow="shoot"
+      title="Demo · Earn 5 LP"
+      description="Base: credit card · HKD 1000 · 15 Aug 2026 14:30 HKT · MCC 101. Brain RATE 1% → 10 LP when MCC+ccy+age match."
+      api={[
+        { method: "GET", path: "/ingest-policies" },
+        { method: "GET", path: "/digestion-rules" },
+        { method: "GET", path: "/coa-profiles" },
+        { method: "POST", path: "/coa-profiles" },
+        { method: "POST", path: "/integrations/webhooks/transactions" },
+        { method: "POST", path: "/integrations/webhooks/transactions/dry-run" },
+      ]}
+      actions={
+        <Link href="/review" className="btn-secondary text-xs">
+          <Search className="h-3.5 w-3.5" />
+          Open Review
+        </Link>
+      }
+    >
 
       <div className="mb-4">
         <Alert tone="info">
@@ -769,7 +769,7 @@ client.events().submit(event);`;
 
           <Card title={`06 · Live earn ${live && live.status !== "SKIPPED" ? "✓" : ""}`}>
             <p className="mb-2 text-sm text-slate-600">
-              Posts DE legs · PROGRAM ↔ member LP · combo #{selected.id} ({selected.currency}{" "}
+              Posts DE legs · HOUSE ↔ member LP · combo #{selected.id} ({selected.currency}{" "}
               {selected.amount.toLocaleString()} · MCC {selected.mcc})
             </p>
             <button
@@ -839,6 +839,6 @@ client.events().submit(event);`;
           ) : null}
         </div>
       ) : null}
-    </div>
+    </PageShell>
   );
 }

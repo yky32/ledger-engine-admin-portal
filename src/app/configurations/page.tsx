@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
+import { Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
+import { PageShell } from "@/components/layout/page-shell";
 
 export default function ConfigurationsPage() {
   const [target, setTarget] = useState("uaa");
@@ -46,16 +46,14 @@ export default function ConfigurationsPage() {
   };
 
   return (
-    <div>
-      <PageHeader
-        title="System configuration"
-        description="JSONB value — e.g. name user-register.otp. GET/PUT /configurations"
-        api={[
-          { method: "GET", path: "/configurations" },
-          { method: "PUT", path: "/configurations" },
-        ]}
-      />
-      <EngineStatusBanner />
+    <PageShell
+      title="System configuration"
+      description="JSONB value — e.g. name user-register.otp. GET/PUT /configurations"
+      api={[
+        { method: "GET", path: "/configurations" },
+        { method: "PUT", path: "/configurations" },
+      ]}
+    >
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Upsert">
           <div className="space-y-3">
@@ -99,6 +97,6 @@ export default function ConfigurationsPage() {
         </Card>
         <Card title="Response">{data ? <JsonBlock value={data} /> : null}</Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

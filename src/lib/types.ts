@@ -29,6 +29,7 @@ export type AccountOpenSpec = {
 /** GetWalletOnboardResponseDto */
 export type WalletView = {
   walletId?: number | string;
+  accountId?: number | string;
   ownerId?: string;
   vanityCode?: string | null;
   settlementCurrency?: CurrencyCode;
@@ -41,6 +42,8 @@ export type WalletView = {
   accounts?: WalletAccount[];
   createDt?: string;
   updateDt?: string;
+  createBy?: string;
+  updateBy?: string;
   isActive?: boolean;
 };
 
@@ -51,7 +54,16 @@ export type WalletAccount = {
   name?: string;
   refCode?: string | null;
   primary?: boolean;
+  /** COA account.entity */
+  entity?: string;
+  /** COA account.type (digit segment) */
   type?: string;
+  /** COA account.sub_type */
+  subType?: string;
+  /** COA account.main_account */
+  mainAccount?: string;
+  /** COA account.buffer */
+  buffer?: string;
   currency?: CurrencyCode;
   status?: string;
   allowNegative?: boolean;
@@ -303,6 +315,19 @@ export type CreateDigestionRuleBody = {
   whenFactors?: FactorSpec[] | FactorSet | Record<string, unknown>;
 };
 
+/** GET /coa-dictionary — stored meaning of a COA segment or stem */
+export type CoaDictionaryRow = {
+  id?: number | string;
+  kind?: string;
+  code?: string;
+  name?: string;
+  definition?: string | null;
+  example?: string | null;
+  side?: string | null;
+  createDt?: string;
+  updateDt?: string;
+};
+
 /** GET /accounting-rules — one posting-sequence leg */
 export type AccountingRule = {
   id?: number | string;
@@ -325,6 +350,23 @@ export type AccountingRuleExecution = {
   eventType?: string | null;
   metadata?: string | { rules?: Array<{ id?: string; seq?: number }> };
   createDt?: string;
+};
+
+/** GET /integrations/use-cases — SDK catalog row */
+export type UseCaseCatalogItem = {
+  code?: string;
+  name?: string;
+  enabled?: boolean;
+  operation?: string;
+  priority?: number;
+  resultCurrency?: string;
+  amountMode?: string;
+  formulaSummary?: string;
+  coaProfileCode?: string;
+  coaCurrency?: string;
+  hasBrainRule?: boolean;
+  hasCoaProfile?: boolean;
+  hasRecipe?: boolean;
 };
 
 export type IngestPolicy = {

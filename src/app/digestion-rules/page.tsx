@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
-import { PageHeader, Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
+import { ChevronDown, ChevronRight, GripVertical, Trash2 } from "lucide-react";
+import { Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel } from "@/components/ui/help";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
 import { engine } from "@/lib/engine";
 import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
@@ -24,7 +24,6 @@ import {
 import { errMsg, clsx } from "@/lib/format";
 import type { CreateDigestionRuleBody, DigestionRule } from "@/lib/types";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/recipes";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR" | "TIERED_RATE" | "TABLE";
 
@@ -67,6 +66,23 @@ function suggestCode(eventType: string, existing: DigestionRule[]): string {
     if (!taken.has(c)) return c;
   }
   return `${base}_${Date.now().toString(36).toUpperCase()}`;
+}
+
+function allAnyBody(eventType: (typeof EVENT_TYPES)[number]): CreateDigestionRuleBody {
+  return {
+    code: eventType,
+    name: `${EVENT_TYPE_LABELS[eventType]} · all any`,
+    eventType,
+    operation: "EARN",
+    isEnabled: true,
+    priority: 1,
+    minAmount: 0,
+    eligibleCurrencies: [],
+    eligibleMccs: [],
+    resultCurrency: "LP",
+    formula: { type: "RATE", rate: 0.01 },
+    whenFactors: [],
+  };
 }
 
 const PRESETS = {
@@ -200,6 +216,7 @@ export default function DigestionRulesPage() {
   const [rows, setRows] = useState<DigestionRule[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
   const [form, setForm] = useState({
     ...demo.identity,
     minAmount: "0.01",
@@ -225,6 +242,7 @@ export default function DigestionRulesPage() {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const [codeAuto, setCodeAuto] = useState(true);
 
   const formulaPreview = useMemo(() => {
@@ -340,6 +358,7 @@ export default function DigestionRulesPage() {
   const create = async () => {
     setLoading(true);
     setError(null);
+    setOk(null);
     try {
       let whenFactors: CreateDigestionRuleBody["whenFactors"];
       try {
@@ -383,7 +402,63 @@ export default function DigestionRulesPage() {
         isEnabled: true,
       });
       setCreated(r.data);
+      setOk(`Created ${form.code.trim()}`);
       await load();
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const quickAllAny = async () => {
+    setLoading(true);
+    setError(null);
+    setOk(null);
+    try {
+      const r = await engine.digestionRules();
+      const d = r.data;
+      const existing = Array.isArray(d) ? d : d ? [d] : [];
+      const byCode = new Map(existing.map((x) => [(x.code || "").toUpperCase(), x]));
+      const createdCodes: string[] = [];
+      const updatedCodes: string[] = [];
+      for (const eventType of EVENT_TYPES) {
+        const body = allAnyBody(eventType);
+        const hit = byCode.get(eventType);
+        if (hit?.id) {
+          await engine.digestionUpdate(hit.id, { ...body, maxAgeDays: 0 });
+          if (!hit.isEnabled) await engine.digestionEnable(hit.id);
+          updatedCodes.push(eventType);
+        } else {
+          await engine.digestionCreate(body);
+          createdCodes.push(eventType);
+        }
+      }
+      setGatesLive(true);
+      setAdvanced(false);
+      setGate({ ...EMPTY_FACTOR_GATE });
+      setFormulaType("RATE");
+      setRate("0.01");
+      setCodeAuto(false);
+      setForm((f) => ({
+        ...f,
+        code: "CC_TXN",
+        name: `${EVENT_TYPE_LABELS.CC_TXN} · all any`,
+        eventType: "CC_TXN",
+        operation: "EARN",
+        resultCurrency: "LP",
+        priority: "1",
+        minAmount: "0",
+        eligibleCurrencies: "",
+        eligibleMccs: "",
+        whenFactors: "[]",
+      }));
+      await load();
+      const bits = [
+        createdCodes.length ? `created ${createdCodes.join(", ")}` : null,
+        updatedCodes.length ? `updated ${updatedCodes.join(", ")}` : null,
+      ].filter(Boolean);
+      setOk(`Quick action saved: Brain all-any RATE 0.01 LP · ${bits.join(" · ") || "ready"}`);
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -442,19 +517,42 @@ export default function DigestionRulesPage() {
     void persistWalk(next);
   };
 
+  const remove = async (r: DigestionRule) => {
+    if (r.id == null) return;
+    const label = r.code || String(r.id);
+    if (!window.confirm(`Delete digestion rule ${label}? This cannot be undone.`)) return;
+    setDeletingId(r.id);
+    setError(null);
+    setOk(null);
+    try {
+      await engine.digestionDelete(r.id);
+      setOk(`Deleted ${label}`);
+      await load();
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="1 · Brain — Digestion rules"
-        description="Walk is one list: lower priority is 1st. Wrong eventType is skipped, not a fail. First bingo stops. Else SKIPPED / NO_RULE."
-        api={[
-          { method: "GET", path: "/digestion-rules" },
-          { method: "POST", path: "/digestion-rules" },
-          { method: "PUT", path: "/digestion-rules/{id}" },
-        ]}
-      />
+    <PageShell
+      flow="ops"
+      title="1 · Brain — Digestion rules"
+      description="Walk is one list: lower priority is 1st. Wrong eventType is skipped, not a fail. First bingo stops. Else SKIPPED / NO_RULE."
+      api={[
+        { method: "GET", path: "/digestion-rules" },
+        { method: "POST", path: "/digestion-rules" },
+        { method: "PUT", path: "/digestion-rules/{id}" },
+        { method: "DELETE", path: "/digestion-rules/{id}" },
+      ]}
+      actions={
+        <button type="button" className="btn-primary text-xs" onClick={() => void quickAllAny()} disabled={loading}>
+          Quick action · all any
+        </button>
+      }
+      ok={ok}
+    >
 
       <Card
         className="mb-4"
@@ -787,7 +885,7 @@ export default function DigestionRulesPage() {
         </div>
 
         <div className="mt-4">
-          <ActionBar loading={loading} error={error}>
+          <ActionBar loading={loading} error={error} ok={ok}>
             <button type="button" className="btn-primary" onClick={() => void create()}>
               Create rule
             </button>
@@ -904,6 +1002,19 @@ export default function DigestionRulesPage() {
                           <span className="rounded-md bg-violet-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-violet-900">
                             pri {r.priority}
                           </span>
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-1 text-[11px] text-rose-700 hover:bg-rose-50"
+                            disabled={deletingId != null || savingOrder}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void remove(r);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {deletingId === r.id ? "Deleting…" : "Delete"}
+                          </button>
                         </div>
                       </div>
                       <p className="mt-1.5 text-[11px] text-slate-500">
@@ -940,9 +1051,22 @@ export default function DigestionRulesPage() {
                       key={r.id ?? r.code}
                       className="rounded-xl border border-dashed border-slate-200 px-3.5 py-3 opacity-60"
                     >
-                      <div className="font-mono text-sm">{r.code}</div>
-                      <div className="text-xs text-slate-500">
-                        {r.eventType} · pri {r.priority}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-mono text-sm">{r.code}</div>
+                          <div className="text-xs text-slate-500">
+                            {r.eventType} · pri {r.priority}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-ghost px-2 py-1 text-[11px] text-rose-700 hover:bg-rose-50"
+                          disabled={deletingId != null}
+                          onClick={() => void remove(r)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          {deletingId === r.id ? "Deleting…" : "Delete"}
+                        </button>
                       </div>
                     </li>
                   ))}
@@ -952,6 +1076,6 @@ export default function DigestionRulesPage() {
           </div>
         )}
       </Card>
-    </div>
+    </PageShell>
   );
 }

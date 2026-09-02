@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { PageHeader, Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
+import { Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { FailedIngest } from "@/lib/types";
-import { FlowStrip } from "@/components/layout/flow-strip";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
 
 export default function FailedPage() {
   const [status, setStatus] = useState("OPEN");
@@ -62,50 +61,46 @@ export default function FailedPage() {
   };
 
   return (
-    <div>
-      <FlowStrip active="engine" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="Failed ingest"
-        description="GET/POST /integrations/failed-transactions — review ack or replay pipeline."
-        api={[
-          { method: "GET", path: "/integrations/failed-transactions" },
-          { method: "POST", path: "/integrations/failed-transactions/{id}/replay" },
-        ]}
-      />
-
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="field">
-            <span className="field-label">status</span>
-            <select
-              className="field-select"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              {["", "OPEN", "REVIEWED", "REPLAYED"].map((s) => (
-                <option key={s || "all"} value={s}>
-                  {s || "ALL"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field min-w-[180px]">
-            <span className="field-label">ownerId</span>
-            <input
-              className="field-input font-mono"
-              value={ownerId}
-              onChange={(e) => setOwnerId(e.target.value)}
-              placeholder="optional"
-            />
-          </label>
-          <ActionBar loading={loading} error={error} ok={actionMsg}>
-            <button type="button" className="btn-primary" onClick={load}>
-              Refresh
-            </button>
-          </ActionBar>
-        </div>
-      </Card>
+    <PageShell
+      flow="engine"
+      title="3 · Fail queue"
+      description="GET/POST /integrations/failed-transactions — review ack or replay pipeline."
+      api={[
+        { method: "GET", path: "/integrations/failed-transactions" },
+        { method: "POST", path: "/integrations/failed-transactions/{id}/replay" },
+      ]}
+    >
+      <FilterBar
+        loading={loading}
+        error={error}
+        ok={actionMsg}
+        onSubmit={() => void load()}
+        submitLabel="Refresh"
+      >
+        <label className="field">
+          <span className="field-label">status</span>
+          <select
+            className="field-select"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            {["", "OPEN", "REVIEWED", "REPLAYED"].map((s) => (
+              <option key={s || "all"} value={s}>
+                {s || "ALL"}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field min-w-[180px]">
+          <span className="field-label">ownerId</span>
+          <input
+            className="field-input font-mono"
+            value={ownerId}
+            onChange={(e) => setOwnerId(e.target.value)}
+            placeholder="optional"
+          />
+        </label>
+      </FilterBar>
 
       <div className="grid gap-4 lg:grid-cols-5">
         <Card title={`Rows (${rows.length})`} className="lg:col-span-3">
@@ -183,6 +178,6 @@ export default function FailedPage() {
           )}
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

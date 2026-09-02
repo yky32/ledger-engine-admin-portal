@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Empty, Alert } from "@/components/ui/kit";
+import { Card, Empty, Alert } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { COA_PRESETS } from "@/lib/recipes";
@@ -53,7 +52,7 @@ export default function CoaPage() {
   const [rows, setRows] = useState<CoaRow[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [newCode, setNewCode] = useState("MEMBER_CUST_LP");
+  const [newCode, setNewCode] = useState("CUSTOMER_CUST_LP");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -91,7 +90,7 @@ export default function CoaPage() {
     setSelectedId(r.id);
     setOk(null);
     setForm(formFromRow(r));
-    setNewCode(r.code || "MEMBER_CUST_LP");
+    setNewCode(r.code || "CUSTOMER_CUST_LP");
   };
 
   const save = async () => {
@@ -156,18 +155,16 @@ export default function CoaPage() {
     form.transactionCode.trim() || selected?.code || newCode || "(same as code)";
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="1 · Brain — COA"
-        description="Chart of accounts only (entity / type / subType / currency). Posting sequences bind eventType on Accounting rules."
-        api={[
-          { method: "GET", path: "/coa-profiles" },
-          { method: "POST", path: "/coa-profiles" },
-          { method: "PUT", path: "/coa-profiles/{id}" },
-        ]}
-      />
+    <PageShell
+      flow="ops"
+      title="1 · Brain — Customer COA"
+      description="Chart of accounts only (entity / type / subType / currency). Posting sequences bind eventType on Accounting rules."
+      api={[
+        { method: "GET", path: "/coa-profiles" },
+        { method: "POST", path: "/coa-profiles" },
+        { method: "PUT", path: "/coa-profiles/{id}" },
+      ]}
+    >
       <Alert tone="info">
         COA is the <strong>chart</strong>, not the event. Webhook <code className="text-xs">eventType</code> is
         shared by Door, Brain, and{" "}
@@ -196,7 +193,7 @@ export default function CoaPage() {
           ))}
         </div>
         <p className="mt-2 text-[11px] text-slate-500">
-          Chart codes (e.g. MEMBER_CUST_LP). Disabled if already present.
+          Chart codes (e.g. CUSTOMER_CUST_LP). Disabled if already present.
         </p>
       </Card>
 
@@ -234,7 +231,7 @@ export default function CoaPage() {
               className="field-input max-w-[140px] font-mono text-xs"
               value={newCode}
               onChange={(e) => setNewCode(e.target.value)}
-              placeholder="MEMBER_CUST_LP"
+              placeholder="CUSTOMER_CUST_LP"
             />
             <button
               type="button"
@@ -292,7 +289,7 @@ export default function CoaPage() {
                   checked={form.poolAllowNegative}
                   onChange={(e) => setForm({ ...form, poolAllowNegative: e.target.checked })}
                 />
-                poolAllowNegative (PROGRAM)
+                poolAllowNegative (HOUSE)
               </label>
               <div className="sm:col-span-2">
                 <ActionBar loading={loading} error={error} ok={ok}>
@@ -305,6 +302,6 @@ export default function CoaPage() {
           )}
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

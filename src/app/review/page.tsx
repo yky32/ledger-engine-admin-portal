@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
+import { Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { FailedIngest, LedgerLeg, MovementView, WalletView } from "@/lib/types";
-import { FlowStrip } from "@/components/layout/flow-strip";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
+import { AccountBooksTable } from "@/components/books/account-books-table";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
 
 export default function ReviewPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -73,43 +73,32 @@ export default function ReviewPage() {
   };
 
   return (
-    <div>
-      <FlowStrip active="engine" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="Customer review"
-        description="Lookup by ownerId — wallet books, movements, as-of balances, failed ingest, DE legs."
-        api={[
-          { method: "GET", path: "/wallets/{ownerId}" },
-          { method: "GET", path: "/wallets/{ownerId}/movements" },
-          { method: "GET", path: "/integrations/ledger-entries" },
-        ]}
-        actions={
-          <Link href="/simulator" className="btn-secondary text-xs">
-            Open simulator
-          </Link>
-        }
-      />
-
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="field min-w-[220px] flex-1">
-            <span className="field-label">ownerId</span>
-            <input
-              className="field-input font-mono"
-              placeholder="01A12345678"
-              value={ownerId}
-              onChange={(e) => setOwnerId(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && load()}
-            />
-          </label>
-          <ActionBar loading={loading} error={error}>
-            <button type="button" className="btn-primary" onClick={load} disabled={loading}>
-              Load
-            </button>
-          </ActionBar>
-        </div>
-      </Card>
+    <PageShell
+      flow="engine"
+      title="3 · Customer LP books"
+      description="Lookup by ownerId — wallet books, movements, as-of balances, failed ingest, DE legs."
+      api={[
+        { method: "GET", path: "/wallets/{ownerId}" },
+        { method: "GET", path: "/wallets/{ownerId}/movements" },
+        { method: "GET", path: "/integrations/ledger-entries" },
+      ]}
+      actions={
+        <Link href="/simulator" className="btn-secondary text-xs">
+          Open simulator
+        </Link>
+      }
+    >
+      <FilterBar loading={loading} error={error} onSubmit={() => void load()} submitLabel="Load">
+        <label className="field min-w-[220px] flex-1">
+          <span className="field-label">ownerId</span>
+          <input
+            className="field-input font-mono"
+            placeholder="01A12345678"
+            value={ownerId}
+            onChange={(e) => setOwnerId(e.target.value)}
+          />
+        </label>
+      </FilterBar>
 
       {wallet ? (
         <div className="mb-4 grid gap-4 lg:grid-cols-2">
@@ -136,38 +125,11 @@ export default function ReviewPage() {
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Accounts
               </div>
-              {(wallet.accounts?.length ? wallet.accounts : wallet.account ? [wallet.account] : [])
-                .length === 0 ? (
-                <Empty>No accounts</Empty>
-              ) : (
-                <div className="table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>ccy</th>
-                        <th>fullNumber</th>
-                        <th>ledger</th>
-                        <th>available</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(wallet.accounts?.length
-                        ? wallet.accounts
-                        : wallet.account
-                          ? [wallet.account]
-                          : []
-                      ).map((a, i) => (
-                        <tr key={a.id ?? i}>
-                          <td className="font-medium">{a.currency}</td>
-                          <td className="font-mono text-[10px] text-slate-600">{a.fullNumber}</td>
-                          <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
-                          <td className="font-mono text-xs">{money(a.availableBalance)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <AccountBooksTable
+                accounts={
+                  wallet.accounts?.length ? wallet.accounts : wallet.account ? [wallet.account] : []
+                }
+              />
             </div>
           </Card>
 
@@ -331,6 +293,6 @@ export default function ReviewPage() {
           </details>
         </div>
       ) : null}
-    </div>
+    </PageShell>
   );
 }

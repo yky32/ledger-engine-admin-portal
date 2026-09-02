@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 
@@ -67,41 +66,31 @@ export default function CoaQueryListPage() {
   }, []);
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="Brain · COA"
-        description="Query list — GET /coa-profiles (Brain books map). Click a row for JSON. Edit under Brain — COA."
-        api={[
-          { method: "GET", path: "/coa-profiles" },
-          { method: "GET", path: "/coa-profiles/default" },
-        ]}
-        actions={
-          <Link href="/coa" className="btn-secondary text-xs">
-            Edit Brain COA →
-          </Link>
-        }
-      />
-
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="field min-w-[200px]">
-            <span className="field-label">code / transactionCode (optional)</span>
-            <input
-              className="field-input font-mono"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="MEMBER_CUST_LP"
-            />
-          </label>
-          <ActionBar loading={loading} error={error}>
-            <button type="button" className="btn-primary" onClick={() => void load()}>
-              Query
-            </button>
-          </ActionBar>
-        </div>
-      </Card>
+    <PageShell
+      flow="books"
+      title="Customer COA — 01-01-01"
+      description="Custodian chart for member wallets (CUSTOMER_CUST_HKD / LP). Not house 01-02 / 01-04. Edit under Brain — Customer COA."
+      api={[
+        { method: "GET", path: "/coa-profiles" },
+        { method: "GET", path: "/coa-profiles/default" },
+      ]}
+      actions={
+        <Link href="/coa" className="btn-secondary text-xs">
+          Edit customer COA →
+        </Link>
+      }
+    >
+      <FilterBar loading={loading} error={error} onSubmit={() => void load()}>
+        <label className="field min-w-[200px]">
+          <span className="field-label">code / transactionCode (optional)</span>
+          <input
+            className="field-input font-mono"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="CUSTOMER_CUST_LP"
+          />
+        </label>
+      </FilterBar>
 
       <div className="grid gap-4 lg:grid-cols-5">
         <Card
@@ -171,6 +160,6 @@ export default function CoaQueryListPage() {
           {selected ? <JsonBlock value={selected} maxHeight={480} /> : <Empty>Click a row</Empty>}
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

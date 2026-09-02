@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { isHouseCoaCode } from "@/lib/recipes";
@@ -65,38 +64,28 @@ export default function CorporateCoaListPage() {
   }, []);
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="House · COA"
-        description="Company books only (HOUSE_* / CORP_* / GL_*). Same GET /coa-profiles, filtered. Edit under 0 · House — Corporate COA."
-        api={[{ method: "GET", path: "/coa-profiles" }]}
-        actions={
-          <Link href="/corporate-coa" className="btn-secondary text-xs">
-            Edit house COA →
-          </Link>
-        }
-      />
-
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="field min-w-[200px]">
-            <span className="field-label">code / name (optional)</span>
-            <input
-              className="field-input font-mono"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="HOUSE_LP"
-            />
-          </label>
-          <ActionBar loading={loading} error={error}>
-            <button type="button" className="btn-primary" onClick={() => void load()}>
-              Query
-            </button>
-          </ActionBar>
-        </div>
-      </Card>
+    <PageShell
+      flow="books"
+      title="House COA — company books"
+      description="UAF finance wallet (ownerId HOUSE). Operating 01-02 and expense 01-04 only — not customer 01-01-01. Edit under 0 · House — Corporate COA."
+      api={[{ method: "GET", path: "/coa-profiles" }]}
+      actions={
+        <Link href="/corporate-coa" className="btn-secondary text-xs">
+          Edit house COA →
+        </Link>
+      }
+    >
+      <FilterBar loading={loading} error={error} onSubmit={() => void load()}>
+        <label className="field min-w-[200px]">
+          <span className="field-label">code / name (optional)</span>
+          <input
+            className="field-input font-mono"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="HOUSE_LP"
+          />
+        </label>
+      </FilterBar>
 
       <div className="grid gap-4 lg:grid-cols-5">
         <Card
@@ -165,6 +154,6 @@ export default function CorporateCoaListPage() {
           {selected ? <JsonBlock value={selected} maxHeight={400} /> : <Empty>Click a row</Empty>}
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

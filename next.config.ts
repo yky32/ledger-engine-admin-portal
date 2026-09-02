@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/rules", destination: "/digestion-rules", permanent: false },
       { source: "/account-rules", destination: "/accounting-rules", permanent: false },
+      { source: "/usecases", destination: "/use-cases", permanent: false },
+      { source: "/use-case", destination: "/use-cases", permanent: false },
+      { source: "/recipes", destination: "/use-cases", permanent: false },
       { source: "/rule-executions", destination: "/review", permanent: false },
       { source: "/accounts", destination: "/records", permanent: false },
       { source: "/ledger-accounts", destination: "/coa", permanent: false },

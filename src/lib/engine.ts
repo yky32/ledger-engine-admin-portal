@@ -8,6 +8,7 @@ import type {
   AsOfBalance,
   AccountingRule,
   AccountingRuleExecution,
+  CoaDictionaryRow,
   CreateDigestionRuleBody,
   CreateWalletOnboardBody,
   DepositBody,
@@ -20,6 +21,7 @@ import type {
   MovementView,
   TransactionalEventBody,
   TransferBody,
+  UseCaseCatalogItem,
   WalletView,
   WithdrawalBody,
 } from "@/lib/types";
@@ -193,6 +195,10 @@ export const engine = {
   digestionDisable: (id: string | number) =>
     ledger.post<DigestionRule>(`/digestion-rules/${id}/disable`),
 
+  /** DELETE /digestion-rules/{id} */
+  digestionDelete: (id: string | number) =>
+    ledger.delete<unknown>(`/digestion-rules/${id}`),
+
   /* ─── Brain: COA profiles (books map) ─── */
   coaProfiles: () => ledger.get("/coa-profiles"),
   coaProfileDefault: () => ledger.get("/coa-profiles/default"),
@@ -200,6 +206,16 @@ export const engine = {
   coaProfileCreate: (body: Record<string, unknown>) => ledger.post("/coa-profiles", body),
   coaProfileUpdate: (id: string | number, body: Record<string, unknown>) =>
     ledger.put(`/coa-profiles/${id}`, body),
+
+  /** GET /coa-dictionary — segment/stem definitions (seeds UA rows if empty) */
+  coaDictionary: () => ledger.get<CoaDictionaryRow[]>("/coa-dictionary"),
+  coaDictionaryEnsure: () => ledger.post<CoaDictionaryRow[]>("/coa-dictionary/ensure", {}),
+  coaDictionaryCreate: (body: Record<string, unknown>) =>
+    ledger.post<CoaDictionaryRow>("/coa-dictionary", body),
+  coaDictionaryUpdate: (id: string | number, body: Record<string, unknown>) =>
+    ledger.put<CoaDictionaryRow>(`/coa-dictionary/${id}`, body),
+  coaDictionaryDelete: (id: string | number) =>
+    ledger.delete<unknown>(`/coa-dictionary/${id}`),
 
   /** GET /accounting-rules — posting-sequence legs */
   accountingRules: (page = 1, size = 500) =>
@@ -227,6 +243,10 @@ export const engine = {
 
   accountingRuleExecutionUpdate: (id: string | number, body: Record<string, unknown>) =>
     ledger.put<AccountingRuleExecution>(`/accounting-rule-executions/${id}`, body),
+
+  /** GET /integrations/use-cases */
+  useCases: (enabledOnly = false) =>
+    ledger.get<UseCaseCatalogItem[]>(`/integrations/use-cases${qs({ enabledOnly })}`),
 
   /** GET /corporate-coa — HOUSE_* + company walletId + accounts */
   houseBooks: () => ledger.get("/corporate-coa"),

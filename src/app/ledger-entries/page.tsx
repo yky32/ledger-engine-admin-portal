@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader, Card, Badge, Empty } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
+import { Card, Badge, Empty } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { LedgerLeg } from "@/lib/types";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
 
 export default function LegsPage() {
   const [eventId, setEventId] = useState("");
@@ -33,38 +33,30 @@ export default function LegsPage() {
   };
 
   return (
-    <div>
-      <FlowStrip active="books" />
-      <PageHeader
-        title="Ledger legs"
-        description="GET /integrations/ledger-entries?eventId= | movementId="
-        api={[{ method: "GET", path: "/integrations/ledger-entries" }]}
-      />
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="field min-w-[200px]">
-            <span className="field-label">eventId</span>
-            <input
-              className="field-input font-mono"
-              value={eventId}
-              onChange={(e) => setEventId(e.target.value)}
-            />
-          </label>
-          <label className="field min-w-[160px]">
-            <span className="field-label">movementId</span>
-            <input
-              className="field-input font-mono"
-              value={movementId}
-              onChange={(e) => setMovementId(e.target.value)}
-            />
-          </label>
-          <ActionBar loading={loading} error={error}>
-            <button type="button" className="btn-primary" onClick={load}>
-              Query
-            </button>
-          </ActionBar>
-        </div>
-      </Card>
+    <PageShell
+      flow="books"
+      title="3 · Books — DE legs"
+      description="GET /integrations/ledger-entries?eventId= | movementId="
+      api={[{ method: "GET", path: "/integrations/ledger-entries" }]}
+    >
+      <FilterBar loading={loading} error={error} onSubmit={() => void load()}>
+        <label className="field min-w-[200px]">
+          <span className="field-label">eventId</span>
+          <input
+            className="field-input font-mono"
+            value={eventId}
+            onChange={(e) => setEventId(e.target.value)}
+          />
+        </label>
+        <label className="field min-w-[160px]">
+          <span className="field-label">movementId</span>
+          <input
+            className="field-input font-mono"
+            value={movementId}
+            onChange={(e) => setMovementId(e.target.value)}
+          />
+        </label>
+      </FilterBar>
       <Card title={`Legs (${rows.length})`}>
         {rows.length === 0 ? (
           <Empty>No legs</Empty>
@@ -99,6 +91,6 @@ export default function LegsPage() {
           </div>
         )}
       </Card>
-    </div>
+    </PageShell>
   );
 }

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PageHeader, Card, Badge, Alert } from "@/components/ui/kit";
+import { Card, Badge, Alert } from "@/components/ui/kit";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg, clsx } from "@/lib/format";
 import {
@@ -21,6 +22,7 @@ import {
   ListTree,
   Wallet,
   Scale,
+  CreditCard,
 } from "lucide-react";
 
 /**
@@ -50,22 +52,21 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div>
-      <PageHeader
-        title="End-to-end business picture"
-        description="One webhook eventType runs Door → Brain → Accounting books. Same code on all three."
-        api={[{ method: "GET", path: "/actuator/health" }]}
-        actions={
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Link href="/demo" className="btn-primary text-xs">
-              Demo · Earn 5 LP
-            </Link>
-            <Link href="/accounting-rules" className="btn-secondary text-xs">
-              Accounting rules
-            </Link>
-            <Link href="/coa" className="btn-secondary text-xs">
-              COA chart
-            </Link>
+    <PageShell
+      title="Business flow"
+      description="One webhook eventType runs Door → Brain → Accounting books. Same code on all three."
+      api={[{ method: "GET", path: "/actuator/health" }]}
+      actions={
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <Link href="/demo" className="btn-primary text-xs">
+            Demo · Earn 5 LP
+          </Link>
+          <Link href="/accounting-rules" className="btn-secondary text-xs">
+            Accounting rules
+          </Link>
+          <Link href="/coa" className="btn-secondary text-xs">
+            COA chart
+          </Link>
             {engineOk === null ? (
               <Badge>engine…</Badge>
             ) : engineOk ? (
@@ -81,7 +82,7 @@ export default function HomePage() {
             )}
           </div>
         }
-      />
+      >
 
       <Card className="mb-6" title="Mapping — one eventType">
         <p className="mb-3 text-xs text-slate-500">
@@ -211,19 +212,19 @@ export default function HomePage() {
               <li>
                 <Link className="flow-link" href="/coa">
                   <BookOpen className="h-3.5 w-3.5" />
-                  Brain · COA <span className="text-slate-400">(chart only)</span>
+                  Customer COA <span className="text-slate-400">(01-01-01 chart)</span>
+                </Link>
+              </li>
+              <li>
+                <Link className="flow-link" href="/use-cases">
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Use cases <span className="text-slate-400">(CC txn → HKD / LP)</span>
                 </Link>
               </li>
               <li>
                 <Link className="flow-link" href="/accounting-rules">
                   <Scale className="h-3.5 w-3.5" />
                   Accounting rules <span className="text-slate-400">(CR/DR sequence)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/recipes">
-                  <ListTree className="h-3.5 w-3.5" />
-                  Posting recipes <span className="text-slate-400">(legacy atoms)</span>
                 </Link>
               </li>
               <li>
@@ -377,6 +378,9 @@ export default function HomePage() {
             <li>Accounting bind that same eventType → CR/DR walk</li>
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/use-cases" className="btn-secondary text-xs">
+              Use cases
+            </Link>
             <Link href="/digestion-rules" className="btn-secondary text-xs">
               Digestion rules
             </Link>
@@ -397,9 +401,9 @@ export default function HomePage() {
             {
               n: "1",
               t: "Ops configures",
-              d: "Door gates · Brain eventType rule · bind accounting combo to the same eventType.",
-              href: "/accounting-rules",
-              cta: "Door · Brain · Books",
+              d: "Use cases CC Transaction → HKD / LP · Door gates · Brain eventType rule · accounting legs.",
+              href: "/use-cases",
+              cta: "Use cases",
             },
             {
               n: "2",
@@ -447,7 +451,7 @@ export default function HomePage() {
         Source of truth: <code>ledger-engine/docs/SYSTEM_BUSINESS_FLOW.md</code>
         {engineDetail ? ` · health ${engineDetail.slice(0, 40)}…` : null}
       </p>
-    </div>
+    </PageShell>
   );
 }
 

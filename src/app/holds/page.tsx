@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
+import { Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel, ExplainBox } from "@/components/ui/help";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 
 export default function HoldsPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -38,17 +37,15 @@ export default function HoldsPage() {
   };
 
   return (
-    <div>
-      <FlowStrip active="engine" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="Hold / Release LP"
-        description="Locks spendable (available) balance only — ledger/total balance unchanged. POST /wallets/holds · /releases"
-        api={[
-          { method: "POST", path: "/wallets/holds" },
-          { method: "POST", path: "/wallets/releases" },
-        ]}
-      />
+    <PageShell
+      flow="engine"
+      title="Hold / Release LP"
+      description="Locks spendable (available) balance only — ledger/total balance unchanged. POST /wallets/holds · /releases"
+      api={[
+        { method: "POST", path: "/wallets/holds" },
+        { method: "POST", path: "/wallets/releases" },
+      ]}
+    >
 
       <div className="mb-4 grid gap-3 lg:grid-cols-2">
         <ExplainBox title="What HOLD does" tone="ops">
@@ -130,6 +127,6 @@ export default function HoldsPage() {
         </Card>
         <Card title="Response">{result ? <JsonBlock value={result} /> : null}</Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

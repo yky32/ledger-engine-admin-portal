@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
+import { clsx } from "@/lib/format";
 
+/** Slate card primitives — match kit Card chrome (border-slate, not zinc). */
 export function Card({
   className,
   children,
@@ -7,16 +8,7 @@ export function Card({
   className?: string;
   children: React.ReactNode;
 }) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-zinc-200 bg-white shadow-sm",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <section className={clsx("card", className)}>{children}</section>;
 }
 
 export function CardHeader({
@@ -29,12 +21,10 @@ export function CardHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
+    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
-        {description ? (
-          <p className="text-xs text-zinc-500">{description}</p>
-        ) : null}
+        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+        {description ? <p className="mt-0.5 text-xs text-slate-500">{description}</p> : null}
       </div>
       {actions}
     </div>
@@ -48,5 +38,5 @@ export function CardBody({
   className?: string;
   children: React.ReactNode;
 }) {
-  return <div className={cn("p-4", className)}>{children}</div>;
+  return <div className={clsx("p-4", className)}>{children}</div>;
 }

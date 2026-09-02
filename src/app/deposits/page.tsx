@@ -11,6 +11,7 @@ export default function Page() {
       createPath="/movements/deposits"
       pageable={false}
       autoload={false}
+      showFlow="engine"
       sample={{
         movementKey: "dep-demo-1",
         ownerId: "01A12345678",

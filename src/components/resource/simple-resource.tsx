@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageHeader, Card, JsonBlock, Empty } from "@/components/ui/kit";
+import { Card, JsonBlock, Empty } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { ledger, qs } from "@/lib/api";
 import { errMsg } from "@/lib/format";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell, type FlowStep } from "@/components/layout/page-shell";
 
 /**
  * Generic list/create helper for secondary resources.
@@ -30,7 +29,7 @@ export default function SimpleResourcePage({
   sample?: Record<string, unknown>;
   pageable?: boolean;
   autoload?: boolean;
-  showFlow?: "ops" | "shoot" | "engine" | "books";
+  showFlow?: FlowStep;
 }) {
   const [body, setBody] = useState(sample ? JSON.stringify(sample, null, 2) : "{\n}\n");
   const [data, setData] = useState<unknown>(null);
@@ -80,17 +79,15 @@ export default function SimpleResourcePage({
   };
 
   return (
-    <div>
-      {showFlow ? <FlowStrip active={showFlow} /> : null}
-      <PageHeader
-        title={title}
-        description={description}
-        api={[
-          { method: "GET", path: listPath },
-          ...(createPath ? [{ method: "POST" as const, path: createPath }] : []),
-        ]}
-      />
-      <EngineStatusBanner />
+    <PageShell
+      flow={showFlow}
+      title={title}
+      description={description}
+      api={[
+        { method: "GET", path: listPath },
+        ...(createPath ? [{ method: "POST" as const, path: createPath }] : []),
+      ]}
+    >
       <div className="grid gap-4 lg:grid-cols-2">
         {createPath ? (
           <Card title="Create / POST body">
@@ -132,6 +129,6 @@ export default function SimpleResourcePage({
           ) : null}
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

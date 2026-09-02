@@ -3,14 +3,43 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { PageHeader, Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { engine } from "@/lib/engine";
 import { errMsg, money, shortId, clsx } from "@/lib/format";
 import { rememberOwnerId } from "@/lib/owner-memory";
 import type { LedgerLeg, MovementView, WalletAccount, WalletView } from "@/lib/types";
+import { AccountBooksTable } from "@/components/books/account-books-table";
+import { Chip } from "@/components/factors/gate-ui";
+
+/** Wallet table columns = DB / JSON names (GET /wallets). */
+const WALLET_COLS: { key: keyof WalletView; label: string; mono?: boolean }[] = [
+  { key: "walletId", label: "walletId", mono: true },
+  { key: "accountId", label: "accountId", mono: true },
+  { key: "ownerId", label: "ownerId", mono: true },
+  { key: "vanityCode", label: "vanityCode", mono: true },
+  { key: "name", label: "name" },
+  { key: "type", label: "type" },
+  { key: "walletType", label: "walletType" },
+  { key: "status", label: "status" },
+  { key: "settlementCurrency", label: "settlementCurrency" },
+  { key: "isActive", label: "isActive" },
+  { key: "createDt", label: "createDt", mono: true },
+  { key: "createBy", label: "createBy" },
+  { key: "updateDt", label: "updateDt", mono: true },
+  { key: "updateBy", label: "updateBy" },
+];
+
+const WALLET_TYPES = ["INDIVIDUAL", "CORPORATE"] as const;
+
+function cell(v: unknown, key: keyof WalletView): string {
+  if (v == null || v === "") return "—";
+  if (key === "walletId" || key === "accountId") return shortId(String(v), 8);
+  if (key === "createDt" || key === "updateDt") return fmtDt(String(v));
+  if (typeof v === "boolean") return v ? "true" : "false";
+  return String(v);
+}
 
 type FlowTab = "in" | "out" | "all";
 type Flow = "in" | "out" | "other";
@@ -32,14 +61,15 @@ const OUT_TYPES = new Set([
   "HANDLING_CHARGE",
 ]);
 
-function isProgram(ownerId?: string | null): boolean {
-  return String(ownerId ?? "").toUpperCase() === "PROGRAM";
+function isHouse(ownerId?: string | null): boolean {
+  const o = String(ownerId ?? "").toUpperCase();
+  return o === "HOUSE" || o === "PROGRAM";
 }
 
-/** Customer: EARN/DEPOSIT in. PROGRAM pool: EARN drains, BURN refills. */
+/** Customer: EARN/DEPOSIT in. HOUSE pool: EARN drains, BURN refills. */
 function movementFlow(m: MovementView, ownerId: string): Flow {
   const t = String(m.orderType ?? m.type ?? "").toUpperCase();
-  const program = isProgram(ownerId);
+  const program = isHouse(ownerId);
   if (t === "EARN") return program ? "out" : "in";
   if (t === "BURN") return program ? "in" : "out";
   if (IN_TYPES.has(t)) return "in";
@@ -60,7 +90,8 @@ function accountsOf(w: WalletView | null): WalletAccount[] {
 
 function fmtDt(v?: string | null): string {
   if (!v) return "—";
-  const d = new Date(v);
+  const iso = /T/.test(v) ? v : v.replace(" ", "T") + (/Z|[+-]\d\d/.test(v) ? "" : "Z");
+  const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return v;
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
@@ -109,6 +140,8 @@ export default function WalletsQueryListPage() {
   const [error, setError] = useState<string | null>(null);
   const [calledPath, setCalledPath] = useState("/wallets");
   const [showJson, setShowJson] = useState(false);
+  const [walletTypeFilter, setWalletTypeFilter] = useState<string>("");
+  const [walletTypeQuery, setWalletTypeQuery] = useState("");
 
   const loadLegs = async (movementId: number | string) => {
     setSelectedMovementId(movementId);
@@ -221,6 +254,17 @@ export default function WalletsQueryListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const filteredRows = useMemo(() => {
+    const chip = walletTypeFilter.trim().toUpperCase();
+    const q = walletTypeQuery.trim().toUpperCase();
+    return rows.filter((r) => {
+      const wt = String(r.walletType ?? "").toUpperCase();
+      if (chip && wt !== chip) return false;
+      if (q && !wt.includes(q)) return false;
+      return true;
+    });
+  }, [rows, walletTypeFilter, walletTypeQuery]);
+
   const oid = selected?.ownerId ?? "";
   const books = accountsOf(selected);
   const bookIds = useMemo(
@@ -238,67 +282,86 @@ export default function WalletsQueryListPage() {
   const selectedMv = movements.find((m) => m.id === selectedMovementId) ?? null;
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="Wallets"
-        description="Click a row for books, incoming history, and DE legs. GET /wallets · /wallets/{ownerId}/movements · ledger-entries."
-        api={[
-          { method: "GET", path: "/wallets" },
-          { method: "GET", path: "/wallets/{ownerId}" },
-          { method: "GET", path: "/wallets/{ownerId}/movements" },
-          { method: "GET", path: "/integrations/ledger-entries" },
-        ]}
-        actions={
-          <Link href="/wallets" className="btn-secondary text-xs">
-            Onboard →
-          </Link>
-        }
-      />
-
-      <Card className="mb-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="field min-w-[220px]">
-            <span className="field-label">ownerId (optional)</span>
-            <input
-              className="field-input font-mono"
-              value={ownerId}
-              onChange={(e) => setOwnerId(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void load()}
-              placeholder="01A47158227"
-            />
-          </label>
-          <ActionBar loading={loading} error={error}>
-            <button type="button" className="btn-primary" onClick={() => void load()}>
-              Query
-            </button>
-          </ActionBar>
+    <PageShell
+      flow="books"
+      title="Wallets"
+      description="Click a row for books, incoming history, and DE legs. GET /wallets · /wallets/{ownerId}/movements · ledger-entries."
+      api={[
+        { method: "GET", path: "/wallets" },
+        { method: "GET", path: "/wallets/{ownerId}" },
+        { method: "GET", path: "/wallets/{ownerId}/movements" },
+        { method: "GET", path: "/integrations/ledger-entries" },
+      ]}
+      actions={
+        <Link href="/wallets" className="btn-secondary text-xs">
+          Onboard →
+        </Link>
+      }
+    >
+      <FilterBar loading={loading} error={error} onSubmit={() => void load()}>
+        <label className="field min-w-[220px]">
+          <span className="field-label">ownerId (optional)</span>
+          <input
+            className="field-input font-mono"
+            value={ownerId}
+            onChange={(e) => setOwnerId(e.target.value)}
+            placeholder="01A47158227"
+          />
+        </label>
+        <label className="field min-w-[160px]">
+          <span className="field-label">walletType</span>
+          <input
+            className="field-input font-mono text-xs"
+            value={walletTypeQuery}
+            onChange={(e) => setWalletTypeQuery(e.target.value)}
+            placeholder="INDIVIDUAL / CORPORATE"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
+          <Chip
+            tone="emerald"
+            active={walletTypeFilter === ""}
+            onClick={() => setWalletTypeFilter("")}
+          >
+            All
+          </Chip>
+          {WALLET_TYPES.map((t) => (
+            <Chip
+              key={t}
+              tone="emerald"
+              active={walletTypeFilter === t}
+              onClick={() => setWalletTypeFilter((cur) => (cur === t ? "" : t))}
+            >
+              {t}
+            </Chip>
+          ))}
         </div>
-      </Card>
+      </FilterBar>
 
       <Card
         className="mb-4"
-        title={`Wallets (${rows.length})`}
+        title={`Wallets (${filteredRows.length}${filteredRows.length !== rows.length ? ` / ${rows.length}` : ""})`}
+        description="All wallet columns from GET /wallets. Click a row for books."
         right={<ApiPath method="GET" path={calledPath} />}
       >
         {rows.length === 0 ? (
           <Empty>{loading ? "Loading…" : "No wallets"}</Empty>
+        ) : filteredRows.length === 0 ? (
+          <Empty>No wallets match walletType filter.</Empty>
         ) : (
-          <div className="table-wrap max-h-[280px] overflow-auto">
+          <div className="table-wrap max-h-[360px] overflow-auto">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>walletId</th>
-                  <th>ownerId</th>
-                  <th>settle</th>
-                  <th>status</th>
-                  <th>vanity</th>
-                  <th>name</th>
+                  {WALLET_COLS.map((c) => (
+                    <th key={c.key} className="whitespace-nowrap">
+                      {c.label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
+                {filteredRows.map((r, i) => (
                   <tr
                     key={r.walletId ?? r.ownerId ?? i}
                     className={
@@ -306,16 +369,47 @@ export default function WalletsQueryListPage() {
                     }
                     onClick={() => void openWallet(r)}
                   >
-                    <td className="font-mono text-[10px]">
-                      {r.walletId != null ? shortId(String(r.walletId), 8) : "—"}
-                    </td>
-                    <td className="font-mono text-xs font-medium">{r.ownerId}</td>
-                    <td>{r.settlementCurrency || "—"}</td>
-                    <td>
-                      <Badge tone={r.status === "ACTIVE" ? "ok" : "neutral"}>{r.status || "—"}</Badge>
-                    </td>
-                    <td className="font-mono text-[10px]">{r.vanityCode || "—"}</td>
-                    <td className="max-w-[180px] truncate">{r.name || "—"}</td>
+                    {WALLET_COLS.map((c) => {
+                      const raw = r[c.key];
+                      if (c.key === "status") {
+                        return (
+                          <td key={c.key}>
+                            <Badge tone={r.status === "ACTIVE" ? "ok" : "neutral"}>{r.status || "—"}</Badge>
+                          </td>
+                        );
+                      }
+                      if (c.key === "walletType") {
+                        return (
+                          <td key={c.key}>
+                            <Badge tone={String(r.walletType).toUpperCase() === "CORPORATE" ? "info" : "neutral"}>
+                              {r.walletType || "—"}
+                            </Badge>
+                          </td>
+                        );
+                      }
+                      if (c.key === "isActive") {
+                        return (
+                          <td key={c.key}>
+                            <Badge tone={r.isActive === false ? "warn" : "ok"}>
+                              {r.isActive === false ? "false" : "true"}
+                            </Badge>
+                          </td>
+                        );
+                      }
+                      return (
+                        <td
+                          key={c.key}
+                          className={clsx(
+                            "whitespace-nowrap text-xs",
+                            c.mono && "font-mono text-[11px]",
+                            c.key === "ownerId" && "font-medium",
+                            c.key === "name" && "max-w-[180px] truncate",
+                          )}
+                        >
+                          {cell(raw, c.key)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -370,34 +464,10 @@ export default function WalletsQueryListPage() {
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Books
               </div>
-              {books.length === 0 ? (
-                <Empty>{detailLoading ? "Loading books…" : "No accounts on this wallet"}</Empty>
-              ) : (
-                <div className="table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>ccy</th>
-                        <th>fullNumber</th>
-                        <th>name</th>
-                        <th>ledger</th>
-                        <th>available</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {books.map((a, i) => (
-                        <tr key={a.id ?? i}>
-                          <td className="font-medium">{a.currency}</td>
-                          <td className="font-mono text-[10px] text-slate-600">{a.fullNumber || "—"}</td>
-                          <td className="text-xs">{a.name || a.refCode || (a.primary ? "primary" : "—")}</td>
-                          <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
-                          <td className="font-mono text-xs">{money(a.availableBalance)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <AccountBooksTable
+                accounts={books}
+                empty={detailLoading ? "Loading books…" : "No accounts on this wallet"}
+              />
             </div>
           </Card>
 
@@ -582,6 +652,6 @@ export default function WalletsQueryListPage() {
       ) : (
         <Empty>Click a wallet row to open books and incoming history.</Empty>
       )}
-    </div>
+    </PageShell>
   );
 }

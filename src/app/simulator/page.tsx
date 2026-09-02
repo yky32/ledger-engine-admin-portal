@@ -9,13 +9,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, Badge, JsonBlock, Alert, Empty } from "@/components/ui/kit";
+import { Card, Badge, JsonBlock, Alert, Empty } from "@/components/ui/kit";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount, clsx, isConflictError } from "@/lib/format";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import { ExplainBox } from "@/components/ui/help";
 import { Plus, Copy, Trash2, Users } from "lucide-react";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
 import { rememberOwnerId } from "@/lib/owner-memory";
 
 /* ───────── types ───────── */
@@ -813,30 +812,30 @@ export default function SimulatorPage() {
   const activeEnabled = activeCases.filter((c) => c.enabled).length;
 
   return (
-    <div>
-      <FlowStrip active="shoot" />
-      <EngineStatusBanner />
-      <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-900">
-        After run, open{" "}
-        <a className="font-semibold underline" href="/records">
-          DB records
-        </a>{" "}
-        to see wallets / movements / Door / Brain rows actually stored in PG.
+    <PageShell
+      flow="shoot"
+      title="2 · Shoot — Simulator"
+      description="SDK webhook per customer: ownerId (01A…) · optional mainAccount (9089/9088) · metadata hashmap."
+      api={[
+        { method: "POST", path: "/integrations/webhooks/transactions" },
+        { method: "GET", path: "/ingest-policies" },
+        { method: "GET", path: "/wallets/{ownerId}" },
+      ]}
+      actions={
+        <Link href="/review" className="btn-secondary text-xs">
+          Customer review →
+        </Link>
+      }
+    >
+      <div className="mb-4">
+        <Alert tone="ok">
+          After run, open{" "}
+          <Link href="/records" className="font-semibold underline">
+            DB records
+          </Link>{" "}
+          to see wallets / movements / Door / Brain rows actually stored in PG.
+        </Alert>
       </div>
-      <PageHeader
-        title="Txn simulator"
-        description="SDK webhook per customer: ownerId (01A…) · optional mainAccount (9089/9088) · metadata hashmap."
-        api={[
-          { method: "POST", path: "/integrations/webhooks/transactions" },
-          { method: "GET", path: "/ingest-policies" },
-          { method: "GET", path: "/wallets/{ownerId}" },
-        ]}
-        actions={
-          <Link href="/review" className="btn-secondary text-xs">
-            Customer review →
-          </Link>
-        }
-      />
 
       <div className="mb-4 grid gap-3 lg:grid-cols-3">
         <ExplainBox title="Multi-customer" tone="ops">
@@ -1594,7 +1593,7 @@ export default function SimulatorPage() {
           </div>
         ) : null}
       </Card>
-    </div>
+    </PageShell>
   );
 }
 

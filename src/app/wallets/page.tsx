@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PageHeader, Card, JsonBlock } from "@/components/ui/kit";
+import { Card, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel, ExplainBox, HelpTip } from "@/components/ui/help";
 import { engine } from "@/lib/engine";
 import { errMsg, randomOwnerId } from "@/lib/format";
-import { FlowStrip } from "@/components/layout/flow-strip";
-import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
+import { PageShell } from "@/components/layout/page-shell";
 
 export default function WalletsPage() {
   const [ownerId, setOwnerId] = useState(randomOwnerId());
@@ -57,17 +56,15 @@ export default function WalletsPage() {
   };
 
   return (
-    <div>
-      <FlowStrip active="ops" />
-      <EngineStatusBanner />
-      <PageHeader
-        title="Wallet onboard (CRM path)"
-        description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode selects COA profile."
-        api={[
-          { method: "POST", path: "/wallets" },
-          { method: "GET", path: "/wallets/{ownerId}" },
-        ]}
-      />
+    <PageShell
+      flow="ops"
+      title="Wallet onboard (CRM)"
+      description="Explicit 1 ownerId → 1 Wallet. Optional coaProfileCode selects COA profile."
+      api={[
+        { method: "POST", path: "/wallets" },
+        { method: "GET", path: "/wallets/{ownerId}" },
+      ]}
+    >
       <div className="mb-4 grid gap-3 lg:grid-cols-2">
         <ExplainBox title="When to use explicit onboard" tone="ops">
           <p>
@@ -137,7 +134,7 @@ export default function WalletsPage() {
               </FieldLabel>
               <input
                 className="field-input font-mono"
-                placeholder="MEMBER_CUST_LP or profile code"
+                placeholder="CUSTOMER_CUST_LP or profile code"
                 value={coaProfileCode}
                 onChange={(e) => setCoaProfileCode(e.target.value)}
               />
@@ -196,6 +193,6 @@ export default function WalletsPage() {
           </div>
         </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

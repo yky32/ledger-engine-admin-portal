@@ -1,32 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { engine } from "@/lib/engine";
-import { errMsg } from "@/lib/format";
 import { Alert } from "@/components/ui/kit";
+import { useEngineHealth } from "@/lib/engine-health";
 
 /** Soft banner — engine down / URL misconfigured (shows on pages that need API). */
 export function EngineStatusBanner() {
-  const [state, setState] = useState<"checking" | "up" | "down">("checking");
-  const [detail, setDetail] = useState("");
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        await engine.health();
-        if (!alive) return;
-        setState("up");
-      } catch (e) {
-        if (!alive) return;
-        setState("down");
-        setDetail(errMsg(e));
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const { state, detail } = useEngineHealth();
 
   if (state !== "down") return null;
 

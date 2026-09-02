@@ -12,14 +12,14 @@ import {
   Lock,
   ListTree,
   FlaskConical,
-  Activity,
   Workflow,
   Database,
   BookOpen,
   Sparkles,
   Building2,
-  Table2,
+  Users,
   Scale,
+  Library,
 } from "lucide-react";
 
 /**
@@ -51,17 +51,11 @@ export const NAV: NavItem[] = [
     blurb: "HKD 500 · MCC 5411 walkthrough",
   },
   {
-    href: "/recipes",
-    label: "Posting recipes",
-    icon: ListTree,
+    href: "/use-cases",
+    label: "Use cases",
+    icon: CreditCard,
     group: "Overview",
-    blurb: "eventType → atoms (CC_TXN / CC_CIP / CC_SIP / LN_TXN)",
-  },
-  {
-    href: "/health",
-    label: "Engine health",
-    icon: Activity,
-    group: "Overview",
+    blurb: "CC Transaction → HKD / LP",
   },
   {
     href: "/records",
@@ -73,17 +67,24 @@ export const NAV: NavItem[] = [
 
   {
     href: "/corporate-coa-list",
-    label: "House · COA",
+    label: "House COA",
     icon: Building2,
     group: "Query",
-    blurb: "Company books (HOUSE_*)",
+    blurb: "Company · 01-02 op / 01-04 expense",
   },
   {
     href: "/coa-list",
-    label: "Brain · COA",
-    icon: Table2,
+    label: "Customer COA",
+    icon: Users,
     group: "Query",
-    blurb: "GET /coa-profiles table",
+    blurb: "Custodian · 01-01-01 HKD / LP",
+  },
+  {
+    href: "/coa-dictionary",
+    label: "COA dictionary",
+    icon: Library,
+    group: "Query",
+    blurb: "What 01-02 / 01-01-01 means",
   },
   {
     href: "/wallets-list",
@@ -119,10 +120,10 @@ export const NAV: NavItem[] = [
   },
   {
     href: "/coa",
-    label: "1 · Brain — COA",
+    label: "1 · Brain — Customer COA",
     icon: BookOpen,
     group: "① Ops configures",
-    blurb: "chart of accounts (structure)",
+    blurb: "01-01-01 custodian chart",
     step: "ops",
   },
   {
@@ -172,7 +173,7 @@ export const NAV: NavItem[] = [
     label: "3 · Books — DE legs",
     icon: ListTree,
     group: "③ Engine outcomes",
-    blurb: "Double-entry vs PROGRAM",
+    blurb: "Double-entry vs HOUSE",
     step: "engine",
   },
   {

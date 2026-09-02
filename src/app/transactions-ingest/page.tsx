@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PageHeader, Card, JsonBlock, Badge } from "@/components/ui/kit";
+import { Card, JsonBlock, Badge } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount } from "@/lib/format";
 import { formatMatchedPath } from "@/lib/factors";
 import { EVENT_TYPES, WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
-import { FlowStrip } from "@/components/layout/flow-strip";
+import { PageShell } from "@/components/layout/page-shell";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
 const DEMO_OWNER = "01A81267065";
@@ -160,16 +160,15 @@ client.events().submit(event);`;
     : [];
 
   return (
-    <div>
-      <FlowStrip active="shoot" />
-      <PageHeader
-        title="Fire webhook"
-        description="SDK TransactionalEvent — ownerId + optional mainAccount + metadata hashmap. Dry-run or live."
-        api={[
-          { method: "POST", path: "/integrations/webhooks/transactions" },
-          { method: "POST", path: "/integrations/webhooks/transactions/dry-run" },
-        ]}
-      />
+    <PageShell
+      flow="shoot"
+      title="2 · Shoot — Single webhook"
+      description="SDK TransactionalEvent — ownerId + optional mainAccount + metadata hashmap. Dry-run or live."
+      api={[
+        { method: "POST", path: "/integrations/webhooks/transactions" },
+        { method: "POST", path: "/integrations/webhooks/transactions/dry-run" },
+      ]}
+    >
       <div className="mb-3 flex flex-wrap gap-2">
         <button
           type="button"
@@ -216,8 +215,8 @@ client.events().submit(event);`;
         <a href="/demo" className="btn-secondary text-xs">
           Open guided Demo page
         </a>
-        <a href="/recipes" className="btn-secondary text-xs">
-          Recipes
+        <a href="/use-cases" className="btn-secondary text-xs">
+          Use cases
         </a>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
@@ -477,6 +476,6 @@ client.events().submit(event);`;
           ) : null}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

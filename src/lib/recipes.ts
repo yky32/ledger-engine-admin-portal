@@ -52,8 +52,8 @@ export const POSTING_RECIPES: RecipeDef[] = [
 /** COA quick-create presets (chart codes — not webhook eventType). */
 export const COA_PRESETS = [
   {
-    code: "MEMBER_CUST_LP",
-    name: "Member Custodian LP",
+    code: "CUSTOMER_CUST_LP",
+    name: "Customer Custodian LP",
     entity: "01",
     type: "01",
     subType: "01",
@@ -61,8 +61,8 @@ export const COA_PRESETS = [
     currency: "LP",
   },
   {
-    code: "MEMBER_CUST_HKD",
-    name: "Member Custodian HKD",
+    code: "CUSTOMER_CUST_HKD",
+    name: "Customer Custodian HKD",
     entity: "01",
     type: "01",
     subType: "01",
@@ -74,9 +74,11 @@ export const COA_PRESETS = [
 /**
  * UA house / corporate books.
  * Operating 01-02-01 (movement example). Expense 01-04-02.
- * Operating main-account 9999. Member custodian 01-01-01 is member, not house.
+ * Operating main-account 9999. Customer custodian 01-01-01 is customer, not house.
  */
 export const HOUSE_MAIN_ACCOUNT = "9999";
+/** Company wallet ownerId (UAF finance). Legacy PROGRAM is renamed on ensure. */
+export const HOUSE_OWNER_ID = "HOUSE";
 
 export const HOUSE_COA_PRESETS = [
   {
@@ -127,7 +129,7 @@ export const HOUSE_COA_PRESETS = [
 
 export function isHouseCoaCode(code?: string | null): boolean {
   const c = (code ?? "").toUpperCase();
-  return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_") || c === "PROGRAM";
+  return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_") || c === "PROGRAM" || c === "HOUSE";
 }
 
 /** Shared webhook / Brain / accounting bind codes. Reward is resultCurrency, not a suffix. */
