@@ -3,7 +3,7 @@
 Ops console for **[LedgeRX](https://github.com/yky32/ledger-engine)** (`ledger-engine` service).
 
 **API contract (path / method / fields):** [docs/BACKEND_API.md](./docs/BACKEND_API.md)  
-UX follows LedgeRX **`docs/SYSTEM_BUSINESS_FLOW.md`**. Brand: engine `docs/BRAND.md`.
+Engine handbook: [ledger-engine `docs/BOOKLET.md`](https://github.com/yky32/ledger-engine/blob/main/docs/BOOKLET.md).
 
 ## Mental model (sidebar + home)
 

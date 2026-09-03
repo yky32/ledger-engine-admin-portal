@@ -16,6 +16,7 @@ import type {
   FailedIngest,
   HoldReleaseBody,
   IngestPolicy,
+  WalletTierPolicy,
   IngestResult,
   LedgerLeg,
   MovementView,
@@ -262,6 +263,13 @@ export const engine = {
   /** PUT /ingest-policies */
   ingestPolicyPut: (body: Partial<IngestPolicy>) =>
     ledger.put<IngestPolicy>("/ingest-policies", body),
+
+  /** GET /wallet-tier-policies */
+  walletTierPolicyGet: () => ledger.get<WalletTierPolicy>("/wallet-tier-policies"),
+
+  /** PUT /wallet-tier-policies */
+  walletTierPolicyPut: (body: Partial<WalletTierPolicy>) =>
+    ledger.put<WalletTierPolicy>("/wallet-tier-policies", body),
 
   /* ─── Product movements (/movements) — require ownerId, NOT walletId on write ─── */
   /** GET /movements?walletId= (required) */

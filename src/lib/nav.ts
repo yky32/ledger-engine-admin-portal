@@ -22,6 +22,7 @@ import {
   Scale,
   Library,
   UserPlus,
+  Medal,
 } from "lucide-react";
 
 /**
@@ -49,6 +50,13 @@ export const NAV: NavItem[] = [
     label: "Onboard",
     icon: UserPlus,
     group: "Wallets",
+  },
+  {
+    href: "/wallet-tier-policies",
+    label: "Tiering",
+    icon: Medal,
+    group: "Wallets",
+    blurb: "/wallet-tier-policies",
   },
 
   {
