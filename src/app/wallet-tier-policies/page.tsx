@@ -11,10 +11,7 @@ import type { WalletTierBand, WalletTierPolicy } from "@/lib/types";
 const emptyBand = (): WalletTierBand => ({ code: "", upgradeAt: "0", downgradeBelow: "" });
 
 export default function WalletTierPoliciesPage() {
-  const [enabled, setEnabled] = useState(true);
-  const [entity, setEntity] = useState("01");
-  const [type, setType] = useState("01");
-  const [subType, setSubType] = useState("01");
+  const [enabled, setEnabled] = useState(false);
   const [currency, setCurrency] = useState("LP");
   const [bands, setBands] = useState<WalletTierBand[]>([emptyBand()]);
   const [saved, setSaved] = useState<WalletTierPolicy | null>(null);
@@ -23,10 +20,7 @@ export default function WalletTierPoliciesPage() {
   const [ok, setOk] = useState<string | null>(null);
 
   const apply = (p: WalletTierPolicy) => {
-    setEnabled(p.isEnabled !== false);
-    setEntity(p.entity || "01");
-    setType(p.type || "01");
-    setSubType(p.subType || "01");
+    setEnabled(p.isEnabled === true);
     setCurrency(p.currency || "LP");
     setBands(p.bands && p.bands.length > 0 ? p.bands.map((b) => ({ ...b })) : [emptyBand()]);
     setSaved(p);
@@ -57,9 +51,6 @@ export default function WalletTierPoliciesPage() {
       const r = await engine.walletTierPolicyPut({
         isEnabled: enabled,
         criterion: "LEDGER_BALANCE",
-        entity,
-        type,
-        subType,
         currency,
         bands: bands
           .filter((b) => b.code.trim())
@@ -97,13 +88,12 @@ export default function WalletTierPoliciesPage() {
       ]}
     >
       <Alert tone="info">
-        Criterion is <code className="text-xs">LEDGER_BALANCE</code> on{" "}
-        <code className="text-xs">
-          {entity}-{type}-{subType} {currency}
-        </code>
-        . Upgrade at <code className="text-xs">upgradeAt</code>; downgrade when below{" "}
+        Amount total = sum of this wallet’s <code className="text-xs">ledgerBalance</code> in{" "}
+        <code className="text-xs">{currency || "LP"}</code> (via <code className="text-xs">account.walletId</code>
+        ). Upgrade at <code className="text-xs">upgradeAt</code>; drop when below{" "}
         <code className="text-xs">downgradeBelow</code> (blank = use upgradeAt). HOUSE skipped.
-        Opening this page loads a disabled draft — click <strong>Enabled</strong> then <strong>Save</strong> to start assessing. Changing bands does not recalc existing wallets until their next LP movement.
+        Click <strong>Enabled</strong> then <strong>Save</strong> to start. Changing bands does not
+        recalc existing wallets until their next movement in that currency.
       </Alert>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
@@ -124,28 +114,14 @@ export default function WalletTierPoliciesPage() {
               Off
             </button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-4">
-            <label className="field">
-              <span className="field-label">entity</span>
-              <input className="field-input font-mono" value={entity} onChange={(e) => setEntity(e.target.value)} />
-            </label>
-            <label className="field">
-              <span className="field-label">type</span>
-              <input className="field-input font-mono" value={type} onChange={(e) => setType(e.target.value)} />
-            </label>
-            <label className="field">
-              <span className="field-label">subType</span>
-              <input className="field-input font-mono" value={subType} onChange={(e) => setSubType(e.target.value)} />
-            </label>
-            <label className="field">
-              <span className="field-label">currency</span>
-              <input
-                className="field-input font-mono"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              />
-            </label>
-          </div>
+          <label className="field max-w-[160px]">
+            <span className="field-label">currency (amount total)</span>
+            <input
+              className="field-input font-mono"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+            />
+          </label>
 
           <div className="table-wrap mt-4">
             <table className="data-table">

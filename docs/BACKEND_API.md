@@ -13,7 +13,7 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | POST | `/wallets` | `ownerId`, `settlementCurrency`, `name?`, `vanityCode?`, `accounts?[{currency}]` | Onboard |
 | GET | `/wallets/{ownerId}` | — | By ownerId · includes `tier` |
 | GET | `/wallet-tier-policies` | — | get-or-create default bands |
-| PUT | `/wallet-tier-policies` | `isEnabled?`,`criterion?`,`entity?`,`type?`,`subType?`,`currency?`,`bands?` | Watched COA book + upgrade/downgrade amounts |
+| PUT | `/wallet-tier-policies` | `isEnabled?`,`criterion?`,`currency?`,`bands?` | Sum ledgerBalance of this wallet's books in `currency` |
 | GET | `/wallets?ownerId=` | — | Alt lookup |
 | GET | `/wallets/{ownerId}/movements` | `page`(1-based),`size`,`orderType?`,`currency?`,`status?`,`startDt?`,`endDt?` | History |
 | GET | `/wallets/{ownerId}/balances/as-of` | `at?`(ISO),`currency?` | As-of |

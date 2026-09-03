@@ -388,9 +388,6 @@ export type WalletTierPolicy = {
   id?: number;
   isEnabled?: boolean;
   criterion?: string;
-  entity?: string;
-  type?: string;
-  subType?: string;
   currency?: string;
   bands?: WalletTierBand[];
   createDt?: string;
