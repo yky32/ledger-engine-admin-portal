@@ -71,7 +71,11 @@ export default function WalletTierPoliciesPage() {
           })),
       });
       apply(r.data as WalletTierPolicy);
-      setOk("Saved — next LP book movement reassesses wallet.tier in the same TX.");
+      setOk(
+        enabled
+          ? "Enabled — next LP book movement reassesses wallet.tier in the same TX."
+          : "Saved draft (off). Settle will not change wallet.tier until you Enable.",
+      );
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -86,7 +90,7 @@ export default function WalletTierPoliciesPage() {
   return (
     <PageShell
       title="Wallet tiering"
-      description="Realtime membership from the watched COA book's ledgerBalance (amount total). Earn / burn / refund all assess after settle."
+      description="Save as Enabled to start realtime wallet.tier. Until then settle does not change tiers."
       api={[
         { method: "GET", path: "/wallet-tier-policies" },
         { method: "PUT", path: "/wallet-tier-policies" },
@@ -99,7 +103,7 @@ export default function WalletTierPoliciesPage() {
         </code>
         . Upgrade at <code className="text-xs">upgradeAt</code>; downgrade when below{" "}
         <code className="text-xs">downgradeBelow</code> (blank = use upgradeAt). HOUSE skipped.
-        Changing bands does not recalc existing wallets until their next LP movement.
+        Opening this page loads a disabled draft — click <strong>Enabled</strong> then <strong>Save</strong> to start assessing. Changing bands does not recalc existing wallets until their next LP movement.
       </Alert>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
