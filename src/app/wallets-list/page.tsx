@@ -11,6 +11,7 @@ import { errMsg, money, shortId, clsx } from "@/lib/format";
 import { rememberOwnerId } from "@/lib/owner-memory";
 import type { LedgerLeg, MovementView, WalletAccount, WalletView } from "@/lib/types";
 import { AccountBooksTable } from "@/components/books/account-books-table";
+import { RefundHow } from "@/components/books/refund-how";
 import { Chip } from "@/components/factors/gate-ui";
 
 /** Wallet table columns = DB / JSON names (GET /wallets). */
@@ -491,6 +492,8 @@ export default function WalletsQueryListPage() {
               />
             </div>
           </Card>
+
+          <RefundHow />
 
           <div className="mb-4 grid gap-4 lg:grid-cols-5">
             <Card

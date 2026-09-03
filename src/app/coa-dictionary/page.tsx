@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, Badge, Empty, Alert } from "@/components/ui/kit";
+import { Card, Badge, Empty } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { PageShell } from "@/components/layout/page-shell";
 import { FilterBar } from "@/components/ui/filter-bar";
+import { CoaHero } from "@/components/books/coa-hero";
 import { engine } from "@/lib/engine";
 import { errMsg, clsx } from "@/lib/format";
 import type { CoaDictionaryRow } from "@/lib/types";
@@ -194,7 +195,7 @@ export default function CoaDictionaryPage() {
     <PageShell
       flow="ledger"
       title="COA dictionary"
-      description="Stored meanings of chart digits and stems. 01-02 = house operating. Profiles are the live books; this is the definition list."
+      description="Meanings of chart digits and stems. Live books live on House COA / Customer COA; this list is the definition."
       api={[
         { method: "GET", path: "/coa-dictionary" },
         { method: "POST", path: "/coa-dictionary" },
@@ -210,6 +211,8 @@ export default function CoaDictionaryPage() {
       ok={ok}
       error={error}
     >
+      <CoaHero />
+
       <FilterBar loading={loading} onSubmit={() => void load()} submitLabel="Reload">
         <label className="field min-w-[180px]">
           <span className="field-label">lookup</span>
@@ -236,12 +239,6 @@ export default function CoaDictionaryPage() {
           </select>
         </label>
       </FilterBar>
-
-      <Alert tone="info">
-        <strong>01-02</strong> is a stem (entity 01 credit card + type 02 operating) — house operating books
-        <span className="font-mono"> 01-02-01-9999</span>. Customer custodian is <span className="font-mono">01-01</span>.
-        Edit the definition on the right; it is saved in PG.
-      </Alert>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">

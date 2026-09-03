@@ -6,8 +6,9 @@ import { ActionBar } from "@/components/ui/action";
 import { engine } from "@/lib/engine";
 import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount } from "@/lib/format";
 import { formatMatchedPath } from "@/lib/factors";
-import { EVENT_TYPES, WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
+import { EVENT_TYPES, INGEST_ACTIONS, WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
 import { PageShell } from "@/components/layout/page-shell";
+import { RefundHow } from "@/components/books/refund-how";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
 const DEMO_OWNER = "01A81267065";
@@ -25,6 +26,8 @@ export default function WebhookPage() {
   const [extraMetaJson, setExtraMetaJson] = useState(
     '{\n  "channel": "UAF_CC",\n  "posId": "HKG-001"\n}',
   );
+  const [originalEventId, setOriginalEventId] = useState("");
+  const [action, setAction] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IngestResult | null>(null);
@@ -77,6 +80,13 @@ export default function WebhookPage() {
     };
     const main = mainAccount.trim();
     if (main) body.mainAccount = main;
+    const orig = originalEventId.trim();
+    if (orig) body.originalEventId = orig;
+    if (action) {
+      body.action = action;
+    } else if (orig) {
+      body.action = "REFUND";
+    }
     return body;
   }, [
     eventId,
@@ -88,6 +98,8 @@ export default function WebhookPage() {
     mcc,
     coaProfileCode,
     extraMeta,
+    originalEventId,
+    action,
     mainAccount,
   ]);
 
@@ -99,9 +111,15 @@ export default function WebhookPage() {
     const mainLine = mainAccount.trim()
       ? `\n    .mainAccount("${mainAccount.trim()}")`
       : "";
+    const actionLine = payload.action
+      ? `\n    .action("${payload.action}")`
+      : "";
+    const origLine = originalEventId.trim()
+      ? `\n    .originalEventId("${originalEventId.trim()}")`
+      : "";
     return `TransactionalEvent event = TransactionalEvent.builder()
     .eventId("${eventId.trim()}")
-    .ownerId("${ownerId.trim()}")${mainLine}
+    .ownerId("${ownerId.trim()}")${mainLine}${actionLine}${origLine}
     .eventType("${eventType}")
     .amount(new BigDecimal("${amount}"))
     .currency("${currency}")
@@ -111,11 +129,13 @@ ${metaEntries}
     ))
     .build();
 client.events().submit(event);`;
-  }, [payload, eventId, ownerId, mainAccount, eventType, amount, currency, occurredAt]);
+  }, [payload, eventId, ownerId, mainAccount, originalEventId, eventType, amount, currency, occurredAt]);
 
   const applyPreset = (kind: "cc_txn" | "cc_cip" | "ln_txn" | "burn") => {
     setEventId(randomEventId());
     setOccurredAt(nowIso());
+    setAction("");
+    setOriginalEventId("");
     if (kind === "cc_txn") {
       setEventType("CC_TXN");
       setAmount("500");
@@ -221,6 +241,9 @@ client.events().submit(event);`;
           Use cases
         </a>
       </div>
+
+      <RefundHow />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Payload">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -296,6 +319,29 @@ client.events().submit(event);`;
                   Gen
                 </button>
               </div>
+            </label>
+            <label className="field">
+              <span className="field-label">action</span>
+              <select
+                className="field-select"
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+              >
+                {INGEST_ACTIONS.map((a) => (
+                  <option key={a.value || "spend"} value={a.value}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span className="field-label">originalEventId</span>
+              <input
+                className="field-input font-mono"
+                value={originalEventId}
+                onChange={(e) => setOriginalEventId(e.target.value)}
+                placeholder="required for reverse"
+              />
             </label>
             <label className="field">
               <span className="field-label">eventType</span>

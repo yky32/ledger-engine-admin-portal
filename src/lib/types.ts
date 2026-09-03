@@ -151,18 +151,22 @@ export type TransactionalEventBody = {
   eventId: string;
   ownerId: string;
   eventType: string;
+  /** SPEND (default, omit) · REFUND · VOID · PARTIAL · CHARGEBACK · ADJUST. */
+  action?: "SPEND" | "REFUND" | "VOID" | "PARTIAL" | "CHARGEBACK" | "ADJUST";
   amount: number | string;
   currency: CurrencyCode;
   occurredAt?: string;
   metadata?: Record<string, string>;
   /** Optional UAF main-account (9089… / 9088…). Omit → engine generates. */
   mainAccount?: string;
+  /** Pointer to the earn eventId. Required for REFUND / VOID / CHARGEBACK / PARTIAL / ADJUST. */
+  originalEventId?: string;
 };
 
 /** IngestionResult + Trust pack B */
 export type IngestResult = {
   eventId?: string;
-  status?: "EARNED" | "BURNED" | "PROCESSED" | "SKIPPED" | "DUPLICATE" | "ERROR" | string;
+  status?: "EARNED" | "BURNED" | "PROCESSED" | "REFUNDED" | "SKIPPED" | "DUPLICATE" | "ERROR" | string;
   operation?: string;
   reason?: string;
   points?: number | string;

@@ -146,3 +146,13 @@ export const WEBHOOK_EVENT_PRESETS = EVENT_TYPES.map((eventType) => ({
   eventType,
   label: EVENT_TYPE_LABELS[eventType],
 }));
+
+/** Booking on TransactionalEvent.action — not a new eventType. */
+export const INGEST_ACTIONS = [
+  { value: "", label: "SPEND (omit)" },
+  { value: "REFUND", label: "REFUND — full reverse" },
+  { value: "VOID", label: "VOID — full reverse" },
+  { value: "CHARGEBACK", label: "CHARGEBACK — full reverse" },
+  { value: "PARTIAL", label: "PARTIAL — not booked yet" },
+  { value: "ADJUST", label: "ADJUST — not booked yet" },
+] as const;
