@@ -11,14 +11,16 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | Method | Path | Body / query | Notes |
 |--------|------|--------------|--------|
 | POST | `/wallets` | `ownerId`, `settlementCurrency`, `name?`, `vanityCode?`, `accounts?[{currency}]` | Onboard |
-| GET | `/wallets/{ownerId}` | — | By ownerId |
+| GET | `/wallets/{ownerId}` | — | By ownerId · includes `tier` |
+| GET | `/wallet-tier-policies` | — | get-or-create default bands |
+| PUT | `/wallet-tier-policies` | `isEnabled?`,`criterion?`,`currency?`,`bands?` | Sum ledgerBalance of this wallet's books in `currency` |
 | GET | `/wallets?ownerId=` | — | Alt lookup |
 | GET | `/wallets/{ownerId}/movements` | `page`(1-based),`size`,`orderType?`,`currency?`,`status?`,`startDt?`,`endDt?` | History |
 | GET | `/wallets/{ownerId}/balances/as-of` | `at?`(ISO),`currency?` | As-of |
 | POST | `/wallets/holds` | `ownerId`,`currency`,`amount`,`movementKey?`,`description?` | Hold |
 | POST | `/wallets/releases` | same | Release |
-| POST | `/integrations/webhooks/transactions` |
-| POST | `/integrations/webhooks/transactions/dry-run` | same body · **no books** · `dryRun=true` + `eligibilityTrace` | `eventId`,`ownerId`,`eventType`,`amount`,`currency`,`occurredAt?`,`metadata?` Map**string→string** | Webhook |
+| POST | `/integrations/webhooks/transactions` | `eventId`,`ownerId`,`eventType`,`amount`,`currency`,`occurredAt?`,`metadata?`,`mainAccount?`,`action?`,`originalEventId?` | Spend omits `action` (default SPEND). `REFUND`/`VOID`/`CHARGEBACK` reverse `originalEventId`. |
+| POST | `/integrations/webhooks/transactions/dry-run` | same body · **no books** · `dryRun=true` + `eligibilityTrace` | Webhook preview |
 | GET | `/integrations/ledger-entries` | **exactly one of** `eventId` \| `movementId` ; `operation?` | DE legs |
 | GET | `/integrations/failed-transactions` | `page`,`size`,`status?`,`ownerId?`,`failureCode?`,`eventId?` | Fail queue |
 | GET | `/integrations/failed-transactions/{id}` | — | |
@@ -38,7 +40,7 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 
 + `matchedRuleCode`, `eligibilityTrace[]` {ruleCode,priority,matched,failStep,detail}, optional `dryRun`
 
-`eventId`, `status` (`EARNED|BURNED|PROCESSED|SKIPPED|DUPLICATE|ERROR`), `operation`, `reason`, `points`, `transactionId`, `walletExternalReference`, `movementId`, `legs[]`
+`eventId`, `status` (`EARNED|BURNED|PROCESSED|REFUNDED|SKIPPED|DUPLICATE|ERROR`), `operation`, `reason`, `points`, `transactionId`, `walletExternalReference`, `movementId`, `legs[]`
 
 ### Eligibility (Brain)
 
@@ -65,6 +67,7 @@ Webhook MCC: `metadata.mcc` | `mccCode` | `merchantCategoryCode`.
 | GET | `/movements` | **`walletId` required**, `page`,`size` |
 | GET | `/movements/{id}` | — |
 | PUT | `/movements/{id}/settle` | `description?` |
+| POST | `/movements/{id}/refund` | — | Reverse SETTLED EARN/BURN (DR/CR swapped) |
 
 ⚠️ Not `walletId` on deposit body — use **`ownerId`**.
 

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 /**
- * Home = interactive SYSTEM_BUSINESS_FLOW §3 end-to-end picture.
+ * Home = interactive Door → Brain → Accounting → Ledger picture.
  */
 export default function HomePage() {
   const [engineOk, setEngineOk] = useState<boolean | null>(null);
@@ -448,7 +448,7 @@ export default function HomePage() {
       </Card>
 
       <p className="mt-6 text-center text-[11px] text-slate-400">
-        Source of truth: <code>ledger-engine/docs/SYSTEM_BUSINESS_FLOW.md</code>
+        Source of truth: <code>ledger-engine/docs/BOOKLET.md</code>
         {engineDetail ? ` · health ${engineDetail.slice(0, 40)}…` : null}
       </p>
     </PageShell>

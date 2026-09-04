@@ -24,6 +24,7 @@ const WALLET_COLS: { key: keyof WalletView; label: string; mono?: boolean }[] = 
   { key: "type", label: "type" },
   { key: "walletType", label: "walletType" },
   { key: "status", label: "status" },
+  { key: "tier", label: "tier" },
   { key: "settlementCurrency", label: "settlementCurrency" },
   { key: "isActive", label: "isActive" },
   { key: "createDt", label: "createDt", mono: true },

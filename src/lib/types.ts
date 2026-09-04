@@ -36,6 +36,8 @@ export type WalletView = {
   status?: string;
   type?: string;
   walletType?: string;
+  /** Membership band from wallet-tier-policies. */
+  tier?: string | null;
   name?: string;
   account?: WalletAccount;
   balance?: WalletBalance;
@@ -374,6 +376,22 @@ export type UseCaseCatalogItem = {
   hasBrainRule?: boolean;
   hasCoaProfile?: boolean;
   hasRecipe?: boolean;
+};
+
+export type WalletTierBand = {
+  code: string;
+  upgradeAt: number | string;
+  downgradeBelow?: number | string | null;
+};
+
+export type WalletTierPolicy = {
+  id?: number;
+  isEnabled?: boolean;
+  criterion?: string;
+  currency?: string;
+  bands?: WalletTierBand[];
+  createDt?: string;
+  updateDt?: string;
 };
 
 export type IngestPolicy = {
