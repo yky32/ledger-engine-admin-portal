@@ -7,6 +7,7 @@ import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { FailedIngest, LedgerLeg, MovementView, WalletView } from "@/lib/types";
 import { AccountBooksTable } from "@/components/books/account-books-table";
+import { TierMark } from "@/components/books/tier-mark";
 import { PageShell } from "@/components/layout/page-shell";
 import { FilterBar } from "@/components/ui/filter-bar";
 
@@ -109,6 +110,10 @@ export default function ReviewPage() {
               <dt className="text-slate-500">status</dt>
               <dd>
                 <Badge tone="ok">{wallet.status || "—"}</Badge>
+              </dd>
+              <dt className="text-slate-500">tier</dt>
+              <dd>
+                <TierMark code={wallet.tier} size="md" />
               </dd>
               <dt className="text-slate-500">settlement</dt>
               <dd>{wallet.settlementCurrency || "—"}</dd>

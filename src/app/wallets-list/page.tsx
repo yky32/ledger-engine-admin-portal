@@ -12,6 +12,7 @@ import { rememberOwnerId } from "@/lib/owner-memory";
 import type { LedgerLeg, MovementView, WalletAccount, WalletView } from "@/lib/types";
 import { AccountBooksTable } from "@/components/books/account-books-table";
 import { RefundHow } from "@/components/books/refund-how";
+import { TierMark } from "@/components/books/tier-mark";
 import { Chip } from "@/components/factors/gate-ui";
 
 /** Wallet table columns = DB / JSON names (GET /wallets). */
@@ -401,6 +402,13 @@ export default function WalletsQueryListPage() {
                           </td>
                         );
                       }
+                      if (c.key === "tier") {
+                        return (
+                          <td key={c.key}>
+                            <TierMark code={r.tier} />
+                          </td>
+                        );
+                      }
                       if (c.key === "walletType") {
                         return (
                           <td key={c.key}>
@@ -458,10 +466,16 @@ export default function WalletsQueryListPage() {
               </div>
             }
           >
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-5">
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-slate-500">walletId</dt>
                 <dd className="font-mono text-xs">{selected.walletId ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-slate-500">tier</dt>
+                <dd>
+                  <TierMark code={selected.tier} size="md" />
+                </dd>
               </div>
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-slate-500">status</dt>

@@ -23,6 +23,7 @@ import {
   Library,
   UserPlus,
   Medal,
+  Layers,
 } from "lucide-react";
 
 /**
@@ -45,6 +46,13 @@ export const NAV: NavItem[] = [
     icon: Workflow,
     group: "Home",
     blurb: "CC_TXN path",
+  },
+  {
+    href: "/capability",
+    label: "Capability",
+    icon: Layers,
+    group: "Home",
+    blurb: "Reward System row",
   },
 
   {

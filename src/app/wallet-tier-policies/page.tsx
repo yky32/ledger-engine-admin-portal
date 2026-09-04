@@ -5,6 +5,7 @@ import { Card, Alert, JsonBlock, Badge } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { PageShell } from "@/components/layout/page-shell";
 import { CcTxnPath } from "@/components/books/cc-txn-path";
+import { TierMark } from "@/components/books/tier-mark";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { setupTier } from "@/lib/sanity-setup";
@@ -124,7 +125,8 @@ export default function WalletTierPoliciesPage() {
         ). Upgrade at <code className="text-xs">upgradeAt</code>; drop when below{" "}
         <code className="text-xs">downgradeBelow</code> (blank = use upgradeAt). HOUSE skipped.
         Click <strong>Enabled</strong> then <strong>Save</strong> to start. Changing bands does not
-        recalc existing wallets until their next movement in that currency.
+        recalc existing wallets until their next movement in that currency. Marks: SILVER medal,
+        GOLD medal, DIAMOND gem (also used for PLATINUM).
       </Alert>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
@@ -159,6 +161,7 @@ export default function WalletTierPoliciesPage() {
               <thead>
                 <tr>
                   <th>code</th>
+                  <th>mark</th>
                   <th>upgradeAt</th>
                   <th>downgradeBelow</th>
                   <th />
@@ -174,6 +177,9 @@ export default function WalletTierPoliciesPage() {
                         onChange={(e) => setBand(i, { code: e.target.value })}
                         placeholder="GOLD"
                       />
+                    </td>
+                    <td className="align-middle">
+                      <TierMark code={b.code || "NONE"} />
                     </td>
                     <td>
                       <input

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Card, Badge, Alert } from "@/components/ui/kit";
 import { PageShell } from "@/components/layout/page-shell";
 import { SanitySetup } from "@/components/books/sanity-setup";
+import { CapabilityTeaser } from "@/components/books/capability-statement";
 import { engine } from "@/lib/engine";
 import { errMsg, clsx } from "@/lib/format";
 import {
@@ -85,6 +86,8 @@ export default function HomePage() {
           </div>
         }
       >
+
+      <CapabilityTeaser />
 
       <SanitySetup />
 

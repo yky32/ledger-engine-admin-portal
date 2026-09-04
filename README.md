@@ -15,7 +15,8 @@ Chart      House COA · Customer COA · Dictionary
 Rails      Hold / Deposit / Withdraw / Transfer
 ```
 
-Home (`/`) is the CC_TXN map: ingest → digest → books → check tier.
+Home (`/`) is the CC_TXN map: ingest → digest → books → check tier.  
+Capability (`/capability`) is the UAF Reward System row — what LedgeRX is vs coupon / CC product.
 
 ## Quick start
 
@@ -36,6 +37,7 @@ http://localhost:3000 → Home → Webhook / Wallets / Tiering.
 | 2 Brain | `/digestion-rules` | `/digestion-rules` |
 | 3 Books | `/accounting-rules` · `/wallets-list` | CR/DR · GET `/wallets` |
 | 4 Tier | `/wallet-tier-policies` | GET/PUT `/wallet-tier-policies` |
+| — | `/capability` | Reward System row vs slide |
 | Shoot | `/transactions-ingest` | POST webhook |
 | Fail | `/failed-transactions` | review / replay |
 

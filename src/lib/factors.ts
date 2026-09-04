@@ -360,6 +360,18 @@ export const BRAIN_FACTOR_PRESETS: FactorPreset[] = [
       ],
     },
   },
+  {
+    id: "mtr-or-mcc17",
+    label: "any · MCC 17 OR merchant MTR*",
+    blurb: "startsWith metadata.merchantName MTR",
+    value: {
+      match: "any",
+      factors: [
+        { id: "F_mcc_17", field: "mcc", op: "eq", value: "17" },
+        { id: "F_mtr", field: "metadata.merchantName", op: "startsWith", value: "MTR" },
+      ],
+    },
+  },
 ];
 
 /** Ops-readable whenFactors: "MCC 101 · HKD · age ≤ 30 · amt ≥ 1". */
@@ -454,5 +466,5 @@ export function formatMatchedPath(path: unknown): string {
 export const FACTOR_HELP = {
   modes: "all · any · atLeast · exactly · atMost · not · oneOf · anyGroup · allGroups",
   leaves: "currency · mcc · amount · ageDays · eventType · metadata.*",
-  ops: "eq · neq · in · nin · gt/gte/lt/lte · between · exists",
+  ops: "eq · neq · in · nin · gt/gte/lt/lte · between · exists · startsWith · endsWith · contains",
 };
