@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, Alert, JsonBlock, Badge } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { PageShell } from "@/components/layout/page-shell";
+import { CcTxnPath } from "@/components/books/cc-txn-path";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import type { WalletTierBand, WalletTierPolicy } from "@/lib/types";
@@ -80,13 +81,15 @@ export default function WalletTierPoliciesPage() {
 
   return (
     <PageShell
+      flow="tier"
       title="Wallet tiering"
-      description="Save as Enabled to start realtime wallet.tier. Until then settle does not change tiers."
+      description="Step 5 of CC_TXN → ingest → digest → books → check tier. Save as Enabled to start."
       api={[
         { method: "GET", path: "/wallet-tier-policies" },
         { method: "PUT", path: "/wallet-tier-policies" },
       ]}
     >
+      <CcTxnPath />
       <Alert tone="info">
         Amount total = sum of this wallet’s <code className="text-xs">ledgerBalance</code> in{" "}
         <code className="text-xs">{currency || "LP"}</code> (via <code className="text-xs">account.walletId</code>

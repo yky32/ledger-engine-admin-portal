@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { clsx } from "@/lib/format";
 
-/** Compact flow strip — engine pipeline Door → Brain → Accounting → Ledger */
-export function FlowStrip({ active }: { active?: "door" | "brain" | "accounting" | "ledger" }) {
+/** Compact flow strip — CC spend: Door → Brain → Accounting → Ledger → Tier */
+export function FlowStrip({
+  active,
+}: {
+  active?: "door" | "brain" | "accounting" | "ledger" | "tier";
+}) {
   const steps: {
-    id: "door" | "brain" | "accounting" | "ledger";
+    id: "door" | "brain" | "accounting" | "ledger" | "tier";
     n: string;
     title: string;
     href: string;
@@ -15,6 +19,7 @@ export function FlowStrip({ active }: { active?: "door" | "brain" | "accounting"
     { id: "brain", n: "2", title: "Brain", href: "/digestion-rules" },
     { id: "accounting", n: "3", title: "Accounting", href: "/accounting-rules" },
     { id: "ledger", n: "4", title: "Ledger", href: "/wallets-list" },
+    { id: "tier", n: "5", title: "Tier", href: "/wallet-tier-policies" },
   ];
 
   return (

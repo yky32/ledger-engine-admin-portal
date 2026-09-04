@@ -23,6 +23,7 @@ import {
   Wallet,
   Scale,
   CreditCard,
+  Medal,
 } from "lucide-react";
 
 /**
@@ -54,7 +55,7 @@ export default function HomePage() {
   return (
     <PageShell
       title="Business flow"
-      description="One webhook eventType runs Door → Brain → Accounting books. Same code on all three."
+      description="CC_TXN → ingest → digest → books → check tier. Same eventType on Door, Brain, and accounting."
       api={[{ method: "GET", path: "/actuator/health" }]}
       actions={
         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -155,6 +156,21 @@ export default function HomePage() {
                   Member <code>01-01-01</code> LP on this wallet · house <code>01-02-01</code> LP
                 </td>
               </tr>
+              <tr>
+                <td className="font-mono text-slate-400">5</td>
+                <td>
+                  <Link href="/wallet-tier-policies" className="text-emerald-700 hover:underline">
+                    Tier
+                  </Link>
+                </td>
+                <td>
+                  After settle, same TX — if policy <code>isEnabled</code>
+                </td>
+                <td>
+                  Sum this wallet’s LP <code>ledgerBalance</code> → write{" "}
+                  <code>wallet.tier</code>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -167,6 +183,8 @@ export default function HomePage() {
           <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
           <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">DR operating LP</span>
           <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">CR 01AXXXX 01-01-01 LP</span>
+          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-800">check wallet.tier</span>
         </div>
       </Card>
 
@@ -233,6 +251,12 @@ export default function HomePage() {
                   Wallet onboard (optional CRM)
                 </Link>
               </li>
+              <li>
+                <Link className="flow-link" href="/wallet-tier-policies">
+                  <Medal className="h-3.5 w-3.5" />
+                  Tiering <span className="text-slate-400">(LP total → wallet.tier)</span>
+                </Link>
+              </li>
             </ul>
           </FlowBox>
         </div>
@@ -282,7 +306,7 @@ export default function HomePage() {
           <FlowBox
             tone="engine"
             title="LedgeRX"
-            subtitle="Door → Brain → Accounting → Audit"
+            subtitle="Door → Brain → books → tier"
             href="/review"
             wide
           >
@@ -311,9 +335,16 @@ export default function HomePage() {
               <EngineStep
                 n="4"
                 icon={ScrollText}
-                title="Audit — legs + movement history"
+                title="Books — legs + LP on this wallet"
                 href="/ledger-entries"
                 note="Query / review"
+              />
+              <EngineStep
+                n="5"
+                icon={Medal}
+                title="Tier — sum this wallet’s LP, write wallet.tier"
+                href="/wallet-tier-policies"
+                note="Off until Enabled + Save"
               />
             </ol>
           </FlowBox>
@@ -324,7 +355,7 @@ export default function HomePage() {
         </div>
 
         {/* Outcomes */}
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <OutcomeCard
             title="Customer LP balance ↑/↓"
             desc="Wallet books after earn/burn. Hold locks available only."
@@ -334,10 +365,17 @@ export default function HomePage() {
           />
           <OutcomeCard
             title="House operating ↔ member books"
-            desc="Same-currency DE: DR 01-02-01 LP (company) · CR 01-01-01 LP on this CUST wallet."
+            desc="Same-currency DE: DR 01-02-01 LP · CR 01-01-01 LP."
             href="/ledger-entries"
             icon={ListTree}
             cta="View DE legs"
+          />
+          <OutcomeCard
+            title="wallet.tier"
+            desc="After books, LP total vs bands. Off until policy Enabled."
+            href="/wallets-list"
+            icon={Medal}
+            cta="Wallets · tier column"
           />
           <OutcomeCard
             title="Fail queue (ops replay)"
@@ -425,6 +463,13 @@ export default function HomePage() {
               d: "Legs by eventId — house operating vs this customer's 01-01-01.",
               href: "/ledger-entries",
               cta: "Double-entry",
+            },
+            {
+              n: "5",
+              t: "Tier",
+              d: "Enable policy, fire CC_TXN, confirm wallet.tier. Refund re-checks the same LP total.",
+              href: "/wallet-tier-policies",
+              cta: "Tiering",
             },
           ].map((s) => (
             <li

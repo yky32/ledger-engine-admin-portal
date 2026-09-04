@@ -9,6 +9,7 @@ import { formatMatchedPath } from "@/lib/factors";
 import { EVENT_TYPES, INGEST_ACTIONS, WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
 import { PageShell } from "@/components/layout/page-shell";
 import { RefundHow } from "@/components/books/refund-how";
+import { CcTxnPath } from "@/components/books/cc-txn-path";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
 
 const DEMO_OWNER = "01A81267065";
@@ -242,6 +243,7 @@ client.events().submit(event);`;
         </a>
       </div>
 
+      <CcTxnPath />
       <RefundHow />
 
       <div className="grid gap-4 lg:grid-cols-2">
