@@ -26,9 +26,9 @@ import {
 } from "lucide-react";
 
 /**
- * Nav follows engine REST domains, not the old numbered ops/shoot/query flow.
- * Door /ingest-policies → Brain /digestion-rules → Accounting /accounting-rules
- * → books on /wallets · /corporate-coa · /coa-profiles · /movements.
+ * Sidebar follows the CC spend path:
+ * Run (webhook) → Books (wallet) → Pipeline (Door / Brain / Accounting / Tier) → Chart.
+ * Rails and lab tools sit last.
  */
 export type NavItem = {
   href: string;
@@ -40,23 +40,83 @@ export type NavItem = {
 
 export const NAV: NavItem[] = [
   {
+    href: "/",
+    label: "Home",
+    icon: Workflow,
+    group: "Home",
+    blurb: "CC_TXN path",
+  },
+
+  {
+    href: "/transactions-ingest",
+    label: "Webhook",
+    icon: Webhook,
+    group: "Run",
+    blurb: "one CC_TXN",
+  },
+  {
+    href: "/simulator",
+    label: "Simulator",
+    icon: FlaskConical,
+    group: "Run",
+    blurb: "event matrix",
+  },
+  {
+    href: "/failed-transactions",
+    label: "Fail queue",
+    icon: AlertTriangle,
+    group: "Run",
+    blurb: "review / replay",
+  },
+
+  {
     href: "/wallets-list",
     label: "Wallets",
     icon: Wallet,
-    group: "Wallets",
+    group: "Books",
+    blurb: "LP · tier · refund",
   },
   {
     href: "/wallets",
     label: "Onboard",
     icon: UserPlus,
-    group: "Wallets",
+    group: "Books",
+  },
+  {
+    href: "/ledger-entries",
+    label: "Double-entry",
+    icon: ListTree,
+    group: "Books",
+    blurb: "DE legs",
+  },
+
+  {
+    href: "/ingest-policies",
+    label: "Door",
+    icon: DoorOpen,
+    group: "Pipeline",
+    blurb: "admit",
+  },
+  {
+    href: "/digestion-rules",
+    label: "Brain",
+    icon: Brain,
+    group: "Pipeline",
+    blurb: "score LP",
+  },
+  {
+    href: "/accounting-rules",
+    label: "Accounting",
+    icon: Scale,
+    group: "Pipeline",
+    blurb: "CR/DR walk",
   },
   {
     href: "/wallet-tier-policies",
     label: "Tiering",
     icon: Medal,
-    group: "Wallets",
-    blurb: "/wallet-tier-policies",
+    group: "Pipeline",
+    blurb: "LP total → tier",
   },
 
   {
@@ -64,7 +124,7 @@ export const NAV: NavItem[] = [
     label: "House COA",
     icon: Building2,
     group: "Chart",
-    blurb: "01-02 op / 01-04 expense",
+    blurb: "01-02 / 01-04",
   },
   {
     href: "/coa",
@@ -78,67 +138,7 @@ export const NAV: NavItem[] = [
     label: "Dictionary",
     icon: Library,
     group: "Chart",
-    blurb: "What 01-02 means",
-  },
-
-  {
-    href: "/ingest-policies",
-    label: "Door",
-    icon: DoorOpen,
-    group: "Rules",
-    blurb: "/ingest-policies",
-  },
-  {
-    href: "/digestion-rules",
-    label: "Brain",
-    icon: Brain,
-    group: "Rules",
-    blurb: "/digestion-rules",
-  },
-  {
-    href: "/accounting-rules",
-    label: "Accounting",
-    icon: Scale,
-    group: "Rules",
-    blurb: "/accounting-rules",
-  },
-
-  {
-    href: "/simulator",
-    label: "Simulator",
-    icon: FlaskConical,
-    group: "Ingest",
-  },
-  {
-    href: "/transactions-ingest",
-    label: "Webhook",
-    icon: Webhook,
-    group: "Ingest",
-  },
-
-  {
-    href: "/review",
-    label: "Wallet books",
-    icon: Search,
-    group: "Ledger",
-  },
-  {
-    href: "/movements",
-    label: "Movements",
-    icon: ArrowLeftRight,
-    group: "Ledger",
-  },
-  {
-    href: "/ledger-entries",
-    label: "Double-entry",
-    icon: ListTree,
-    group: "Ledger",
-  },
-  {
-    href: "/failed-transactions",
-    label: "Fail queue",
-    icon: AlertTriangle,
-    group: "Ledger",
+    blurb: "what 01-02 means",
   },
 
   {
@@ -167,34 +167,42 @@ export const NAV: NavItem[] = [
   },
 
   {
-    href: "/",
-    label: "Business flow",
-    icon: Workflow,
-    group: "Guide",
-  },
-  {
     href: "/demo",
     label: "Demo",
     icon: Sparkles,
-    group: "Guide",
+    group: "More",
   },
   {
     href: "/use-cases",
     label: "Use cases",
     icon: CreditCard,
-    group: "Guide",
+    group: "More",
+  },
+  {
+    href: "/review",
+    label: "Lookup",
+    icon: Search,
+    group: "More",
+    blurb: "one ownerId",
+  },
+  {
+    href: "/movements",
+    label: "Movements",
+    icon: ArrowLeftRight,
+    group: "More",
+    blurb: "by walletId",
   },
   {
     href: "/records",
     label: "DB records",
     icon: Database,
-    group: "Guide",
+    group: "More",
   },
   {
     href: "/configurations",
     label: "Config",
     icon: Settings2,
-    group: "Guide",
+    group: "More",
   },
 ];
 
@@ -204,7 +212,7 @@ export function navGroups(): { name: string; items: NavItem[] }[] {
     if (!map.has(item.group)) map.set(item.group, []);
     map.get(item.group)!.push(item);
   }
-  const order = ["Wallets", "Chart", "Rules", "Ingest", "Ledger", "Rails", "Guide"];
+  const order = ["Home", "Run", "Books", "Pipeline", "Chart", "Rails", "More"];
   return order
     .filter((n) => map.has(n))
     .map((name) => ({ name, items: map.get(name)! }));

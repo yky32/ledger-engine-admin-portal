@@ -7,6 +7,7 @@ import { PageShell } from "@/components/layout/page-shell";
 import { CcTxnPath } from "@/components/books/cc-txn-path";
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { setupTier } from "@/lib/sanity-setup";
 import type { WalletTierBand, WalletTierPolicy } from "@/lib/types";
 
 const emptyBand = (): WalletTierBand => ({ code: "", upgradeAt: "0", downgradeBelow: "" });
@@ -43,6 +44,22 @@ export default function WalletTierPoliciesPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const quickSanity = async () => {
+    setLoading(true);
+    setError(null);
+    setOk(null);
+    try {
+      const detail = await setupTier();
+      const r = await engine.walletTierPolicyGet();
+      apply(r.data as WalletTierPolicy);
+      setOk(`Quick action saved: ${detail} — next LP movement reassesses wallet.tier`);
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async () => {
     setLoading(true);
@@ -88,6 +105,17 @@ export default function WalletTierPoliciesPage() {
         { method: "GET", path: "/wallet-tier-policies" },
         { method: "PUT", path: "/wallet-tier-policies" },
       ]}
+      actions={
+        <button
+          type="button"
+          className="btn-primary text-xs"
+          onClick={() => void quickSanity()}
+          disabled={loading}
+        >
+          Quick action · Enabled · SILVER at 1 LP
+        </button>
+      }
+      ok={ok}
     >
       <CcTxnPath />
       <Alert tone="info">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, Badge, Alert } from "@/components/ui/kit";
 import { PageShell } from "@/components/layout/page-shell";
+import { SanitySetup } from "@/components/books/sanity-setup";
 import { engine } from "@/lib/engine";
 import { errMsg, clsx } from "@/lib/format";
 import {
@@ -54,13 +55,13 @@ export default function HomePage() {
 
   return (
     <PageShell
-      title="Business flow"
+      title="Home"
       description="CC_TXN → ingest → digest → books → check tier. Same eventType on Door, Brain, and accounting."
       api={[{ method: "GET", path: "/actuator/health" }]}
       actions={
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Link href="/demo" className="btn-primary text-xs">
-            Demo · Earn 5 LP
+          <Link href="/transactions-ingest" className="btn-primary text-xs">
+            Then · Webhook CC_TXN
           </Link>
           <Link href="/accounting-rules" className="btn-secondary text-xs">
             Accounting rules
@@ -84,6 +85,8 @@ export default function HomePage() {
           </div>
         }
       >
+
+      <SanitySetup />
 
       <Card className="mb-6" title="Mapping — one eventType">
         <p className="mb-3 text-xs text-slate-500">

@@ -8,12 +8,14 @@ Engine handbook: [ledger-engine `docs/BOOKLET.md`](https://github.com/yky32/ledg
 ## Mental model (sidebar + home)
 
 ```text
-① Ops configures     Door (ingest-policies) + Brain (digestion-rules)
-② Upstream shoot     Simulator / single webhook  (= POS/OMS)
-③ Engine outcomes    Customer LP · DE legs · Fail queue · Movements
+Run        Webhook / Simulator / Fail queue
+Books      Wallets (LP · tier · refund) · Onboard · Double-entry
+Pipeline   Door → Brain → Accounting → Tiering
+Chart      House COA · Customer COA · Dictionary
+Rails      Hold / Deposit / Withdraw / Transfer
 ```
 
-Home (`/`) is an interactive flow map of that diagram.
+Home (`/`) is the CC_TXN map: ingest → digest → books → check tier.
 
 ## Quick start
 
@@ -24,19 +26,17 @@ cd ../ledger-engine-admin-portal
 npm run dev
 ```
 
-http://localhost:3000 → **LedgeRX** business flow → steps 1→4.
+http://localhost:3000 → Home → Webhook / Wallets / Tiering.
 
 ## Key routes
 
-| Step | Route | Engine API idea |
-|------|-------|-----------------|
+| Step | Route | Engine API |
+|------|-------|------------|
 | 1 Door | `/ingest-policies` | GET/PUT `/ingest-policies` |
-| 1 Brain | `/digestion-rules` | `/digestion-rules` |
-| 2 Shoot | `/simulator` | webhook matrix |
-| 2 Shoot | `/transactions-ingest` | POST webhook |
-| 3 Books | `/review` | wallet + movements by ownerId |
-| 3 Legs | `/ledger-entries` | DE legs |
-| 3 Fail | `/failed-transactions` | review/replay |
-| 4 Audit | `/movements` | history |
+| 2 Brain | `/digestion-rules` | `/digestion-rules` |
+| 3 Books | `/accounting-rules` · `/wallets-list` | CR/DR · GET `/wallets` |
+| 4 Tier | `/wallet-tier-policies` | GET/PUT `/wallet-tier-policies` |
+| Shoot | `/transactions-ingest` | POST webhook |
+| Fail | `/failed-transactions` | review / replay |
 
-Each main screen shows a **Flow strip** (1 Ops → 2 Shoot → 3 Digest → 4 Books).
+Each main screen shows the **Flow** strip (Door → Brain → Accounting → Ledger → Tier).

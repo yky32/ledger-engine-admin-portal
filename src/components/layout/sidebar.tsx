@@ -52,7 +52,7 @@ export function Sidebar() {
             <EngineBadge state={engineState} />
           </div>
           <div className="truncate text-[11px] text-slate-400">
-            Door · Brain · Accounting · Ledger
+            ingest → digest → books → tier
           </div>
         </div>
       </div>
