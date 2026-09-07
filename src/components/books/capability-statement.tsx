@@ -5,14 +5,20 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 import { Badge, Card } from "@/components/ui/kit";
 import {
   CAP_STATUS_LABEL,
+  PRESENTED_CASES,
   REWARD_LANES,
   type CapStatus,
+  type CaseVerdict,
 } from "@/lib/capability";
 
 function StatusChip({ status }: { status: CapStatus }) {
   const tone =
     status === "live" ? "ok" : status === "partial" ? "info" : status === "named" ? "warn" : "neutral";
   return <Badge tone={tone}>{CAP_STATUS_LABEL[status]}</Badge>;
+}
+
+function VerdictChip({ verdict }: { verdict: CaseVerdict }) {
+  return verdict === "yes" ? <Badge tone="ok">Fulfill</Badge> : <Badge tone="error">Cannot</Badge>;
 }
 
 function LaneCard({
@@ -111,6 +117,33 @@ export function CapabilityStatement() {
         </p>
       </div>
 
+      <Card
+        title="Presented use cases"
+        description="After the UAF architecture session — can we do it, or not."
+      >
+        <div className="space-y-3">
+          {PRESENTED_CASES.map((c) => (
+            <div
+              key={c.id}
+              className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">{c.title}</h3>
+                <VerdictChip verdict={c.verdict} />
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">{c.how}</p>
+              {c.note ? <p className="mt-1 text-[11px] text-slate-500">{c.note}</p> : null}
+              {c.href ? (
+                <Link href={c.href} className="mt-2 inline-flex text-xs text-emerald-700 hover:underline">
+                  Open {c.href}
+                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                </Link>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <Card title="Slide box → LedgeRX" description="Same list as the architecture row">
         <div className="table-wrap">
           <table className="data-table text-xs">
@@ -169,7 +202,7 @@ export function CapabilityTeaser() {
     <Card
       className="mb-6"
       title="UAF Reward System"
-      description="We are this row. CC / Loan send events. Coupon is a sibling."
+      description="We are this row. MCC 17 / MTR* → LP 2X is Brain config. Coupon is a sibling."
       right={
         <Link href="/capability" className="btn-secondary text-xs">
           Capability statement

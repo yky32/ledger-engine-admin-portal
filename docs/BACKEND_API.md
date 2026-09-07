@@ -19,7 +19,7 @@ Envelope: `{ code, message, httpStatus, data, pagination? }` · success `code=SY
 | GET | `/wallets/{ownerId}/balances/as-of` | `at?`(ISO),`currency?` | As-of |
 | POST | `/wallets/holds` | `ownerId`,`currency`,`amount`,`movementKey?`,`description?` | Hold |
 | POST | `/wallets/releases` | same | Release |
-| POST | `/integrations/webhooks/transactions` | `eventId`,`ownerId`,`eventType`,`amount`,`currency`,`occurredAt?`,`metadata?`,`mainAccount?`,`action?`,`originalEventId?` | Spend omits `action` (default SPEND). `REFUND`/`VOID`/`CHARGEBACK` reverse `originalEventId`. |
+| POST | `/integrations/webhooks/transactions` | `eventId`,`ownerId`,`eventType`,`amount`,`currency`,`occurredAt?`,`metadata?`,`mainAccount?`,`action?`,`originalEventId?`,`applyTo?` | Spend omits `action` (default SPEND). `applyTo` omit/`BOTH` = ledger+available; `LEDGER` = AUTH; `AVAILABLE` = POST. `REFUND`/`VOID`/`CHARGEBACK` reverse `originalEventId` with the original `applyTo`. |
 | POST | `/integrations/webhooks/transactions/dry-run` | same body · **no books** · `dryRun=true` + `eligibilityTrace` | Webhook preview |
 | GET | `/integrations/ledger-entries` | **exactly one of** `eventId` \| `movementId` ; `operation?` | DE legs |
 | GET | `/integrations/failed-transactions` | `page`,`size`,`status?`,`ownerId?`,`failureCode?`,`eventId?` | Fail queue |

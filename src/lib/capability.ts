@@ -40,7 +40,12 @@ export const REWARD_LANES: CapLane[] = [
     items: [
       { slide: "Reward Wallet", engine: "1 ownerId → 1 wallet", status: "live", href: "/wallets-list" },
       { slide: "Balance Inquiry", engine: "GET /wallets/{ownerId}", status: "live", href: "/review" },
-      { slide: "Hold & Release", engine: "HOLD / RELEASE", status: "live", href: "/holds" },
+      {
+        slide: "Hold & Release",
+        engine: "Freeze available; ledger unchanged (ops / investigation)",
+        status: "live",
+        href: "/holds",
+      },
       {
         slide: "Balance Reversal",
         engine: "REFUND / VOID / CHARGEBACK",
@@ -68,7 +73,7 @@ export const REWARD_LANES: CapLane[] = [
       },
       {
         slide: "Points Calculation",
-        engine: "Brain formula → LP",
+        engine: "Brain RATE + multiplier · startsWith / endsWith / contains",
         status: "live",
         href: "/digestion-rules",
       },
@@ -125,5 +130,44 @@ export const REWARD_LANES: CapLane[] = [
       { slide: "Referrer Management", engine: "—", status: "slide" },
       { slide: "Merchant Management", engine: "—", status: "slide" },
     ],
+  },
+];
+
+export type CaseVerdict = "yes" | "no";
+
+export type PresentedCase = {
+  id: string;
+  title: string;
+  verdict: CaseVerdict;
+  how: string;
+  href?: string;
+  note?: string;
+};
+
+/** Use cases from the UAF presentation — fulfill vs cannot. */
+export const PRESENTED_CASES: PresentedCase[] = [
+  {
+    id: "mtr-2x-lp",
+    title: "MCC 17 or merchant name starts with MTR → LP only, 2X",
+    verdict: "yes",
+    how: "Brain rule, priority above default CC_TXN. whenFactors any: mcc eq 17 OR metadata.merchantName startsWith MTR. resultCurrency LP. formula RATE + multiplier 2.",
+    href: "/digestion-rules",
+    note: "Webhook must send metadata.merchantName (and mcc). Confirm MCC 17 vs 4111/4131. Preset: any · MCC 17 OR merchant MTR*.",
+  },
+  {
+    id: "hold-investigation",
+    title: "Hold balances for ops / CC_TXN under investigation",
+    verdict: "yes",
+    how: "POST /wallets/holds freezes available; ledger stays. Most of the time available = ledger. RELEASE restores spendable. Not a pending earn.",
+    href: "/holds",
+    note: "Manual today — not auto-tied to a CC_TXN eventId.",
+  },
+  {
+    id: "auth-pending",
+    title: "CC_TXN AUTH → ledger only, POST → available",
+    verdict: "yes",
+    how: "Webhook field applyTo. Omit / BOTH = both balances (default). AUTH: applyTo=LEDGER. POST: new eventId, applyTo=AVAILABLE (available cannot exceed ledger). VOID of a LEDGER earn reverses ledger only.",
+    href: "/transactions-ingest",
+    note: "Not HOLD. Two fires, two eventIds. POST without AUTH fails (available would exceed ledger).",
   },
 ];

@@ -7,7 +7,7 @@ export default function CapabilityPage() {
   return (
     <PageShell
       title="Capability"
-      description="UAF Reward System architecture — LedgeRX is this row. Slide box → engine surface."
+      description="UAF Reward System row plus presented use cases (fulfill vs cannot)."
     >
       <CapabilityStatement />
     </PageShell>

@@ -29,6 +29,7 @@ export default function WebhookPage() {
   );
   const [originalEventId, setOriginalEventId] = useState("");
   const [action, setAction] = useState("");
+  const [applyTo, setApplyTo] = useState("BOTH");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<IngestResult | null>(null);
@@ -88,6 +89,7 @@ export default function WebhookPage() {
     } else if (orig) {
       body.action = "REFUND";
     }
+    if (applyTo && applyTo !== "BOTH") body.applyTo = applyTo;
     return body;
   }, [
     eventId,
@@ -101,6 +103,7 @@ export default function WebhookPage() {
     extraMeta,
     originalEventId,
     action,
+    applyTo,
     mainAccount,
   ]);
 
@@ -118,9 +121,11 @@ export default function WebhookPage() {
     const origLine = originalEventId.trim()
       ? `\n    .originalEventId("${originalEventId.trim()}")`
       : "";
+    const applyLine =
+      applyTo && applyTo !== "BOTH" ? `\n    .applyTo("${applyTo}")` : "";
     return `TransactionalEvent event = TransactionalEvent.builder()
     .eventId("${eventId.trim()}")
-    .ownerId("${ownerId.trim()}")${mainLine}${actionLine}${origLine}
+    .ownerId("${ownerId.trim()}")${mainLine}${actionLine}${origLine}${applyLine}
     .eventType("${eventType}")
     .amount(new BigDecimal("${amount}"))
     .currency("${currency}")
@@ -130,7 +135,7 @@ ${metaEntries}
     ))
     .build();
 client.events().submit(event);`;
-  }, [payload, eventId, ownerId, mainAccount, originalEventId, eventType, amount, currency, occurredAt]);
+  }, [payload, eventId, ownerId, mainAccount, originalEventId, applyTo, eventType, amount, currency, occurredAt]);
 
   const applyPreset = (kind: "cc_txn" | "cc_cip" | "ln_txn" | "burn") => {
     setEventId(randomEventId());
@@ -321,6 +326,18 @@ client.events().submit(event);`;
                   Gen
                 </button>
               </div>
+            </label>
+            <label className="field">
+              <span className="field-label">applyTo</span>
+              <select
+                className="field-select"
+                value={applyTo}
+                onChange={(e) => setApplyTo(e.target.value)}
+              >
+                <option value="BOTH">BOTH · ledger + available (default)</option>
+                <option value="LEDGER">LEDGER · AUTH / pending</option>
+                <option value="AVAILABLE">AVAILABLE · POST after AUTH</option>
+              </select>
             </label>
             <label className="field">
               <span className="field-label">action</span>
