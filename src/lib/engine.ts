@@ -276,10 +276,10 @@ export const engine = {
   movementsListByWalletId: (walletId: number | string, page = 1, size = 50) =>
     ledger.get(`/movements${qs({ walletId, page, size })}`),
 
-  deposit: (body: DepositBody) => ledger.post("/movements/deposits", body),
-  withdraw: (body: WithdrawalBody) => ledger.post("/movements/withdrawals", body),
+  deposit: (body: DepositBody) => ledger.post<MovementView>("/movements/deposits", body),
+  withdraw: (body: WithdrawalBody) => ledger.post<MovementView>("/movements/withdrawals", body),
   transferInWallet: (body: TransferBody) =>
-    ledger.post("/movements/transfers/in-wallet", body),
+    ledger.post<MovementView>("/movements/transfers/in-wallet", body),
 
   /** POST /movements/{id}/refund — reverse DR/CR of a settled EARN/BURN. */
   refundMovement: (id: number | string) =>

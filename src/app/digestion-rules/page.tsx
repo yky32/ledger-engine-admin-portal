@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from "lucide-react";
-import { Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
+import { Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel } from "@/components/ui/help";
 import { PageShell } from "@/components/layout/page-shell";
