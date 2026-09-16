@@ -274,7 +274,7 @@ export function DoorPanel() {
               <p className="mt-1.5 max-w-2xl text-sm text-slate-700">{sentence}</p>
             </div>
             <Link
-              href="/rules?tab=brain"
+              href="/rules/brain"
               className="text-xs font-medium text-emerald-700 hover:underline"
             >
               Brain scores next →
@@ -676,7 +676,7 @@ export function DoorPanel() {
             ) : null}
             <Alert tone="info">
               Pair with{" "}
-              <Link href="/rules?tab=brain" className="underline">
+              <Link href="/rules/brain" className="underline">
                 Brain rules
               </Link>{" "}
               then{" "}

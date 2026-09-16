@@ -166,7 +166,7 @@ export default function CoaPage() {
       <Alert tone="info">
         COA is the <strong>chart</strong>, not the event. Webhook{" "}
         <code className="text-xs">eventType</code> is shared by Door, Brain, and{" "}
-        <Link href="/rules?tab=accounting" className="underline">
+        <Link href="/rules/accounting" className="underline">
           Accounting rules
         </Link>
         .{" "}

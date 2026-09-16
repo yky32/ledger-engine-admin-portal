@@ -247,7 +247,7 @@ export default function CorporateCoaPage() {
       <Alert tone="info">
         House profiles are chart codes (<code className="text-xs">HOUSE_*</code>), not webhook{" "}
         <code className="text-xs">eventType</code>. Bind <code className="text-xs">CC_TXN</code> on{" "}
-        <Link href="/rules?tab=accounting" className="underline">
+        <Link href="/rules/accounting" className="underline">
           Accounting rules
         </Link>
         . Do not mark house default.

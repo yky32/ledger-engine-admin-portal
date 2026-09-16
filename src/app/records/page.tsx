@@ -256,7 +256,7 @@ export default function DbRecordsPage() {
         <Card
           title="ingest_policies row (GET /ingest-policies)"
           right={
-            <Link href="/rules?tab=door" className="text-xs text-emerald-700 hover:underline">
+            <Link href="/rules/door" className="text-xs text-emerald-700 hover:underline">
               Edit Door →
             </Link>
           }
@@ -292,7 +292,7 @@ export default function DbRecordsPage() {
           <Card
             title={`Brain · digestion_rule (${brain.length}) — GET /digestion-rules`}
             right={
-              <Link href="/rules?tab=brain" className="text-xs text-emerald-700 hover:underline">
+              <Link href="/rules/brain" className="text-xs text-emerald-700 hover:underline">
                 Edit rules →
               </Link>
             }

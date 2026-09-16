@@ -65,7 +65,7 @@ export default function HomePage() {
           <Link href="/transactions-ingest" className="btn-primary text-xs">
             Then · Webhook CC_TXN
           </Link>
-          <Link href="/rules?tab=accounting" className="btn-secondary text-xs">
+          <Link href="/rules/accounting" className="btn-secondary text-xs">
             Accounting rules
           </Link>
           <Link href="/coa" className="btn-secondary text-xs">
@@ -120,7 +120,7 @@ export default function HomePage() {
               <tr>
                 <td className="font-mono text-slate-400">1</td>
                 <td>
-                  <Link href="/rules?tab=door" className="text-emerald-700 hover:underline">
+                  <Link href="/rules/door" className="text-emerald-700 hover:underline">
                     Door
                   </Link>
                 </td>
@@ -130,7 +130,7 @@ export default function HomePage() {
               <tr>
                 <td className="font-mono text-slate-400">2</td>
                 <td>
-                  <Link href="/rules?tab=brain" className="text-emerald-700 hover:underline">
+                  <Link href="/rules/brain" className="text-emerald-700 hover:underline">
                     Brain
                   </Link>
                 </td>
@@ -140,7 +140,7 @@ export default function HomePage() {
               <tr>
                 <td className="font-mono text-slate-400">3</td>
                 <td>
-                  <Link href="/rules?tab=accounting" className="text-emerald-700 hover:underline">
+                  <Link href="/rules/accounting" className="text-emerald-700 hover:underline">
                     Accounting
                   </Link>
                 </td>
@@ -165,7 +165,7 @@ export default function HomePage() {
               <tr>
                 <td className="font-mono text-slate-400">5</td>
                 <td>
-                  <Link href="/rules?tab=tier" className="text-emerald-700 hover:underline">
+                  <Link href="/rules/tier" className="text-emerald-700 hover:underline">
                     Tier
                   </Link>
                 </td>
@@ -215,7 +215,7 @@ export default function HomePage() {
             tone="ops"
             title="Ops configures once"
             subtitle="runtime DB · no restart"
-            href="/rules?tab=door"
+            href="/rules/door"
           >
             <ul className="mt-2 space-y-1.5 text-sm">
               <li>
@@ -226,13 +226,13 @@ export default function HomePage() {
                 </Link>
               </li>
               <li>
-                <Link className="flow-link" href="/rules?tab=door">
+                <Link className="flow-link" href="/rules/door">
                   <DoorOpen className="h-3.5 w-3.5" />
                   Ingest policy <span className="text-slate-400">(door)</span>
                 </Link>
               </li>
               <li>
-                <Link className="flow-link" href="/rules?tab=brain">
+                <Link className="flow-link" href="/rules/brain">
                   <Brain className="h-3.5 w-3.5" />
                   Brain · digestion rules
                 </Link>
@@ -250,7 +250,7 @@ export default function HomePage() {
                 </Link>
               </li>
               <li>
-                <Link className="flow-link" href="/rules?tab=accounting">
+                <Link className="flow-link" href="/rules/accounting">
                   <Scale className="h-3.5 w-3.5" />
                   Accounting rules <span className="text-slate-400">(CR/DR sequence)</span>
                 </Link>
@@ -262,7 +262,7 @@ export default function HomePage() {
                 </Link>
               </li>
               <li>
-                <Link className="flow-link" href="/rules?tab=tier">
+                <Link className="flow-link" href="/rules/tier">
                   <Medal className="h-3.5 w-3.5" />
                   Tiering <span className="text-slate-400">(LP total → wallet.tier)</span>
                 </Link>
@@ -328,21 +328,21 @@ export default function HomePage() {
                 n="1"
                 icon={DoorOpen}
                 title="Door — eventType + MCC/ccy/amount/age → entered?"
-                href="/rules?tab=door"
+                href="/rules/door"
                 note="Ingest policy"
               />
               <EngineStep
                 n="2"
                 icon={Brain}
                 title="Brain — same eventType, first bingo, score points"
-                href="/rules?tab=brain"
+                href="/rules/brain"
                 note="Digestion rules"
               />
               <EngineStep
                 n="3"
                 icon={Scale}
                 title="Accounting — bound combo walks CR/DR onto COA"
-                href="/rules?tab=accounting"
+                href="/rules/accounting"
                 note="Dynamic account id from wallet + chart"
               />
               <EngineStep
@@ -356,7 +356,7 @@ export default function HomePage() {
                 n="5"
                 icon={Medal}
                 title="Tier — sum this wallet’s LP, write wallet.tier"
-                href="/rules?tab=tier"
+                href="/rules/tier"
                 note="Off until Enabled + Save"
               />
             </ol>
@@ -417,7 +417,7 @@ export default function HomePage() {
               API <code>GET/PUT /ingest-policies</code>
             </li>
           </ul>
-          <Link href="/rules?tab=door" className="btn-secondary mt-3 text-xs">
+          <Link href="/rules/door" className="btn-secondary mt-3 text-xs">
             Open door config
           </Link>
         </Card>
@@ -438,13 +438,13 @@ export default function HomePage() {
             <Link href="/use-cases" className="btn-secondary text-xs">
               Use cases
             </Link>
-            <Link href="/rules?tab=brain" className="btn-secondary text-xs">
+            <Link href="/rules/brain" className="btn-secondary text-xs">
               Digestion rules
             </Link>
             <Link href="/coa" className="btn-secondary text-xs">
               COA
             </Link>
-            <Link href="/rules?tab=accounting" className="btn-secondary text-xs">
+            <Link href="/rules/accounting" className="btn-secondary text-xs">
               Accounting rules
             </Link>
           </div>
@@ -459,7 +459,7 @@ export default function HomePage() {
               n: "1",
               t: "Rules",
               d: "Door gates · Brain eventType rule · Accounting CR/DR walk. Same eventType on all three.",
-              href: "/rules?tab=door",
+              href: "/rules/door",
               cta: "Door",
             },
             {
@@ -487,7 +487,7 @@ export default function HomePage() {
               n: "5",
               t: "Tier",
               d: "Enable policy, fire CC_TXN, confirm wallet.tier. Refund re-checks the same LP total.",
-              href: "/rules?tab=tier",
+              href: "/rules/tier",
               cta: "Tiering",
             },
           ].map((s) => (

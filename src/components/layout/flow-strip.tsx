@@ -16,11 +16,11 @@ export function FlowStrip({
     title: string;
     href: string;
   }[] = [
-    { id: "door", n: "1", title: "Door", href: "/rules?tab=door" },
-    { id: "brain", n: "2", title: "Brain", href: "/rules?tab=brain" },
-    { id: "accounting", n: "3", title: "Accounting", href: "/rules?tab=accounting" },
+    { id: "door", n: "1", title: "Door", href: "/rules/door" },
+    { id: "brain", n: "2", title: "Brain", href: "/rules/brain" },
+    { id: "accounting", n: "3", title: "Accounting", href: "/rules/accounting" },
     { id: "ledger", n: "4", title: "Ledger", href: "/wallets-list" },
-    { id: "tier", n: "5", title: "Tier", href: "/rules?tab=tier" },
+    { id: "tier", n: "5", title: "Tier", href: "/rules/tier" },
   ];
 
   return (
