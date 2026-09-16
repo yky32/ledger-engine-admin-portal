@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { engine } from "@/lib/engine";
@@ -23,7 +22,7 @@ import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
 import { PageShell } from "@/components/layout/page-shell";
 import { ActionBar } from "@/components/ui/action";
 import { FieldLabel } from "@/components/ui/help";
-import { Alert, Badge, Card, JsonBlock } from "@/components/ui/kit";
+import { Badge, Card, JsonBlock } from "@/components/ui/kit";
 
 const TIPS = {
   settlement: {
@@ -57,43 +56,70 @@ const GATE_PRESETS: Record<string, FactorGate> = {
   hkdPos: { ...EMPTY_FACTOR_GATE, currencies: "HKD", channel: "POS" },
 };
 
-function Choice({
-  active,
-  onClick,
-  title,
-  sub,
-  tone = "emerald",
+/** Compact segmented toggle for boolean choices. */
+function SegToggle({
+  value,
+  onChange,
+  options,
 }: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  sub: string;
-  tone?: "emerald" | "rose";
+  value: boolean;
+  onChange: (v: boolean) => void;
+  options: Array<{ v: boolean; label: string }>;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={clsx(
-        "flex-1 rounded-xl border px-4 py-3 text-left transition",
-        active
-          ? tone === "rose"
-            ? "border-rose-300 bg-rose-50 shadow-sm"
-            : "border-emerald-300 bg-emerald-50 shadow-sm"
-          : "border-slate-200 bg-white hover:border-slate-300",
-      )}
-    >
-      <div
-        className={clsx(
-          "text-sm font-semibold",
-          active ? (tone === "rose" ? "text-rose-900" : "text-emerald-900") : "text-slate-800",
-        )}
-      >
-        {title}
-      </div>
-      <div className="mt-0.5 text-[11px] leading-snug text-slate-500">{sub}</div>
-    </button>
+    <div className="inline-flex shrink-0 rounded-lg bg-slate-100 p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.label}
+          type="button"
+          onClick={() => onChange(o.v)}
+          className={clsx(
+            "rounded-md px-2.5 py-1 text-[11px] font-medium transition",
+            o.v === value
+              ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
+              : "text-slate-500 hover:text-slate-800",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
+}
+
+/** Read-only, human formatting of a policy value for the diff. */
+function fmtValue(v: unknown): string {
+  if (v == null || v === "") return "—";
+  if (typeof v === "boolean") return v ? "on" : "off";
+  return String(v);
+}
+
+type DiffRow = { label: string; from: string; to: string };
+
+const DIFF_FIELDS: Array<{ key: keyof IngestPolicy; label: string }> = [
+  { key: "isEnabled", label: "door" },
+  { key: "isAutoCreateWallet", label: "auto-wallet" },
+  { key: "autoWalletSettlementCurrency", label: "settlement" },
+  { key: "autoWalletEnsureCurrency", label: "ensure" },
+  { key: "autoWalletNamePrefix", label: "name prefix" },
+  { key: "autoWalletAssociatedFrom", label: "associatedFrom" },
+  { key: "autoWalletCoaProfileCode", label: "COA on auto-create" },
+];
+
+/** Saved row vs in-progress edits — humanized, one row per changed field. */
+function diffPolicy(before: IngestPolicy, after: IngestPolicy): DiffRow[] {
+  const rows: DiffRow[] = [];
+  for (const { key, label } of DIFF_FIELDS) {
+    const from = fmtValue(before[key]);
+    const to = fmtValue(after[key]);
+    if (from !== to) rows.push({ label, from, to });
+  }
+  const fromFactors = humanizeWhenFactors(before.entryFactors);
+  const toFactors = humanizeWhenFactors(after.entryFactors);
+  if (fromFactors !== toFactors) {
+    rows.push({ label: "entry factors", from: fromFactors || "any", to: toFactors || "any" });
+  }
+  return rows;
 }
 
 export function DoorPanel() {
@@ -207,6 +233,17 @@ export function DoorPanel() {
 
   const admitBits = useMemo(() => (gatesLive ? gateBits(gate) : []), [gate, gatesLive]);
 
+  const diffRows = useMemo(() => {
+    if (!saved || !policy) return [];
+    let draftEntryFactors: IngestPolicy["entryFactors"];
+    try {
+      draftEntryFactors = parseFactorJson(entryFactorsText) as IngestPolicy["entryFactors"];
+    } catch {
+      draftEntryFactors = policy.entryFactors; // invalid JSON — diff the rest only
+    }
+    return diffPolicy(saved, { ...policy, entryFactors: draftEntryFactors });
+  }, [saved, policy, entryFactorsText]);
+
   return (
     <PageShell
       title="Rules · Door"
@@ -223,7 +260,7 @@ export function DoorPanel() {
       }
       ok={ok}
     >
-      {!policy ? (
+      {!policy || !saved ? (
         <ActionBar loading={loading} error={error}>
           <button type="button" className="btn-secondary" onClick={() => void load()}>
             Load
@@ -233,50 +270,112 @@ export function DoorPanel() {
         <>
           <Card
             className="mb-4"
+            title="Current config"
+            description="Saved policy — live in the engine since the last Save"
+            right={diffRows.length > 0 ? <Badge tone="warn">unsaved edits below</Badge> : undefined}
+          >
+            <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  door
+                </dt>
+                <dd className="mt-1">
+                  <Badge tone={saved.isEnabled ? "ok" : "error"}>
+                    {saved.isEnabled ? "OPEN" : "CLOSED"}
+                  </Badge>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  auto-wallet
+                </dt>
+                <dd className="mt-1">
+                  <Badge tone={saved.isAutoCreateWallet ? "info" : "neutral"}>
+                    {saved.isAutoCreateWallet ? "create on first match" : "off — CRM onboard"}
+                  </Badge>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  settlement + ensure
+                </dt>
+                <dd className="mt-1 font-mono text-xs text-slate-700">
+                  {`${saved.autoWalletSettlementCurrency || "HKD"} + ${saved.autoWalletEnsureCurrency || "LP"}`}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  name prefix / associatedFrom
+                </dt>
+                <dd className="mt-1 font-mono text-xs text-slate-700">
+                  {`${saved.autoWalletNamePrefix || "—"} / ${saved.autoWalletAssociatedFrom || "—"}`}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  COA on auto-create
+                </dt>
+                <dd className="mt-1 font-mono text-xs text-slate-700">
+                  {saved.autoWalletCoaProfileCode || "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  who may enter
+                </dt>
+                <dd className="mt-1 font-mono text-xs text-slate-700">
+                  {humanizeWhenFactors(saved.entryFactors) || "any"}
+                </dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
+              onClick={() => setShowJson((v) => !v)}
+            >
+              {showJson ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+              DB JSON
+            </button>
+            {showJson ? (
+              <div className="mt-2">
+                <JsonBlock value={saved} maxHeight={240} />
+              </div>
+            ) : null}
+          </Card>
+
+          <Card
             title="Edit door"
             description="Empty gate = admit anyone. Chips write entryFactors live — no Apply."
           >
-            <div className="mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <StepHead
                 n={1}
                 title="Master switch"
-                sub="Kill-switch for all inbound webhooks"
+                sub="off = every webhook SKIPPED / DISABLED"
                 tone="emerald"
+              />
+              <SegToggle
+                value={!!policy.isEnabled}
+                onChange={(v) => setPolicy({ ...policy, isEnabled: v })}
+                options={[
+                  { v: true, label: "Open" },
+                  { v: false, label: "Closed" },
+                ]}
               />
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Choice
-                active={!!policy.isEnabled}
-                onClick={() => setPolicy({ ...policy, isEnabled: true })}
-                title="Open"
-                sub="Accept webhooks. Brain may score."
-                tone="emerald"
-              />
-              <Choice
-                active={!policy.isEnabled}
-                onClick={() => setPolicy({ ...policy, isEnabled: false })}
-                title="Closed"
-                sub="SKIPPED / DISABLED — nothing lands."
-                tone="rose"
-              />
-            </div>
-            <p className="mt-2 text-[11px] text-slate-500">
-              Scoring never happens here — that is digestion rules. Off = incident kill-switch.
-            </p>
 
-            <hr className="my-5 border-slate-100" />
+            <hr className="my-4 border-slate-100" />
 
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <StepHead
-                n={2}
-                title="Who may enter"
-                sub="AND — skip a gate to allow any"
-                tone="emerald"
-              />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <StepHead n={2} title="Who may enter" sub="AND — skip a gate to allow any" />
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
-                  className="btn-secondary text-xs"
+                  className="btn-secondary text-[11px]"
                   onClick={() => {
                     setGatesLive(true);
                     setGate(GATE_PRESETS.demoCc);
@@ -286,7 +385,7 @@ export function DoorPanel() {
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary text-xs"
+                  className="btn-secondary text-[11px]"
                   onClick={() => {
                     setGatesLive(true);
                     setGate(GATE_PRESETS.grocery);
@@ -296,7 +395,7 @@ export function DoorPanel() {
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary text-xs"
+                  className="btn-secondary text-[11px]"
                   onClick={() => {
                     setGatesLive(true);
                     setGate(GATE_PRESETS.hkdPos);
@@ -306,7 +405,7 @@ export function DoorPanel() {
                 </button>
                 <button
                   type="button"
-                  className="btn-ghost text-xs"
+                  className="btn-ghost text-[11px]"
                   onClick={() => {
                     setGatesLive(true);
                     setGate({ ...EMPTY_FACTOR_GATE });
@@ -317,36 +416,33 @@ export function DoorPanel() {
               </div>
             </div>
 
-            <AndGateGrid gate={gate} onChange={patchGate} tone="emerald" />
+            <div className="mt-2.5">
+              <AndGateGrid gate={gate} onChange={patchGate} tone="emerald" />
+            </div>
 
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Channel
-              </div>
-              <div className="mt-1 truncate font-mono text-lg font-semibold text-slate-900">
-                {gate.channel?.trim() || "any"}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {["POS", "CRM", "OMS"].map((v) => (
-                  <Chip
-                    key={v}
-                    tone="emerald"
-                    active={gate.channel === v}
-                    onClick={() => patchGate({ channel: v })}
-                  >
-                    {v}
-                  </Chip>
-                ))}
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                channel
+              </span>
+              {["POS", "CRM", "OMS"].map((v) => (
                 <Chip
+                  key={v}
                   tone="emerald"
-                  active={!gate.channel?.trim()}
-                  onClick={() => patchGate({ channel: "" })}
+                  active={gate.channel === v}
+                  onClick={() => patchGate({ channel: v })}
                 >
-                  any
+                  {v}
                 </Chip>
-              </div>
+              ))}
+              <Chip
+                tone="emerald"
+                active={!gate.channel?.trim()}
+                onClick={() => patchGate({ channel: "" })}
+              >
+                any
+              </Chip>
               <input
-                className="field-input mt-2 font-mono text-xs"
+                className="field-input w-44 font-mono text-xs"
                 value={gate.channel ?? ""}
                 onChange={(e) => patchGate({ channel: e.target.value })}
                 placeholder="metadata.channel"
@@ -355,7 +451,7 @@ export function DoorPanel() {
 
             <div
               className={clsx(
-                "mt-3 rounded-lg px-3 py-2 text-sm font-medium",
+                "mt-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium",
                 gatesLive ? "bg-emerald-50 text-emerald-950" : "bg-amber-50 text-amber-950",
               )}
             >
@@ -364,7 +460,7 @@ export function DoorPanel() {
                   <span>Admits every webhook — only the master switch applies.</span>
                 ) : (
                   <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
                       Admits when
                     </span>
                     {admitBits
@@ -374,7 +470,7 @@ export function DoorPanel() {
                           {i > 0 ? (
                             <span className="text-[10px] font-bold text-emerald-400">AND</span>
                           ) : null}
-                          <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-[12px] ring-1 ring-emerald-200">
+                          <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-[11px] ring-1 ring-emerald-200">
                             {bit}
                           </span>
                         </span>
@@ -414,48 +510,28 @@ export function DoorPanel() {
               </div>
             ) : null}
 
-            <hr className="my-5 border-slate-100" />
+            <hr className="my-4 border-slate-100" />
 
-            <div className="mb-3">
-              <StepHead
-                n={3}
-                title="No wallet yet"
-                sub="Only after Brain already matched"
-                tone="emerald"
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <StepHead n={3} title="No wallet yet" sub="runs only after Brain already matched" />
+              <SegToggle
+                value={!!policy.isAutoCreateWallet}
+                onChange={(v) => setPolicy({ ...policy, isAutoCreateWallet: v })}
+                options={[
+                  { v: true, label: "Create wallet" },
+                  { v: false, label: "CRM onboards" },
+                ]}
               />
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Choice
-                active={!!policy.isAutoCreateWallet}
-                onClick={() => setPolicy({ ...policy, isAutoCreateWallet: true })}
-                title="Create wallet"
-                sub="Adopt / POS-first — same txn as earn"
-                tone="emerald"
-              />
-              <Choice
-                active={!policy.isAutoCreateWallet}
-                onClick={() => setPolicy({ ...policy, isAutoCreateWallet: false })}
-                title="CRM must onboard"
-                sub="Fail NO_WALLET until POST /wallets"
-                tone="rose"
-              />
-            </div>
-            <p className="mt-2 text-[11px] text-slate-500">
-              Junk events never open wallets — digestion has to match first.
-            </p>
 
             {policy.isAutoCreateWallet ? (
-              <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-3">
-                <p className="font-mono text-sm font-semibold text-emerald-900">
-                  {(policy.autoWalletNamePrefix || "") + "01A…"} → settlement HKD · 01-01-01 HKD +
-                  LP
-                </p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="mt-2.5 rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-2.5">
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   <div>
                     <FieldLabel tipTitle={TIPS.settlement.title} tip={TIPS.settlement.body}>
                       Settlement (cash)
                     </FieldLabel>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       {["HKD", "USD"].map((c) => (
                         <Chip
                           key={c}
@@ -466,24 +542,24 @@ export function DoorPanel() {
                           {c}
                         </Chip>
                       ))}
+                      <input
+                        className="field-input w-20 font-mono text-xs"
+                        value={String(policy.autoWalletSettlementCurrency ?? "")}
+                        onChange={(e) =>
+                          setPolicy({
+                            ...policy,
+                            autoWalletSettlementCurrency: e.target.value.toUpperCase(),
+                          })
+                        }
+                        placeholder="HKD"
+                      />
                     </div>
-                    <input
-                      className="field-input mt-2 font-mono text-xs"
-                      value={String(policy.autoWalletSettlementCurrency ?? "")}
-                      onChange={(e) =>
-                        setPolicy({
-                          ...policy,
-                          autoWalletSettlementCurrency: e.target.value.toUpperCase(),
-                        })
-                      }
-                      placeholder="HKD"
-                    />
                   </div>
                   <div>
                     <FieldLabel tipTitle={TIPS.ensure.title} tip={TIPS.ensure.body}>
                       Ensure (points)
                     </FieldLabel>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       {["LP", "HKD"].map((c) => (
                         <Chip
                           key={c}
@@ -494,24 +570,24 @@ export function DoorPanel() {
                           {c}
                         </Chip>
                       ))}
+                      <input
+                        className="field-input w-20 font-mono text-xs"
+                        value={String(policy.autoWalletEnsureCurrency ?? "")}
+                        onChange={(e) =>
+                          setPolicy({
+                            ...policy,
+                            autoWalletEnsureCurrency: e.target.value.toUpperCase(),
+                          })
+                        }
+                        placeholder="LP"
+                      />
                     </div>
-                    <input
-                      className="field-input mt-2 font-mono text-xs"
-                      value={String(policy.autoWalletEnsureCurrency ?? "")}
-                      onChange={(e) =>
-                        setPolicy({
-                          ...policy,
-                          autoWalletEnsureCurrency: e.target.value.toUpperCase(),
-                        })
-                      }
-                      placeholder="LP"
-                    />
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800/70 hover:text-emerald-950"
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800/70 hover:text-emerald-950"
                   onClick={() => setOnboardExtra((v) => !v)}
                 >
                   {onboardExtra ? (
@@ -522,7 +598,7 @@ export function DoorPanel() {
                   Name, source label, COA
                 </button>
                 {onboardExtra ? (
-                  <div className="mt-2 grid gap-2.5 sm:grid-cols-3">
+                  <div className="mt-1.5 grid gap-2 sm:grid-cols-3">
                     <label className="field">
                       <span className="field-label">name prefix</span>
                       <input
@@ -555,7 +631,7 @@ export function DoorPanel() {
                         }
                         placeholder="CUSTOMER_CUST_LP"
                       />
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <div className="mt-1 flex flex-wrap gap-1.5">
                         {["CUSTOMER_CUST_LP", "CUSTOMER_CUST_HKD"].map((c) => (
                           <Chip
                             key={c}
@@ -572,8 +648,24 @@ export function DoorPanel() {
                 ) : null}
               </div>
             ) : null}
+          </Card>
 
-            <div className="mt-4">
+          <Card title="Review & save" description="Diff against the saved row, then apply.">
+            {diffRows.length === 0 ? (
+              <p className="text-xs text-slate-500">No unsaved changes.</p>
+            ) : (
+              <ul className="space-y-0.5 font-mono text-xs">
+                {diffRows.map((r) => (
+                  <li key={r.label}>
+                    <span className="font-semibold text-slate-700">{r.label}</span>
+                    <span className="text-slate-400"> · {r.from} → </span>
+                    <span className="font-semibold text-emerald-700">{r.to}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="mt-3">
               <ActionBar loading={loading} error={error} ok={ok}>
                 <button type="button" className="btn-primary" onClick={() => void save()}>
                   Save policy
@@ -583,61 +675,6 @@ export function DoorPanel() {
                 </button>
               </ActionBar>
             </div>
-          </Card>
-
-          <Card
-            title="In engine"
-            description="Last saved GET /ingest-policies — live after Save"
-            right={
-              <span className="font-mono text-[11px] text-slate-500">
-                {humanizeWhenFactors((saved ?? policy).entryFactors)}
-              </span>
-            }
-          >
-            <div className="flex flex-wrap gap-1.5">
-              <Badge tone={(saved ?? policy).isEnabled ? "ok" : "error"}>
-                {(saved ?? policy).isEnabled ? "isEnabled" : "disabled"}
-              </Badge>
-              <Badge tone={(saved ?? policy).isAutoCreateWallet ? "info" : "neutral"}>
-                {(saved ?? policy).isAutoCreateWallet ? "auto-wallet" : "no auto-wallet"}
-              </Badge>
-              {(saved ?? policy).isAutoCreateWallet ? (
-                <span className="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] text-slate-700 ring-1 ring-slate-200">
-                  {`${(saved ?? policy).autoWalletSettlementCurrency || "HKD"} + ${(saved ?? policy).autoWalletEnsureCurrency || "LP"}`}
-                </span>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
-              onClick={() => setShowJson((v) => !v)}
-            >
-              {showJson ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-              DB JSON
-            </button>
-            {showJson ? (
-              <div className="mt-2">
-                <JsonBlock value={saved ?? policy} maxHeight={240} />
-              </div>
-            ) : null}
-            <Alert tone="info">
-              Pair with{" "}
-              <Link href="/rules/brain" className="underline">
-                Brain rules
-              </Link>{" "}
-              then{" "}
-              <Link href="/simulator" className="underline">
-                shoot
-              </Link>
-              .{" "}
-              <Link href="/records" className="underline">
-                All DB records →
-              </Link>
-            </Alert>
           </Card>
         </>
       )}
