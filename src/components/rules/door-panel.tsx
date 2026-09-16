@@ -9,7 +9,6 @@ import {
   EMPTY_FACTOR_GATE,
   factorsFromGate,
   gateBits,
-  gateIsOpen,
   humanizeWhenFactors,
   parseAndGates,
   parseFactorJson,
@@ -21,7 +20,7 @@ import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
 import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
 import { PageShell } from "@/components/layout/page-shell";
 import { ActionBar } from "@/components/ui/action";
-import { FieldLabel } from "@/components/ui/help";
+import { FieldRow } from "@/components/ui/field-row";
 import { Badge, Card, JsonBlock } from "@/components/ui/kit";
 
 const TIPS = {
@@ -134,7 +133,6 @@ export function DoorPanel() {
   const [gatesLive, setGatesLive] = useState(true);
   const [advanced, setAdvanced] = useState(false);
   const [showJson, setShowJson] = useState(false);
-  const [onboardExtra, setOnboardExtra] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -208,31 +206,23 @@ export function DoorPanel() {
     }
   };
 
-  const quickAllAny = async () => {
-    setLoading(true);
-    setError(null);
-    setOk(null);
-    try {
-      setGatesLive(true);
-      setGate({ ...EMPTY_FACTOR_GATE });
-      const r = await engine.ingestPolicyPut({
-        isEnabled: true,
-        isAutoCreateWallet: true,
-        autoWalletSettlementCurrency: "HKD",
-        autoWalletEnsureCurrency: "LP",
-        autoWalletNamePrefix: "Auto ",
-        autoWalletCoaProfileCode: "",
-        entryFactors: [],
-      });
-      setPolicy(r.data);
-      setSaved(r.data);
-      applyLoadedFactors(r.data?.entryFactors);
-      setOk("Quick action saved: Door OPEN · anyone · settlement HKD · 01-01-01 HKD + LP");
-    } catch (e) {
-      setError(errMsg(e));
-    } finally {
-      setLoading(false);
-    }
+  /** Fill the form with the all-any preset — no engine call; user reviews the diff and Saves. */
+  const quickAllAny = () => {
+    if (!policy) return;
+    setPolicy({
+      ...policy,
+      isEnabled: true,
+      isAutoCreateWallet: true,
+      autoWalletSettlementCurrency: "HKD",
+      autoWalletEnsureCurrency: "LP",
+      autoWalletNamePrefix: "Auto ",
+      autoWalletCoaProfileCode: "",
+      entryFactors: [],
+    });
+    setGatesLive(true);
+    setGate({ ...EMPTY_FACTOR_GATE });
+    setEntryFactorsText("[]");
+    setOk("Preset applied to the form — review the diff, then Save.");
   };
 
   const admitBits = useMemo(() => (gatesLive ? gateBits(gate) : []), [gate, gatesLive]);
@@ -252,16 +242,6 @@ export function DoorPanel() {
     <PageShell
       title="Rules · Door"
       description="First gate: accept the webhook at all? Brain scores after. One global row for the engine."
-      actions={
-        <button
-          type="button"
-          className="btn-primary text-xs"
-          onClick={() => void quickAllAny()}
-          disabled={loading}
-        >
-          Quick action · all any
-        </button>
-      }
       ok={ok}
     >
       {!policy || !saved ? (
@@ -355,6 +335,11 @@ export function DoorPanel() {
             title="Edit door"
             className="mb-4"
             description="Empty gate = admit anyone. Chips write entryFactors live — no Apply."
+            right={
+              <button type="button" className="btn-secondary text-xs" onClick={quickAllAny}>
+                Quick action · set all any
+              </button>
+            }
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <StepHead
@@ -425,10 +410,7 @@ export function DoorPanel() {
               <AndGateGrid gate={gate} onChange={patchGate} tone="emerald" />
             </div>
 
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
-              <span className="w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                channel
-              </span>
+            <FieldRow label="channel" className="mt-2.5">
               {["POS", "CRM", "OMS"].map((v) => (
                 <Chip
                   key={v}
@@ -452,7 +434,7 @@ export function DoorPanel() {
                 onChange={(e) => patchGate({ channel: e.target.value })}
                 placeholder="metadata.channel"
               />
-            </div>
+            </FieldRow>
 
             <button
               type="button"
@@ -485,7 +467,11 @@ export function DoorPanel() {
             <hr className="my-4 border-slate-100" />
 
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <StepHead n={3} title="No wallet yet" sub="runs only after Brain already matched" />
+              <StepHead
+                n={3}
+                title="Wallet creation policy"
+                sub="runs only after Brain already matched"
+              />
               <SegToggle
                 value={!!policy.isAutoCreateWallet}
                 onChange={(v) => setPolicy({ ...policy, isAutoCreateWallet: v })}
@@ -497,127 +483,95 @@ export function DoorPanel() {
             </div>
 
             {policy.isAutoCreateWallet ? (
-              <div className="mt-2.5 rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-2.5">
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  <div>
-                    <FieldLabel tipTitle={TIPS.settlement.title} tip={TIPS.settlement.body}>
-                      Settlement (cash)
-                    </FieldLabel>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      {["HKD", "USD"].map((c) => (
-                        <Chip
-                          key={c}
-                          tone="emerald"
-                          active={policy.autoWalletSettlementCurrency === c}
-                          onClick={() => setPolicy({ ...policy, autoWalletSettlementCurrency: c })}
-                        >
-                          {c}
-                        </Chip>
-                      ))}
-                      <input
-                        className="field-input w-20 font-mono text-xs"
-                        value={String(policy.autoWalletSettlementCurrency ?? "")}
-                        onChange={(e) =>
-                          setPolicy({
-                            ...policy,
-                            autoWalletSettlementCurrency: e.target.value.toUpperCase(),
-                          })
-                        }
-                        placeholder="HKD"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <FieldLabel tipTitle={TIPS.ensure.title} tip={TIPS.ensure.body}>
-                      Ensure (points)
-                    </FieldLabel>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      {["LP", "HKD"].map((c) => (
-                        <Chip
-                          key={c}
-                          tone="emerald"
-                          active={policy.autoWalletEnsureCurrency === c}
-                          onClick={() => setPolicy({ ...policy, autoWalletEnsureCurrency: c })}
-                        >
-                          {c}
-                        </Chip>
-                      ))}
-                      <input
-                        className="field-input w-20 font-mono text-xs"
-                        value={String(policy.autoWalletEnsureCurrency ?? "")}
-                        onChange={(e) =>
-                          setPolicy({
-                            ...policy,
-                            autoWalletEnsureCurrency: e.target.value.toUpperCase(),
-                          })
-                        }
-                        placeholder="LP"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800/70 hover:text-emerald-950"
-                  onClick={() => setOnboardExtra((v) => !v)}
+              <div className="mt-2.5 space-y-1.5">
+                <FieldRow
+                  label="settlement"
+                  tip={TIPS.settlement.body}
+                  tipTitle={TIPS.settlement.title}
                 >
-                  {onboardExtra ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  )}
-                  Name, source label, COA
-                </button>
-                {onboardExtra ? (
-                  <div className="mt-1.5 grid gap-2 sm:grid-cols-3">
-                    <label className="field">
-                      <span className="field-label">name prefix</span>
-                      <input
-                        className="field-input text-xs"
-                        value={String(policy.autoWalletNamePrefix ?? "")}
-                        onChange={(e) =>
-                          setPolicy({ ...policy, autoWalletNamePrefix: e.target.value })
-                        }
-                        placeholder="Demo "
-                      />
-                    </label>
-                    <label className="field">
-                      <span className="field-label">associatedFrom</span>
-                      <input
-                        className="field-input text-xs"
-                        value={String(policy.autoWalletAssociatedFrom ?? "")}
-                        onChange={(e) =>
-                          setPolicy({ ...policy, autoWalletAssociatedFrom: e.target.value })
-                        }
-                        placeholder="POS"
-                      />
-                    </label>
-                    <label className="field">
-                      <span className="field-label">COA on auto-create</span>
-                      <input
-                        className="field-input font-mono text-xs"
-                        value={String(policy.autoWalletCoaProfileCode ?? "")}
-                        onChange={(e) =>
-                          setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })
-                        }
-                        placeholder="CUSTOMER_CUST_LP"
-                      />
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {["CUSTOMER_CUST_LP", "CUSTOMER_CUST_HKD"].map((c) => (
-                          <Chip
-                            key={c}
-                            tone="emerald"
-                            active={policy.autoWalletCoaProfileCode === c}
-                            onClick={() => setPolicy({ ...policy, autoWalletCoaProfileCode: c })}
-                          >
-                            {c}
-                          </Chip>
-                        ))}
-                      </div>
-                    </label>
-                  </div>
-                ) : null}
+                  {["HKD", "USD"].map((c) => (
+                    <Chip
+                      key={c}
+                      tone="emerald"
+                      active={policy.autoWalletSettlementCurrency === c}
+                      onClick={() => setPolicy({ ...policy, autoWalletSettlementCurrency: c })}
+                    >
+                      {c}
+                    </Chip>
+                  ))}
+                  <input
+                    className="field-input w-20 font-mono text-xs"
+                    value={String(policy.autoWalletSettlementCurrency ?? "")}
+                    onChange={(e) =>
+                      setPolicy({
+                        ...policy,
+                        autoWalletSettlementCurrency: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="HKD"
+                  />
+                </FieldRow>
+                <FieldRow label="ensure" tip={TIPS.ensure.body} tipTitle={TIPS.ensure.title}>
+                  {["LP", "HKD"].map((c) => (
+                    <Chip
+                      key={c}
+                      tone="emerald"
+                      active={policy.autoWalletEnsureCurrency === c}
+                      onClick={() => setPolicy({ ...policy, autoWalletEnsureCurrency: c })}
+                    >
+                      {c}
+                    </Chip>
+                  ))}
+                  <input
+                    className="field-input w-20 font-mono text-xs"
+                    value={String(policy.autoWalletEnsureCurrency ?? "")}
+                    onChange={(e) =>
+                      setPolicy({
+                        ...policy,
+                        autoWalletEnsureCurrency: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="LP"
+                  />
+                </FieldRow>
+                <FieldRow label="name prefix" labelWidth="w-28">
+                  <input
+                    className="field-input w-32 text-xs"
+                    value={String(policy.autoWalletNamePrefix ?? "")}
+                    onChange={(e) => setPolicy({ ...policy, autoWalletNamePrefix: e.target.value })}
+                    placeholder="Demo "
+                  />
+                </FieldRow>
+                <FieldRow label="associatedFrom" labelWidth="w-28">
+                  <input
+                    className="field-input w-32 text-xs"
+                    value={String(policy.autoWalletAssociatedFrom ?? "")}
+                    onChange={(e) =>
+                      setPolicy({ ...policy, autoWalletAssociatedFrom: e.target.value })
+                    }
+                    placeholder="POS"
+                  />
+                </FieldRow>
+                <FieldRow label="COA on create" labelWidth="w-28">
+                  {["CUSTOMER_CUST_LP", "CUSTOMER_CUST_HKD"].map((c) => (
+                    <Chip
+                      key={c}
+                      tone="emerald"
+                      active={policy.autoWalletCoaProfileCode === c}
+                      onClick={() => setPolicy({ ...policy, autoWalletCoaProfileCode: c })}
+                    >
+                      {c}
+                    </Chip>
+                  ))}
+                  <input
+                    className="field-input w-40 font-mono text-xs"
+                    value={String(policy.autoWalletCoaProfileCode ?? "")}
+                    onChange={(e) =>
+                      setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })
+                    }
+                    placeholder="CUSTOMER_CUST_LP"
+                  />
+                </FieldRow>
               </div>
             ) : null}
           </Card>

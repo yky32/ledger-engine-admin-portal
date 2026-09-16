@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { FactorGate } from "@/lib/factors";
 import { clsx } from "@/lib/format";
 import { EVENT_TYPE_LABELS, EVENT_TYPES } from "@/lib/recipes";
+import { FieldRow } from "@/components/ui/field-row";
 
 export type ChipTone = "violet" | "emerald" | "sky" | "rose";
 
@@ -81,18 +82,6 @@ export function StepHead({
   );
 }
 
-/** One gate = one line: label + preset chips + free-text input. */
-function GateRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-        {label}
-      </span>
-      {children}
-    </div>
-  );
-}
-
 /** Shared eventType × MCC × currency × age × amount AND rows (Door + Brain). */
 export function AndGateGrid({
   gate,
@@ -105,7 +94,7 @@ export function AndGateGrid({
 }) {
   return (
     <div className="space-y-1.5">
-      <GateRow label="eventType">
+      <FieldRow label="eventType">
         {EVENT_TYPES.map((v) => (
           <Chip
             key={v}
@@ -130,9 +119,9 @@ export function AndGateGrid({
           onChange={(e) => onChange({ eventTypes: e.target.value.toUpperCase() })}
           placeholder="CC_TXN, CC_CIP,…"
         />
-      </GateRow>
+      </FieldRow>
 
-      <GateRow label="MCC">
+      <FieldRow label="MCC">
         {["101", "5411", "5411,5412", "5812"].map((v) => (
           <Chip key={v} tone={tone} active={gate.mccs === v} onClick={() => onChange({ mccs: v })}>
             {v}
@@ -147,9 +136,9 @@ export function AndGateGrid({
           onChange={(e) => onChange({ mccs: e.target.value })}
           placeholder="custom csv"
         />
-      </GateRow>
+      </FieldRow>
 
-      <GateRow label="currency">
+      <FieldRow label="currency">
         {["HKD", "USD", "HKD,USD", "LP"].map((v) => (
           <Chip
             key={v}
@@ -173,9 +162,9 @@ export function AndGateGrid({
           onChange={(e) => onChange({ currencies: e.target.value })}
           placeholder="custom csv"
         />
-      </GateRow>
+      </FieldRow>
 
-      <GateRow label="age">
+      <FieldRow label="age">
         {["7", "30", "90"].map((v) => (
           <Chip
             key={v}
@@ -195,9 +184,9 @@ export function AndGateGrid({
           onChange={(e) => onChange({ ageLte: e.target.value })}
           placeholder="max days"
         />
-      </GateRow>
+      </FieldRow>
 
-      <GateRow label="amount">
+      <FieldRow label="amount">
         {(
           [
             ["1", "", "≥1"],
@@ -234,7 +223,7 @@ export function AndGateGrid({
           onChange={(e) => onChange({ amtMax: e.target.value })}
           placeholder="max"
         />
-      </GateRow>
+      </FieldRow>
     </div>
   );
 }
