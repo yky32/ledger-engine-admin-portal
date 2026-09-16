@@ -10,8 +10,13 @@ export type FlowStep = "door" | "brain" | "accounting" | "ledger" | "tier";
 /**
  * Standard page chrome for every Admin surface:
  * Flow strip → engine banner → title / APIs / actions → optional ok/error → body.
+ *
+ * `variant="doc"` is the reading-mode chrome for Docs-view pages: no flow
+ * strip, no API chips, and the `actions` slot is ignored — doc pages can't
+ * carry ops controls.
  */
 export function PageShell({
+  variant = "app",
   flow,
   title,
   description,
@@ -21,6 +26,8 @@ export function PageShell({
   error,
   children,
 }: {
+  /** "app" (default) = full ops chrome; "doc" = reading mode. */
+  variant?: "app" | "doc";
   /** Highlight on Door → Brain → Accounting → Ledger → Tier. Omit = strip still shows, none selected. */
   flow?: FlowStep;
   title: string;
@@ -33,9 +40,18 @@ export function PageShell({
 }) {
   return (
     <div>
-      <FlowStrip active={flow} />
+      {variant === "doc" ? null : <FlowStrip active={flow} />}
       <EngineStatusBanner />
-      <PageHeader title={title} description={description} api={api} actions={actions} />
+      {variant === "doc" ? (
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
+          {description ? (
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>
+          ) : null}
+        </div>
+      ) : (
+        <PageHeader title={title} description={description} api={api} actions={actions} />
+      )}
       {error ? (
         <div className="mb-4">
           <Alert tone="error">{error}</Alert>

@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEngineHealth, type EngineHealthState } from "@/lib/engine-health";
 import { clsx } from "@/lib/format";
 import { navGroups } from "@/lib/nav";
+import { useView } from "@/lib/view";
 
 function EngineBadge({ state }: { state: EngineHealthState }) {
   const online = state === "up";
@@ -36,7 +37,8 @@ function EngineBadge({ state }: { state: EngineHealthState }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const groups = navGroups();
+  const { view } = useView();
+  const groups = navGroups(view);
   const { state: engineState } = useEngineHealth();
 
   return (

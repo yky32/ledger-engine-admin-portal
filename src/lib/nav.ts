@@ -4,38 +4,28 @@ import {
   ArrowDownToLine,
   ArrowLeftRight,
   ArrowUpFromLine,
-  Brain,
-  Building2,
   CreditCard,
   Database,
-  DoorOpen,
   FlaskConical,
   Layers,
-  Library,
-  ListTree,
-  Lock,
-  Medal,
-  Scale,
-  Search,
   Settings2,
   Sparkles,
-  UserPlus,
-  Users,
-  Wallet,
-  Webhook,
   Workflow,
 } from "lucide-react";
 
+import type { AdminView } from "@/lib/view";
+
 /**
- * Sidebar follows the CC spend path:
- * Run (webhook) → Books (wallet) → Pipeline (Door / Brain / Accounting / Tier) → Chart.
- * Rails and lab tools sit last.
+ * Sidebar is filtered by view (Ops / Lab / Docs), not by pipeline stage.
+ * Screens being consolidated away (Door/Brain/COA/lookups/…) are absent —
+ * they stay reachable by URL until their replacements land.
  */
 export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
   group: string;
+  view: AdminView;
   blurb?: string;
 };
 
@@ -44,182 +34,117 @@ export const NAV: NavItem[] = [
     href: "/",
     label: "Home",
     icon: Workflow,
-    group: "Home",
+    group: "Overview",
+    view: "ops",
     blurb: "CC_TXN path",
-  },
-  {
-    href: "/capability",
-    label: "Capability",
-    icon: Layers,
-    group: "Home",
-    blurb: "Reward System row",
-  },
-
-  {
-    href: "/transactions-ingest",
-    label: "Webhook",
-    icon: Webhook,
-    group: "Run",
-    blurb: "one CC_TXN",
-  },
-  {
-    href: "/simulator",
-    label: "Simulator",
-    icon: FlaskConical,
-    group: "Run",
-    blurb: "event matrix",
   },
   {
     href: "/failed-transactions",
     label: "Fail queue",
     icon: AlertTriangle,
-    group: "Run",
+    group: "Operate",
+    view: "ops",
     blurb: "review / replay",
   },
 
   {
-    href: "/wallets-list",
-    label: "Wallets",
-    icon: Wallet,
-    group: "Books",
-    blurb: "LP · tier · refund",
+    href: "/simulator",
+    label: "Simulator",
+    icon: FlaskConical,
+    group: "Lab",
+    view: "lab",
+    blurb: "event matrix",
   },
   {
-    href: "/wallets",
-    label: "Onboard",
-    icon: UserPlus,
-    group: "Books",
+    href: "/demo",
+    label: "Demo",
+    icon: Sparkles,
+    group: "Lab",
+    view: "lab",
   },
   {
-    href: "/ledger-entries",
-    label: "Double-entry",
-    icon: ListTree,
-    group: "Books",
-    blurb: "DE legs",
+    href: "/configurations",
+    label: "Config",
+    icon: Settings2,
+    group: "Lab",
+    view: "lab",
+  },
+  {
+    href: "/records",
+    label: "DB records",
+    icon: Database,
+    group: "Lab",
+    view: "lab",
   },
 
-  {
-    href: "/ingest-policies",
-    label: "Door",
-    icon: DoorOpen,
-    group: "Pipeline",
-    blurb: "admit",
-  },
-  {
-    href: "/digestion-rules",
-    label: "Brain",
-    icon: Brain,
-    group: "Pipeline",
-    blurb: "score LP",
-  },
-  {
-    href: "/accounting-rules",
-    label: "Accounting",
-    icon: Scale,
-    group: "Pipeline",
-    blurb: "CR/DR walk",
-  },
-  {
-    href: "/wallet-tier-policies",
-    label: "Tiering",
-    icon: Medal,
-    group: "Pipeline",
-    blurb: "LP total → tier",
-  },
-
-  {
-    href: "/corporate-coa",
-    label: "House COA",
-    icon: Building2,
-    group: "Chart",
-    blurb: "01-02 / 01-04",
-  },
-  {
-    href: "/coa",
-    label: "Customer COA",
-    icon: Users,
-    group: "Chart",
-    blurb: "01-01-01 HKD / LP",
-  },
-  {
-    href: "/coa-dictionary",
-    label: "Dictionary",
-    icon: Library,
-    group: "Chart",
-    blurb: "what 01-02 means",
-  },
-
-  {
-    href: "/holds",
-    label: "Hold",
-    icon: Lock,
-    group: "Rails",
-  },
   {
     href: "/deposits",
     label: "Deposit",
     icon: ArrowDownToLine,
     group: "Rails",
+    view: "lab",
   },
   {
     href: "/withdrawals",
     label: "Withdraw",
     icon: ArrowUpFromLine,
     group: "Rails",
+    view: "lab",
   },
   {
     href: "/transfers",
     label: "Transfer",
     icon: ArrowLeftRight,
     group: "Rails",
+    view: "lab",
   },
 
-  {
-    href: "/demo",
-    label: "Demo",
-    icon: Sparkles,
-    group: "More",
-  },
   {
     href: "/use-cases",
     label: "Use cases",
     icon: CreditCard,
-    group: "More",
+    group: "Docs",
+    view: "docs",
   },
   {
-    href: "/review",
-    label: "Lookup",
-    icon: Search,
-    group: "More",
-    blurb: "one ownerId",
-  },
-  {
-    href: "/movements",
-    label: "Movements",
-    icon: ArrowLeftRight,
-    group: "More",
-    blurb: "by walletId",
-  },
-  {
-    href: "/records",
-    label: "DB records",
-    icon: Database,
-    group: "More",
-  },
-  {
-    href: "/configurations",
-    label: "Config",
-    icon: Settings2,
-    group: "More",
+    href: "/capability",
+    label: "Capability",
+    icon: Layers,
+    group: "Docs",
+    view: "docs",
   },
 ];
 
-export function navGroups(): { name: string; items: NavItem[] }[] {
+const GROUP_ORDER: Record<AdminView, string[]> = {
+  ops: ["Overview", "Operate", "Configure", "Investigate"],
+  lab: ["Lab", "Rails"],
+  docs: ["Docs"],
+};
+
+export function navGroups(view: AdminView): { name: string; items: NavItem[] }[] {
   const map = new Map<string, NavItem[]>();
   for (const item of NAV) {
+    if (item.view !== view) continue;
     if (!map.has(item.group)) map.set(item.group, []);
     map.get(item.group)!.push(item);
   }
-  const order = ["Home", "Run", "Books", "Pipeline", "Chart", "Rails", "More"];
-  return order.filter((n) => map.has(n)).map((name) => ({ name, items: map.get(name)! }));
+  return GROUP_ORDER[view]
+    .filter((name) => map.has(name))
+    .map((name) => ({ name, items: map.get(name)! }));
+}
+
+export function routesForView(view: AdminView): string[] {
+  return NAV.filter((item) => item.view === view).map((item) => item.href);
+}
+
+/** Which view owns this path, or null for unlisted (legacy) routes. */
+export function viewForPath(pathname: string): AdminView | null {
+  for (const item of NAV) {
+    const hit =
+      item.href === "/"
+        ? pathname === "/"
+        : pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (hit) return item.view;
+  }
+  return null;
 }
