@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { FieldLabel, ExplainBox } from "@/components/ui/help";
-import { PageShell } from "@/components/layout/page-shell";
+
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { ExplainBox, FieldLabel } from "@/components/ui/help";
+import { Card, JsonBlock } from "@/components/ui/kit";
 
 export default function HoldsPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -46,13 +47,12 @@ export default function HoldsPage() {
         { method: "POST", path: "/wallets/releases" },
       ]}
     >
-
       <div className="mb-4 grid gap-3 lg:grid-cols-2">
         <ExplainBox title="What HOLD does" tone="ops">
           <p>
-            <strong>HOLD</strong> reduces <em>available</em> balance (what customer can spend
-            now) but keeps <em>ledger</em> balance the same. Used when points are reserved
-            (pending order) without burning yet.
+            <strong>HOLD</strong> reduces <em>available</em> balance (what customer can spend now)
+            but keeps <em>ledger</em> balance the same. Used when points are reserved (pending
+            order) without burning yet.
           </p>
         </ExplainBox>
         <ExplainBox title="RELEASE + legs">
@@ -81,10 +81,7 @@ export default function HoldsPage() {
               />
             </label>
             <label className="field">
-              <FieldLabel
-                tipTitle="currency"
-                tip="Book to lock. Usually LP for loyalty holds."
-              >
+              <FieldLabel tipTitle="currency" tip="Book to lock. Usually LP for loyalty holds.">
                 currency
               </FieldLabel>
               <select

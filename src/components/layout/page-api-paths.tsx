@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import { formatApiCall, subscribeApiCalls, type ApiCall } from "@/lib/api";
 import { ApiPath, type ApiRef } from "@/components/ui/api-path";
 
@@ -21,7 +22,7 @@ function uniqueLatest(calls: ApiCall[]): ApiCall[] {
 /** Live METHOD /path chips for the current page (calls since this route mounted). */
 export function PageApiPaths({ fallback }: { fallback?: ApiRef[] }) {
   const pathname = usePathname();
-  const sinceRef = useRef(Date.now());
+  const sinceRef = useRef(0);
   const [calls, setCalls] = useState<ApiCall[]>([]);
 
   useEffect(() => {

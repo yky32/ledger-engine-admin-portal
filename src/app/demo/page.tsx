@@ -1,25 +1,25 @@
 "use client";
 
+import {
+  ArrowRight,
+  BookOpen,
+  Brain,
+  CheckCircle2,
+  Circle,
+  DoorOpen,
+  FlaskConical,
+  Search,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, Badge, Alert, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
+
 import { engine } from "@/lib/engine";
 import { errMsg, isConflictError, randomEventId, randomOwnerId } from "@/lib/format";
 import type { DigestionRule, IngestResult, WalletView } from "@/lib/types";
-
-import {
-  CheckCircle2,
-  Circle,
-  ArrowRight,
-  FlaskConical,
-  BookOpen,
-  Brain,
-  DoorOpen,
-  Wallet,
-  Search,
-} from "lucide-react";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Alert, Badge, Card, JsonBlock } from "@/components/ui/kit";
 
 /** Guided demo: CC_TXN · HKD 1000 · 15 Aug 2026 HKT · MCC 101 · RATE 1% → 10 LP */
 const DEMO_RULE_CODE = "DEMO_CC_1PCT";
@@ -95,7 +95,10 @@ function buildCombos(seed: number): DemoCombo[] {
   const hours = [9, 11, 16, 19, 21];
   const days = [15, 16, 18, 20];
   const v2Amt = pick(rng, amounts);
-  const v3Amt = pick(rng, amounts.filter((a) => a !== v2Amt));
+  const v3Amt = pick(
+    rng,
+    amounts.filter((a) => a !== v2Amt),
+  );
   const v3Day = pick(rng, days);
   const v3Hour = pick(rng, hours);
   return [
@@ -237,9 +240,7 @@ export default function DemoPage() {
     try {
       const r = await engine.coaProfiles();
       const list = Array.isArray(r.data) ? (r.data as CoaRow[]) : [];
-      const member = list.find(
-        (x) => (x.code || "").toUpperCase() === DEMO_COA_MEMBER,
-      );
+      const member = list.find((x) => (x.code || "").toUpperCase() === DEMO_COA_MEMBER);
       if (member) {
         setCoaOk(true);
         setCoaDetail(coaLabel(member));
@@ -394,14 +395,10 @@ export default function DemoPage() {
   }, [eventId, ownerId, selected, extraMeta, mainAccount]);
 
   const sdkJava = useMemo(() => {
-    const metaEntries = Object.entries(
-      (payload.metadata as Record<string, string>) || {},
-    )
+    const metaEntries = Object.entries((payload.metadata as Record<string, string>) || {})
       .map(([k, v]) => `            "${k}", "${v}"`)
       .join(",\n");
-    const mainLine = mainAccount.trim()
-      ? `\n    .mainAccount("${mainAccount.trim()}")`
-      : "";
+    const mainLine = mainAccount.trim() ? `\n    .mainAccount("${mainAccount.trim()}")` : "";
     return `TransactionalEvent event = TransactionalEvent.builder()
     .eventId("${eventId}")
     .ownerId("${ownerId.trim() || DEMO_OWNER}")${mainLine}
@@ -481,23 +478,22 @@ client.events().submit(event);`;
         </Link>
       }
     >
-
       <div className="mb-4">
         <Alert tone="info">
           Combo 1: <strong>CC_TXN · HKD 1,000 · 15 Aug 2026 HKT · MCC 101</strong> → ~10 LP.
-          Variants 2–6 change amount / day / MCC / currency / age so you can see earn vs skip.
-          Rule <code className="text-xs">{DEMO_RULE_CODE}</code> · eventType{" "}
+          Variants 2–6 change amount / day / MCC / currency / age so you can see earn vs skip. Rule{" "}
+          <code className="text-xs">{DEMO_RULE_CODE}</code> · eventType{" "}
           <code className="text-xs">{DEMO_EVENT_TYPE}</code> · COA{" "}
           <code className="text-xs">{DEMO_COA_MEMBER}</code>.
         </Alert>
       </div>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/ingest-policies" className="btn-secondary justify-start text-xs">
+        <Link href="/rules/door" className="btn-secondary justify-start text-xs">
           <DoorOpen className="h-4 w-4 text-emerald-600" />
           Door
         </Link>
-        <Link href="/digestion-rules" className="btn-secondary justify-start text-xs">
+        <Link href="/rules/brain" className="btn-secondary justify-start text-xs">
           <Brain className="h-4 w-4 text-violet-600" />
           Brain · rules
         </Link>
@@ -561,7 +557,9 @@ client.events().submit(event);`;
                   <td className="font-mono text-[11px]">{c.eventType}</td>
                   <td className="font-mono text-xs">{c.amount.toLocaleString()}</td>
                   <td>{c.currency}</td>
-                  <td className="whitespace-nowrap font-mono text-[11px]">{formatHkt(c.occurredAt)}</td>
+                  <td className="whitespace-nowrap font-mono text-[11px]">
+                    {formatHkt(c.occurredAt)}
+                  </td>
                   <td className="font-mono text-xs">{c.mcc}</td>
                   <td className="text-xs text-slate-600">{c.expect}</td>
                 </tr>
@@ -570,7 +568,8 @@ client.events().submit(event);`;
           </table>
         </div>
         <p className="mt-2 text-[11px] text-slate-500">
-          Selected #{selected.id} · click a row, then Dry-run / Send live. Request JSON updates below.
+          Selected #{selected.id} · click a row, then Dry-run / Send live. Request JSON updates
+          below.
         </p>
       </Card>
 
@@ -621,15 +620,12 @@ client.events().submit(event);`;
               ) : (
                 <Circle className="h-4 w-4 text-slate-400" />
               )}
-              {coaOk === null
-                ? "Checking…"
-                : coaOk
-                  ? `${DEMO_COA_MEMBER} chart`
-                  : "COA incomplete"}
+              {coaOk === null ? "Checking…" : coaOk ? `${DEMO_COA_MEMBER} chart` : "COA incomplete"}
             </div>
             <p className="mb-1 font-mono text-[11px] text-slate-500">{coaDetail || "—"}</p>
             <p className="mb-2 text-sm text-slate-600">
-              Member chart <code className="text-xs">{DEMO_COA_MEMBER}</code> (01-01-01 LP). No DEFAULT profile.
+              Member chart <code className="text-xs">{DEMO_COA_MEMBER}</code> (01-01-01 LP). No
+              DEFAULT profile.
             </p>
             <div className="flex flex-wrap gap-2">
               <button
@@ -795,16 +791,11 @@ client.events().submit(event);`;
               </dl>
             ) : null}
             {lpLine ? (
-              <p className="mt-2 text-lg font-semibold text-emerald-700">
-                LP available ≈ {lpLine}
-              </p>
+              <p className="mt-2 text-lg font-semibold text-emerald-700">LP available ≈ {lpLine}</p>
             ) : null}
             {wallet ? (
               <div className="mt-3">
-                <Link
-                  href="/review"
-                  className="text-sm font-medium text-emerald-700 underline"
-                >
+                <Link href="/review" className="text-sm font-medium text-emerald-700 underline">
                   Open Review for {ownerId}
                 </Link>
               </div>

@@ -38,8 +38,18 @@ export const REWARD_LANES: CapLane[] = [
     id: "wallet",
     title: "Wallet",
     items: [
-      { slide: "Reward Wallet", engine: "1 ownerId → 1 wallet", status: "live", href: "/wallets-list" },
-      { slide: "Balance Inquiry", engine: "GET /wallets/{ownerId}", status: "live", href: "/review" },
+      {
+        slide: "Reward Wallet",
+        engine: "1 ownerId → 1 wallet",
+        status: "live",
+        href: "/wallets-list",
+      },
+      {
+        slide: "Balance Inquiry",
+        engine: "GET /wallets/{ownerId}",
+        status: "live",
+        href: "/review",
+      },
       {
         slide: "Hold & Release",
         engine: "Freeze available; ledger unchanged (ops / investigation)",
@@ -57,7 +67,7 @@ export const REWARD_LANES: CapLane[] = [
         slide: "Reward Enablement",
         engine: "Door isEnabled + auto-wallet",
         status: "live",
-        href: "/ingest-policies",
+        href: "/rules/door",
       },
     ],
   },
@@ -69,25 +79,25 @@ export const REWARD_LANES: CapLane[] = [
         slide: "Transaction Eligibility",
         engine: "Door admit",
         status: "live",
-        href: "/ingest-policies",
+        href: "/rules/door",
       },
       {
         slide: "Points Calculation",
         engine: "Brain RATE + multiplier · startsWith / endsWith / contains",
         status: "live",
-        href: "/digestion-rules",
+        href: "/rules/brain",
       },
       {
         slide: "Earn Engine",
         engine: "Brain EARN + CR 01-01-01",
         status: "live",
-        href: "/digestion-rules",
+        href: "/rules/brain",
       },
       {
         slide: "Burn Engine",
         engine: "Brain BURN + DR 01-01-01",
         status: "live",
-        href: "/digestion-rules",
+        href: "/rules/brain",
       },
     ],
   },
@@ -95,7 +105,12 @@ export const REWARD_LANES: CapLane[] = [
     id: "ledger",
     title: "Ledger",
     items: [
-      { slide: "Chart of Accounts", engine: "House 01-02 / 01-04 · customer 01-01-01", status: "live", href: "/coa" },
+      {
+        slide: "Chart of Accounts",
+        engine: "House 01-02 / 01-04 · customer 01-01-01",
+        status: "live",
+        href: "/coa",
+      },
       {
         slide: "Double-Entry Posting",
         engine: "Accounting walk + DE legs",
@@ -110,8 +125,18 @@ export const REWARD_LANES: CapLane[] = [
     id: "audit",
     title: "Audit",
     items: [
-      { slide: "Audit Trail", engine: "Movements + ledger entries", status: "partial", href: "/movements" },
-      { slide: "Event Log", engine: "Ingest + fail queue", status: "partial", href: "/failed-transactions" },
+      {
+        slide: "Audit Trail",
+        engine: "Movements + ledger entries",
+        status: "partial",
+        href: "/movements",
+      },
+      {
+        slide: "Event Log",
+        engine: "Ingest + fail queue",
+        status: "partial",
+        href: "/failed-transactions",
+      },
       { slide: "Change History", engine: "createDt / updateDt on rows", status: "partial" },
       { slide: "Access Log", engine: "—", status: "slide" },
     ],
@@ -120,12 +145,17 @@ export const REWARD_LANES: CapLane[] = [
     id: "config",
     title: "Configuration",
     items: [
-      { slide: "Rule Configurator", engine: "Door + Brain + Accounting", status: "live", href: "/ingest-policies" },
+      {
+        slide: "Rule Configurator",
+        engine: "Door + Brain + Accounting",
+        status: "live",
+        href: "/rules/door",
+      },
       {
         slide: "Wallet Tiering",
         engine: "Unique criterion + currency",
         status: "live",
-        href: "/wallet-tier-policies",
+        href: "/rules/tier",
       },
       { slide: "Referrer Management", engine: "—", status: "slide" },
       { slide: "Merchant Management", engine: "—", status: "slide" },
@@ -151,7 +181,7 @@ export const PRESENTED_CASES: PresentedCase[] = [
     title: "MCC 17 or merchant name starts with MTR → LP only, 2X",
     verdict: "yes",
     how: "Brain rule, priority above default CC_TXN. whenFactors any: mcc eq 17 OR metadata.merchantName startsWith MTR. resultCurrency LP. formula RATE + multiplier 2.",
-    href: "/digestion-rules",
+    href: "/rules/brain",
     note: "Webhook must send metadata.merchantName (and mcc). Confirm MCC 17 vs 4111/4131. Preset: any · MCC 17 OR merchant MTR*.",
   },
   {

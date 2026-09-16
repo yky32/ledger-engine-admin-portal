@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import { clsx } from "@/lib/format";
 
 /** Compact flow strip — CC spend: Door → Brain → Accounting → Ledger → Tier */
@@ -15,11 +16,11 @@ export function FlowStrip({
     title: string;
     href: string;
   }[] = [
-    { id: "door", n: "1", title: "Door", href: "/ingest-policies" },
-    { id: "brain", n: "2", title: "Brain", href: "/digestion-rules" },
-    { id: "accounting", n: "3", title: "Accounting", href: "/accounting-rules" },
+    { id: "door", n: "1", title: "Door", href: "/rules/door" },
+    { id: "brain", n: "2", title: "Brain", href: "/rules/brain" },
+    { id: "accounting", n: "3", title: "Accounting", href: "/rules/accounting" },
     { id: "ledger", n: "4", title: "Ledger", href: "/wallets-list" },
-    { id: "tier", n: "5", title: "Tier", href: "/wallet-tier-policies" },
+    { id: "tier", n: "5", title: "Tier", href: "/rules/tier" },
   ];
 
   return (

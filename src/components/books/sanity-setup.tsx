@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Card, Badge } from "@/components/ui/kit";
+import { useState } from "react";
+
 import { errMsg } from "@/lib/format";
 import { runSanitySetup, type SanityStep } from "@/lib/sanity-setup";
+import { Badge, Card } from "@/components/ui/kit";
 
 export function SanitySetup() {
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,12 @@ export function SanitySetup() {
       title="1-click setup · all parties"
       description="Door · Brain · Accounting · COA · Tiering. Then fire a CC_TXN."
     >
-      <button type="button" className="btn-primary text-sm" onClick={() => void run()} disabled={loading}>
+      <button
+        type="button"
+        className="btn-primary text-sm"
+        onClick={() => void run()}
+        disabled={loading}
+      >
         {loading ? "Setting up…" : "Setup all · Door + Brain + Accounting + COA + Tier"}
       </button>
       {error ? <p className="mt-2 text-sm text-rose-600">{error}</p> : null}

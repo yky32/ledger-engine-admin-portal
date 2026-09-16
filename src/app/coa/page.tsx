@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Empty, Alert } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
+import { useCallback, useEffect, useState } from "react";
+
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { COA_PRESETS } from "@/lib/recipes";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Alert, Card, Empty } from "@/components/ui/kit";
 
 type CoaRow = {
   id?: number;
@@ -66,9 +67,7 @@ export default function CoaPage() {
         (x) => (x.code || "").toUpperCase() !== "DEFAULT",
       );
       setRows(list);
-      const pick =
-        (selectedId && list.find((x) => x.id === selectedId)) ||
-        list[0];
+      const pick = (selectedId && list.find((x) => x.id === selectedId)) || list[0];
       if (pick?.id) {
         setSelectedId(pick.id);
         setForm(formFromRow(pick));
@@ -151,8 +150,7 @@ export default function CoaPage() {
   };
 
   const selected = rows.find((r) => r.id === selectedId);
-  const effectiveTxn =
-    form.transactionCode.trim() || selected?.code || newCode || "(same as code)";
+  const effectiveTxn = form.transactionCode.trim() || selected?.code || newCode || "(same as code)";
 
   return (
     <PageShell
@@ -166,9 +164,9 @@ export default function CoaPage() {
       ]}
     >
       <Alert tone="info">
-        COA is the <strong>chart</strong>, not the event. Webhook <code className="text-xs">eventType</code> is
-        shared by Door, Brain, and{" "}
-        <Link href="/accounting-rules" className="underline">
+        COA is the <strong>chart</strong>, not the event. Webhook{" "}
+        <code className="text-xs">eventType</code> is shared by Door, Brain, and{" "}
+        <Link href="/rules/accounting" className="underline">
           Accounting rules
         </Link>
         .{" "}
@@ -241,7 +239,12 @@ export default function CoaPage() {
             >
               Create / clone
             </button>
-            <button type="button" className="btn-secondary text-xs" onClick={() => void load()} disabled={loading}>
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => void load()}
+              disabled={loading}
+            >
               Reload
             </button>
           </div>
@@ -293,7 +296,12 @@ export default function CoaPage() {
               </label>
               <div className="sm:col-span-2">
                 <ActionBar loading={loading} error={error} ok={ok}>
-                  <button type="button" className="btn-primary" onClick={() => void save()} disabled={loading}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => void save()}
+                    disabled={loading}
+                  >
                     Save to DB
                   </button>
                 </ActionBar>

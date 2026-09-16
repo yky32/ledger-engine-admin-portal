@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
+
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { FailedIngest } from "@/lib/types";
 import { PageShell } from "@/components/layout/page-shell";
 import { FilterBar } from "@/components/ui/filter-bar";
+import { Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 export default function FailedPage() {
   const [status, setStatus] = useState("OPEN");
@@ -129,9 +130,7 @@ export default function FailedPage() {
                         {money(r.amount)} {r.currency}
                       </td>
                       <td>
-                        <Badge tone={r.status === "OPEN" ? "warn" : "neutral"}>
-                          {r.status}
-                        </Badge>
+                        <Badge tone={r.status === "OPEN" ? "warn" : "neutral"}>{r.status}</Badge>
                       </td>
                       <td className="space-x-1 whitespace-nowrap">
                         <button

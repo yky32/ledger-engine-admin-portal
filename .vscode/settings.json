@@ -1,0 +1,24 @@
+{
+  // ESLint — show errors/warnings inline using eslint.config.mjs (flat config)
+  "eslint.enable": true,
+  "eslint.useFlatConfig": true,
+  // Prettier owns formatting (eslint-config-prettier already disables
+  // ESLint's stylistic rules), so never let ESLint act as the formatter.
+  "eslint.format.enable": false,
+  // Quick fixes: "Disable rule for this line" + open rule docs
+  "eslint.codeAction.disableRuleComment": { "enable": true, "location": "sameLine" },
+  "eslint.codeAction.showDocumentation": { "enable": true },
+
+  // Prettier is the formatter for manual "Format Document" (⇧⌥F) using
+  // .prettierrc — no auto-format on save. Only applies where a Prettier
+  // config exists.
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.requireConfig": true,
+
+  // ESLint auto-fixes on save, EXCEPT prettier/prettier — formatting stays
+  // manual (quick fix via ⌘., or `npm run format`)
+  "editor.codeActionsOnSave.rules": ["!prettier/prettier", "*"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
+}

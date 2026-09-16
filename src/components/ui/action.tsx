@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+
 import { ApiError } from "@/lib/api";
 import { errMsg } from "@/lib/format";
 import { Alert, Spinner } from "@/components/ui/kit";
@@ -22,9 +23,7 @@ export function useAsyncAction<TArgs extends unknown[], TResult>(
         return r;
       } catch (e) {
         const msg =
-          e instanceof ApiError
-            ? `${e.code ? e.code + " · " : ""}${e.message}`
-            : errMsg(e);
+          e instanceof ApiError ? `${e.code ? e.code + " · " : ""}${e.message}` : errMsg(e);
         setError(msg);
         throw e;
       } finally {

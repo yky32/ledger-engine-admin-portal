@@ -6,16 +6,24 @@
  * - Each customer: own matrix (eventType × ccy × amount × age × repeats)
  * - Global bootstrap once; then per-customer onboard → webhooks → optional hold/dupe/snapshot
  */
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Copy, Plus, Trash2, Users } from "lucide-react";
 import Link from "next/link";
-import { Card, Badge, JsonBlock, Alert, Empty } from "@/components/ui/kit";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { engine } from "@/lib/engine";
-import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount, clsx, isConflictError } from "@/lib/format";
+import {
+  clsx,
+  errMsg,
+  isConflictError,
+  nowIso,
+  randomEventId,
+  randomMainAccount,
+  randomOwnerId,
+} from "@/lib/format";
+import { rememberOwnerId } from "@/lib/owner-memory";
 import { PageShell } from "@/components/layout/page-shell";
 import { ExplainBox } from "@/components/ui/help";
-import { Plus, Copy, Trash2, Users } from "lucide-react";
-import { rememberOwnerId } from "@/lib/owner-memory";
+import { Alert, Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 /* ───────── types ───────── */
 
@@ -323,7 +331,13 @@ function guessExpect(c: WebhookCase): string {
   if (c.ageDays >= 400) return "maybe age-gate";
   if (c.amount === 0) return "maybe min-amount";
   if (c.mcc) return "earn if mcc/rule matches";
-  if (c.eventType === "CC_TXN" || c.eventType === "CC_CIP" || c.eventType === "CC_SIP" || c.eventType === "LN_TXN") return "earn if rule matches";
+  if (
+    c.eventType === "CC_TXN" ||
+    c.eventType === "CC_CIP" ||
+    c.eventType === "CC_SIP" ||
+    c.eventType === "LN_TXN"
+  )
+    return "earn if rule matches";
   if (c.eventType === "CARD_OPEN" || c.eventType === "SIGNUP") return "fixed bonus if rule";
   return "depends on digestion";
 }
@@ -380,8 +394,7 @@ function parseHoldAmounts(csv: string): number[] {
 export default function SimulatorPage() {
   const [customers, setCustomers] = useState<SimCustomer[]>([]);
   const [activeId, setActiveId] = useState<string>("");
-  const active =
-    customers.find((c) => c.id === (activeId || customers[0]?.id)) || customers[0];
+  const active = customers.find((c) => c.id === (activeId || customers[0]?.id)) || customers[0];
 
   const [globalOpts, setGlobalOpts] = useState({
     seedPurchaseRule: true,
@@ -460,8 +473,7 @@ export default function SimulatorPage() {
       cases: casesForCustomer(c).filter((x) => x.enabled),
     }));
 
-    let totalUnits =
-      (globalOpts.seedPurchaseRule ? 1 : 0) + (globalOpts.seedIngestPolicy ? 1 : 0);
+    let totalUnits = (globalOpts.seedPurchaseRule ? 1 : 0) + (globalOpts.seedIngestPolicy ? 1 : 0);
     for (const p of plans) {
       totalUnits += 1; // customer-start
       if (p.c.doOnboard) totalUnits += 1;
@@ -493,7 +505,12 @@ export default function SimulatorPage() {
             isEnabled: true,
           }),
         );
-        const ok = t.ok || isConflictError((t as { e: unknown }).e) || errMsg((t as { e?: unknown }).e || "").toLowerCase().includes("exist");
+        const ok =
+          t.ok ||
+          isConflictError((t as { e: unknown }).e) ||
+          errMsg((t as { e?: unknown }).e || "")
+            .toLowerCase()
+            .includes("exist");
         push({
           kind: "bootstrap-rule",
           name: "seed digestion SIM_CC_TXN_DEFAULT (+ REDEEM/CARD_OPEN try)",
@@ -651,13 +668,23 @@ export default function SimulatorPage() {
           if (!firstBody) firstBody = body;
 
           const t = await timed(() => engine.webhookTxn(body));
-          const data = t.ok && t.v.data && typeof t.v.data === "object" ? (t.v.data as Record<string, unknown>) : undefined;
+          const data =
+            t.ok && t.v.data && typeof t.v.data === "object"
+              ? (t.v.data as Record<string, unknown>)
+              : undefined;
           const status = data && "status" in data ? String(data.status) : undefined;
           const rule = data && data.matchedRuleCode != null ? String(data.matchedRuleCode) : "";
           const pts = data && data.points != null ? String(data.points) : "";
-          const trace = Array.isArray(data?.eligibilityTrace) ? (data!.eligibilityTrace as { failStep?: string }[]) : [];
+          const trace = Array.isArray(data?.eligibilityTrace)
+            ? (data!.eligibilityTrace as { failStep?: string }[])
+            : [];
           const failStep = trace.find((x) => x.failStep)?.failStep;
-          const detailOk = [status, rule && `rule=${rule}`, pts && `pts=${pts}`, failStep && `fail=${failStep}`]
+          const detailOk = [
+            status,
+            rule && `rule=${rule}`,
+            pts && `pts=${pts}`,
+            failStep && `fail=${failStep}`,
+          ]
             .filter(Boolean)
             .join(" · ");
           push({
@@ -797,7 +824,13 @@ export default function SimulatorPage() {
   }, [customers, globalOpts]);
 
   const filtered = log.filter((l) => {
-    if (logCustomer !== "all" && l.ownerId && l.ownerId !== logCustomer && l.kind !== "bootstrap-rule" && l.kind !== "bootstrap-policy") {
+    if (
+      logCustomer !== "all" &&
+      l.ownerId &&
+      l.ownerId !== logCustomer &&
+      l.kind !== "bootstrap-rule" &&
+      l.kind !== "bootstrap-policy"
+    ) {
       if (l.customerId !== logCustomer && l.ownerId !== logCustomer) return false;
     }
     if (filter === "ok") return l.ok;
@@ -996,7 +1029,10 @@ export default function SimulatorPage() {
         <div className="space-y-4 xl:col-span-5">
           {active ? (
             <>
-              <Card title={`${active.label} — identity`} description="Upstream member for this matrix">
+              <Card
+                title={`${active.label} — identity`}
+                description="Upstream member for this matrix"
+              >
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className="field">
                     <span className="field-label">label</span>
@@ -1077,30 +1113,30 @@ export default function SimulatorPage() {
                     </select>
                   </label>
                   <label className="field">
-                                      <span className="field-label">vanityCode</span>
-                                      <input
-                                        className="field-input font-mono text-xs"
-                                        value={active.vanityCode}
-                                        onChange={(e) => updateActive({ vanityCode: e.target.value })}
-                                      />
-                                    </label>
-                                    <label className="field">
-                                      <span className="field-label">coaProfileCode</span>
-                                      <input
-                                        className="field-input font-mono text-xs"
-                                        placeholder="blank = CoaCodes 10-20-00"
-                                        value={active.coaProfileCode}
-                                        onChange={(e) => updateActive({ coaProfileCode: e.target.value })}
-                                      />
-                                    </label>
-                                    <label className="flex items-center gap-2 text-xs">
-                                      <input
-                                        type="checkbox"
-                                        checked={active.extraLp}
-                                        onChange={(e) => updateActive({ extraLp: e.target.checked })}
-                                      />
-                                      Open LP book on onboard
-                                    </label>
+                    <span className="field-label">vanityCode</span>
+                    <input
+                      className="field-input font-mono text-xs"
+                      value={active.vanityCode}
+                      onChange={(e) => updateActive({ vanityCode: e.target.value })}
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">coaProfileCode</span>
+                    <input
+                      className="field-input font-mono text-xs"
+                      placeholder="blank = CoaCodes 10-20-00"
+                      value={active.coaProfileCode}
+                      onChange={(e) => updateActive({ coaProfileCode: e.target.value })}
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={active.extraLp}
+                      onChange={(e) => updateActive({ extraLp: e.target.checked })}
+                    />
+                    Open LP book on onboard
+                  </label>
                 </div>
               </Card>
 
@@ -1407,9 +1443,7 @@ export default function SimulatorPage() {
                 <input
                   type="checkbox"
                   checked={globalOpts.stopOnError}
-                  onChange={(e) =>
-                    setGlobalOpts((o) => ({ ...o, stopOnError: e.target.checked }))
-                  }
+                  onChange={(e) => setGlobalOpts((o) => ({ ...o, stopOnError: e.target.checked }))}
                 />
                 Stop on first error
               </label>
@@ -1623,7 +1657,11 @@ function DimGroup({
           {title}
         </div>
         {onAdd ? (
-          <button type="button" className="text-[11px] font-medium text-emerald-700" onClick={onAdd}>
+          <button
+            type="button"
+            className="text-[11px] font-medium text-emerald-700"
+            onClick={onAdd}
+          >
             + add
           </button>
         ) : null}

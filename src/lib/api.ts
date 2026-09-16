@@ -207,19 +207,14 @@ export async function api<T = unknown>(
 
 export const ledger = {
   get: <T = unknown>(path: string) => api<T>(path),
-  post: <T = unknown>(path: string, json?: unknown) =>
-    api<T>(path, { method: "POST", json }),
-  put: <T = unknown>(path: string, json?: unknown) =>
-    api<T>(path, { method: "PUT", json }),
-  patch: <T = unknown>(path: string, json?: unknown) =>
-    api<T>(path, { method: "PATCH", json }),
+  post: <T = unknown>(path: string, json?: unknown) => api<T>(path, { method: "POST", json }),
+  put: <T = unknown>(path: string, json?: unknown) => api<T>(path, { method: "PUT", json }),
+  patch: <T = unknown>(path: string, json?: unknown) => api<T>(path, { method: "PATCH", json }),
   delete: <T = unknown>(path: string) => api<T>(path, { method: "DELETE" }),
 };
 
 /** Build query string; skips null/undefined/''. */
-export function qs(
-  params: Record<string, string | number | boolean | undefined | null>,
-): string {
+export function qs(params: Record<string, string | number | boolean | undefined | null>): string {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null || v === "") continue;

@@ -1,227 +1,206 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Wallet,
-  ArrowLeftRight,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Settings2,
-  Webhook,
-  CreditCard,
-  Brain,
-  DoorOpen,
   AlertTriangle,
-  Search,
-  Lock,
-  ListTree,
-  FlaskConical,
-  Workflow,
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ArrowUpFromLine,
+  Brain,
+  CreditCard,
   Database,
-  Sparkles,
-  Building2,
-  Users,
-  Scale,
-  Library,
-  UserPlus,
-  Medal,
+  DoorOpen,
+  FlaskConical,
   Layers,
+  ListTree,
+  Medal,
+  Scale,
+  Settings2,
+  Sparkles,
+  Workflow,
 } from "lucide-react";
 
+import type { AdminView } from "@/lib/view";
+
 /**
- * Sidebar follows the CC spend path:
- * Run (webhook) → Books (wallet) → Pipeline (Door / Brain / Accounting / Tier) → Chart.
- * Rails and lab tools sit last.
+ * Sidebar is filtered by view (Ops / Lab / Docs), not by pipeline stage.
+ * Configure entries carry their CC_TXN flow number (1 Door · 2 Brain ·
+ * 3 Accounting · 5 Tiering — 4 Ledger is not operator-configurable).
  */
 export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
   group: string;
+  view: AdminView;
+  /** CC_TXN flow step shown as a number badge in the sidebar. */
+  step?: number;
+  /** Rendered greyed-out and non-clickable (flow steps with no config surface yet). */
+  disabled?: boolean;
   blurb?: string;
 };
 
 export const NAV: NavItem[] = [
   {
     href: "/",
-    label: "Home",
+    label: "Overview",
     icon: Workflow,
-    group: "Home",
-    blurb: "CC_TXN path",
-  },
-  {
-    href: "/capability",
-    label: "Capability",
-    icon: Layers,
-    group: "Home",
-    blurb: "Reward System row",
-  },
-
-  {
-    href: "/transactions-ingest",
-    label: "Webhook",
-    icon: Webhook,
-    group: "Run",
-    blurb: "one CC_TXN",
-  },
-  {
-    href: "/simulator",
-    label: "Simulator",
-    icon: FlaskConical,
-    group: "Run",
-    blurb: "event matrix",
+    group: "Overview",
+    view: "ops",
+    blurb: "engine health",
   },
   {
     href: "/failed-transactions",
     label: "Fail queue",
     icon: AlertTriangle,
-    group: "Run",
+    group: "Operate",
+    view: "ops",
     blurb: "review / replay",
   },
-
   {
-    href: "/wallets-list",
-    label: "Wallets",
-    icon: Wallet,
-    group: "Books",
-    blurb: "LP · tier · refund",
-  },
-  {
-    href: "/wallets",
-    label: "Onboard",
-    icon: UserPlus,
-    group: "Books",
-  },
-  {
-    href: "/ledger-entries",
-    label: "Double-entry",
-    icon: ListTree,
-    group: "Books",
-    blurb: "DE legs",
-  },
-
-  {
-    href: "/ingest-policies",
+    href: "/rules/door",
     label: "Door",
     icon: DoorOpen,
-    group: "Pipeline",
-    blurb: "admit",
+    group: "Configure",
+    view: "ops",
+    step: 1,
+    blurb: "admit gate",
   },
   {
-    href: "/digestion-rules",
+    href: "/rules/brain",
     label: "Brain",
     icon: Brain,
-    group: "Pipeline",
+    group: "Configure",
+    view: "ops",
+    step: 2,
     blurb: "score LP",
   },
   {
-    href: "/accounting-rules",
+    href: "/rules/accounting",
     label: "Accounting",
     icon: Scale,
-    group: "Pipeline",
+    group: "Configure",
+    view: "ops",
+    step: 3,
     blurb: "CR/DR walk",
   },
   {
-    href: "/wallet-tier-policies",
+    href: "/ledger",
+    label: "Ledger",
+    icon: ListTree,
+    group: "Configure",
+    view: "ops",
+    step: 4,
+    disabled: true,
+    blurb: "books — see Wallets",
+  },
+  {
+    href: "/rules/tier",
     label: "Tiering",
     icon: Medal,
-    group: "Pipeline",
+    group: "Configure",
+    view: "ops",
+    step: 5,
     blurb: "LP total → tier",
   },
 
   {
-    href: "/corporate-coa",
-    label: "House COA",
-    icon: Building2,
-    group: "Chart",
-    blurb: "01-02 / 01-04",
+    href: "/simulator",
+    label: "Simulator",
+    icon: FlaskConical,
+    group: "Lab",
+    view: "lab",
+    blurb: "event matrix",
   },
   {
-    href: "/coa",
-    label: "Customer COA",
-    icon: Users,
-    group: "Chart",
-    blurb: "01-01-01 HKD / LP",
+    href: "/demo",
+    label: "Demo",
+    icon: Sparkles,
+    group: "Lab",
+    view: "lab",
   },
   {
-    href: "/coa-dictionary",
-    label: "Dictionary",
-    icon: Library,
-    group: "Chart",
-    blurb: "what 01-02 means",
+    href: "/configurations",
+    label: "Config",
+    icon: Settings2,
+    group: "Lab",
+    view: "lab",
+  },
+  {
+    href: "/records",
+    label: "DB records",
+    icon: Database,
+    group: "Investigate",
+    view: "ops",
+    blurb: "raw rows · read-only",
   },
 
-  {
-    href: "/holds",
-    label: "Hold",
-    icon: Lock,
-    group: "Rails",
-  },
   {
     href: "/deposits",
     label: "Deposit",
     icon: ArrowDownToLine,
     group: "Rails",
+    view: "lab",
   },
   {
     href: "/withdrawals",
     label: "Withdraw",
     icon: ArrowUpFromLine,
     group: "Rails",
+    view: "lab",
   },
   {
     href: "/transfers",
     label: "Transfer",
     icon: ArrowLeftRight,
     group: "Rails",
+    view: "lab",
   },
 
-  {
-    href: "/demo",
-    label: "Demo",
-    icon: Sparkles,
-    group: "More",
-  },
   {
     href: "/use-cases",
     label: "Use cases",
     icon: CreditCard,
-    group: "More",
+    group: "Docs",
+    view: "docs",
   },
   {
-    href: "/review",
-    label: "Lookup",
-    icon: Search,
-    group: "More",
-    blurb: "one ownerId",
-  },
-  {
-    href: "/movements",
-    label: "Movements",
-    icon: ArrowLeftRight,
-    group: "More",
-    blurb: "by walletId",
-  },
-  {
-    href: "/records",
-    label: "DB records",
-    icon: Database,
-    group: "More",
-  },
-  {
-    href: "/configurations",
-    label: "Config",
-    icon: Settings2,
-    group: "More",
+    href: "/capability",
+    label: "Capability",
+    icon: Layers,
+    group: "Docs",
+    view: "docs",
   },
 ];
 
-export function navGroups(): { name: string; items: NavItem[] }[] {
+const GROUP_ORDER: Record<AdminView, string[]> = {
+  ops: ["Overview", "Operate", "Configure", "Investigate"],
+  lab: ["Lab", "Rails"],
+  docs: ["Docs"],
+};
+
+export function navGroups(view: AdminView): { name: string; items: NavItem[] }[] {
   const map = new Map<string, NavItem[]>();
   for (const item of NAV) {
+    if (item.view !== view) continue;
     if (!map.has(item.group)) map.set(item.group, []);
     map.get(item.group)!.push(item);
   }
-  const order = ["Home", "Run", "Books", "Pipeline", "Chart", "Rails", "More"];
-  return order
-    .filter((n) => map.has(n))
+  return GROUP_ORDER[view]
+    .filter((name) => map.has(name))
     .map((name) => ({ name, items: map.get(name)! }));
+}
+
+export function routesForView(view: AdminView): string[] {
+  return NAV.filter((item) => item.view === view).map((item) => item.href);
+}
+
+/** Which view owns this path, or null for unlisted (legacy) routes. */
+export function viewForPath(pathname: string): AdminView | null {
+  for (const item of NAV) {
+    const hit =
+      item.href === "/"
+        ? pathname === "/"
+        : pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (hit) return item.view;
+  }
+  return null;
 }

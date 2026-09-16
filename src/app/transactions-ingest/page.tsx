@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Card, JsonBlock, Badge } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
+
 import { engine } from "@/lib/engine";
-import { errMsg, nowIso, randomEventId, randomOwnerId, randomMainAccount } from "@/lib/format";
 import { formatMatchedPath } from "@/lib/factors";
+import { errMsg, nowIso, randomEventId, randomMainAccount, randomOwnerId } from "@/lib/format";
 import { EVENT_TYPES, INGEST_ACTIONS, WEBHOOK_EVENT_PRESETS } from "@/lib/recipes";
-import { PageShell } from "@/components/layout/page-shell";
-import { RefundHow } from "@/components/books/refund-how";
-import { CcTxnPath } from "@/components/books/cc-txn-path";
 import type { EligibilityTraceEntry, IngestResult } from "@/lib/types";
+import { CcTxnPath } from "@/components/books/cc-txn-path";
+import { RefundHow } from "@/components/books/refund-how";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Badge, Card, JsonBlock } from "@/components/ui/kit";
 
 const DEMO_OWNER = "01A81267065";
 
@@ -74,9 +75,7 @@ export default function WebhookPage() {
       metadata: {
         source: "uaf-sdk",
         ...(mcc.trim() ? { mcc: mcc.trim() } : {}),
-        ...(coaProfileCode.trim()
-          ? { coaProfileCode: coaProfileCode.trim().toUpperCase() }
-          : {}),
+        ...(coaProfileCode.trim() ? { coaProfileCode: coaProfileCode.trim().toUpperCase() } : {}),
         ...extraMeta,
       },
     };
@@ -112,17 +111,12 @@ export default function WebhookPage() {
     const metaEntries = Object.entries(meta)
       .map(([k, v]) => `            "${k}", "${v}"`)
       .join(",\n");
-    const mainLine = mainAccount.trim()
-      ? `\n    .mainAccount("${mainAccount.trim()}")`
-      : "";
-    const actionLine = payload.action
-      ? `\n    .action("${payload.action}")`
-      : "";
+    const mainLine = mainAccount.trim() ? `\n    .mainAccount("${mainAccount.trim()}")` : "";
+    const actionLine = payload.action ? `\n    .action("${payload.action}")` : "";
     const origLine = originalEventId.trim()
       ? `\n    .originalEventId("${originalEventId.trim()}")`
       : "";
-    const applyLine =
-      applyTo && applyTo !== "BOTH" ? `\n    .applyTo("${applyTo}")` : "";
+    const applyLine = applyTo && applyTo !== "BOTH" ? `\n    .applyTo("${applyTo}")` : "";
     return `TransactionalEvent event = TransactionalEvent.builder()
     .eventId("${eventId.trim()}")
     .ownerId("${ownerId.trim()}")${mainLine}${actionLine}${origLine}${applyLine}
@@ -135,7 +129,18 @@ ${metaEntries}
     ))
     .build();
 client.events().submit(event);`;
-  }, [payload, eventId, ownerId, mainAccount, originalEventId, applyTo, eventType, amount, currency, occurredAt]);
+  }, [
+    payload,
+    eventId,
+    ownerId,
+    mainAccount,
+    originalEventId,
+    applyTo,
+    eventType,
+    amount,
+    currency,
+    occurredAt,
+  ]);
 
   const applyPreset = (kind: "cc_txn" | "cc_cip" | "ln_txn" | "burn") => {
     setEventId(randomEventId());
@@ -172,9 +177,7 @@ client.events().submit(event);`;
     setLoading(true);
     setError(null);
     try {
-      const r = dry
-        ? await engine.webhookTxnDryRun(payload)
-        : await engine.webhookTxn(payload);
+      const r = dry ? await engine.webhookTxnDryRun(payload) : await engine.webhookTxn(payload);
       setResult(r.data as IngestResult);
     } catch (e) {
       setError(errMsg(e));
@@ -219,11 +222,7 @@ client.events().submit(event);`;
         >
           Preset · LN_TXN loan
         </button>
-        <button
-          type="button"
-          className="btn-secondary text-xs"
-          onClick={() => applyPreset("burn")}
-        >
+        <button type="button" className="btn-secondary text-xs" onClick={() => applyPreset("burn")}>
           Preset · REDEEM burn
         </button>
         {WEBHOOK_EVENT_PRESETS.map((p) => (
@@ -464,9 +463,7 @@ client.events().submit(event);`;
                 <dt className="text-slate-500">matchedRule</dt>
                 <dd className="font-mono text-xs">{result.matchedRuleCode || "—"}</dd>
                 <dt className="text-slate-500">points</dt>
-                <dd className="text-lg font-bold text-emerald-700">
-                  {result.points ?? "—"}
-                </dd>
+                <dd className="text-lg font-bold text-emerald-700">{result.points ?? "—"}</dd>
                 <dt className="text-slate-500">reason</dt>
                 <dd className="text-xs">{result.reason || "—"}</dd>
                 <dt className="text-slate-500">COA</dt>
@@ -476,7 +473,9 @@ client.events().submit(event);`;
                     : "—"}
                 </dd>
                 <dt className="text-slate-500">account</dt>
-                <dd className="font-mono text-[11px]">{result.coa?.fullNumber || result.coa?.accountId || "—"}</dd>
+                <dd className="font-mono text-[11px]">
+                  {result.coa?.fullNumber || result.coa?.accountId || "—"}
+                </dd>
               </dl>
             ) : (
               <p className="text-sm text-slate-500">—</p>

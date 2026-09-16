@@ -1,12 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Card, Badge, Alert, Spinner, Empty } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { engine } from "@/lib/engine";
-import { errMsg, clsx } from "@/lib/format";
+import { clsx, errMsg } from "@/lib/format";
 import { HOUSE_MAIN_ACCOUNT } from "@/lib/recipes";
 import type {
   AccountingRule,
@@ -14,6 +12,9 @@ import type {
   DigestionRule,
   UseCaseCatalogItem,
 } from "@/lib/types";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Alert, Badge, Card, Empty, Spinner } from "@/components/ui/kit";
 
 type CoaRow = {
   code?: string;
@@ -99,7 +100,9 @@ const USE_CASES: UseCaseDef[] = [
   },
 ];
 
-function parseMeta(metadata: AccountingRuleExecution["metadata"]): Array<{ id: string; seq: number }> {
+function parseMeta(
+  metadata: AccountingRuleExecution["metadata"],
+): Array<{ id: string; seq: number }> {
   if (!metadata) return [];
   let obj: unknown = metadata;
   if (typeof metadata === "string") {
@@ -130,14 +133,15 @@ function coaPath(coa: CoaRow | undefined, house: boolean, fallback: string): str
   return `${entity}-${type}-${sub}-${main}-${ccy}`;
 }
 
-function pickExecution(def: UseCaseDef, executions: AccountingRuleExecution[]): AccountingRuleExecution | null {
+function pickExecution(
+  def: UseCaseDef,
+  executions: AccountingRuleExecution[],
+): AccountingRuleExecution | null {
   const byEvent = executions.find((ex) =>
     def.bindKeys.includes((ex.eventType || "").trim().toUpperCase()),
   );
   if (byEvent) return byEvent;
-  return (
-    executions.find((ex) => def.names.includes((ex.name || "").trim().toUpperCase())) ?? null
-  );
+  return executions.find((ex) => def.names.includes((ex.name || "").trim().toUpperCase())) ?? null;
 }
 
 function booksFromExecution(
@@ -161,7 +165,11 @@ function booksFromExecution(
     if (!cell) {
       cell = {
         code,
-        title: coa?.name || (house ? `Operating (${coa?.currency || code})` : `Customer reward (${coa?.currency || code})`),
+        title:
+          coa?.name ||
+          (house
+            ? `Operating (${coa?.currency || code})`
+            : `Customer reward (${coa?.currency || code})`),
         path: coaPath(coa, house, code),
         house,
       };
@@ -183,7 +191,9 @@ function TAccount({ book }: { book: BookCell }) {
         <div className="text-xs font-semibold text-slate-800">{book.title}</div>
         <div className="mt-0.5 font-mono text-[10px] text-slate-500">{book.path}</div>
         <div className="mt-1">
-          <Badge tone={book.house ? "info" : "ok"}>{book.house ? "house wallet" : "customer wallet · runtime"}</Badge>
+          <Badge tone={book.house ? "info" : "ok"}>
+            {book.house ? "house wallet" : "customer wallet · runtime"}
+          </Badge>
         </div>
       </div>
       <div className="grid grid-cols-2 divide-x divide-slate-200">
@@ -304,11 +314,11 @@ export default function UseCasesPage() {
         </ActionBar>
       }
     >
-
       <Alert tone="info">
-        Upstream sends <code className="text-xs">eventType=CC_TXN</code>. Reward is not a suffix on that
-        code — Brain <code className="text-xs">resultCurrency</code> HKD = cashback books, LP = loyalty
-        books. Same-currency double-entry: DR operating / CR customer, both in the reward ccy.
+        Upstream sends <code className="text-xs">eventType=CC_TXN</code>. Reward is not a suffix on
+        that code — Brain <code className="text-xs">resultCurrency</code> HKD = cashback books, LP =
+        loyalty books. Same-currency double-entry: DR operating / CR customer, both in the reward
+        ccy.
       </Alert>
 
       {loading && executions.length === 0 ? <Spinner label="Loading use cases…" /> : null}
@@ -360,7 +370,8 @@ export default function UseCasesPage() {
             <p className="mt-3 text-[11px] text-slate-500">
               Member <code className="text-[10px]">01-01-01</code> resolves at ingest (
               <code className="text-[10px]">xxxxxxxx</code> = event.mainAccount). House operating{" "}
-              <code className="text-[10px]">01-02-01</code> uses company wallet {HOUSE_MAIN_ACCOUNT}.
+              <code className="text-[10px]">01-02-01</code> uses company wallet {HOUSE_MAIN_ACCOUNT}
+              .
               {ex?.name ? (
                 <>
                   {" "}
@@ -386,7 +397,7 @@ export default function UseCasesPage() {
                 <p className="text-xs text-slate-500">
                   No digestion rule with eventType {def.eventType} and resultCurrency{" "}
                   {def.resultCurrency}.{" "}
-                  <Link href="/digestion-rules" className="text-emerald-700 hover:underline">
+                  <Link href="/rules/brain" className="text-emerald-700 hover:underline">
                     Create one →
                   </Link>
                 </p>
@@ -405,10 +416,10 @@ export default function UseCasesPage() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/digestion-rules" className="btn-secondary text-xs">
+              <Link href="/rules/brain" className="btn-secondary text-xs">
                 Brain
               </Link>
-              <Link href="/accounting-rules" className="btn-secondary text-xs">
+              <Link href="/rules/accounting" className="btn-secondary text-xs">
                 Accounting legs
               </Link>
               <Link href="/transactions-ingest" className="btn-secondary text-xs">
@@ -450,7 +461,9 @@ export default function UseCasesPage() {
                       </Badge>
                     </td>
                     <td>
-                      <Badge tone={row.enabled ? "ok" : "neutral"}>{row.enabled ? "on" : "off"}</Badge>
+                      <Badge tone={row.enabled ? "ok" : "neutral"}>
+                        {row.enabled ? "on" : "off"}
+                      </Badge>
                     </td>
                   </tr>
                 ))}

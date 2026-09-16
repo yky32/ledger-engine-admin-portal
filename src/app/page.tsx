@@ -1,633 +1,273 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Card, Badge, Alert } from "@/components/ui/kit";
-import { PageShell } from "@/components/layout/page-shell";
-import { SanitySetup } from "@/components/books/sanity-setup";
-import { CapabilityTeaser } from "@/components/books/capability-statement";
-import { engine } from "@/lib/engine";
-import { errMsg, clsx } from "@/lib/format";
 import {
-  ArrowDown,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  DoorOpen,
-  Brain,
-  BookOpen,
-  ScrollText,
-  FlaskConical,
-  Webhook,
-  Search,
   AlertTriangle,
-  ListTree,
-  Wallet,
-  Scale,
-  CreditCard,
+  ArrowRight,
+  Brain,
+  DoorOpen,
   Medal,
+  RefreshCw,
+  Scale,
+  Wallet,
+  Webhook,
 } from "lucide-react";
+import Link from "next/link";
 
-/**
- * Home = interactive Door → Brain → Accounting → Ledger picture.
- */
-export default function HomePage() {
-  const [engineOk, setEngineOk] = useState<boolean | null>(null);
-  const [engineDetail, setEngineDetail] = useState("");
+import {
+  useEngineHealth,
+  type EngineHealthSample,
+  type EngineHealthState,
+} from "@/lib/engine-health";
+import { clsx } from "@/lib/format";
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const r = await engine.health();
-        if (!alive) return;
-        setEngineOk(true);
-        setEngineDetail(JSON.stringify(r.data).slice(0, 100));
-      } catch (e) {
-        if (!alive) return;
-        setEngineOk(false);
-        setEngineDetail(errMsg(e));
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
+const OPERATE_LINKS = [
+  {
+    href: "/failed-transactions",
+    icon: AlertTriangle,
+    title: "Fail queue",
+    desc: "Triage + replay failed ingests",
+  },
+  {
+    href: "/transactions-ingest",
+    icon: Webhook,
+    title: "Ingest",
+    desc: "Fire a test transaction",
+  },
+  {
+    href: "/wallets-list",
+    icon: Wallet,
+    title: "Wallets",
+    desc: "Books, movements, balances",
+  },
+] as const;
 
-  return (
-    <PageShell
-      title="Home"
-      description="CC_TXN → ingest → digest → books → check tier. Same eventType on Door, Brain, and accounting."
-      api={[{ method: "GET", path: "/actuator/health" }]}
-      actions={
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Link href="/transactions-ingest" className="btn-primary text-xs">
-            Then · Webhook CC_TXN
-          </Link>
-          <Link href="/accounting-rules" className="btn-secondary text-xs">
-            Accounting rules
-          </Link>
-          <Link href="/coa" className="btn-secondary text-xs">
-            COA chart
-          </Link>
-            {engineOk === null ? (
-              <Badge>engine…</Badge>
-            ) : engineOk ? (
-              <Badge tone="ok">
-                <CheckCircle2 className="mr-1 inline h-3 w-3" />
-                engine up
-              </Badge>
-            ) : (
-              <Badge tone="error">
-                <XCircle className="mr-1 inline h-3 w-3" />
-                engine down
-              </Badge>
-            )}
-          </div>
-        }
-      >
+const FLOW_LINKS = [
+  { href: "/rules/door", icon: DoorOpen, step: 1, title: "Door", desc: "Admit gate + auto-wallet" },
+  {
+    href: "/rules/brain",
+    icon: Brain,
+    step: 2,
+    title: "Brain",
+    desc: "Scoring rules + walk order",
+  },
+  {
+    href: "/rules/accounting",
+    icon: Scale,
+    step: 3,
+    title: "Accounting",
+    desc: "CR/DR legs + combos",
+  },
+  { href: "/rules/tier", icon: Medal, step: 5, title: "Tiering", desc: "Tier bands + enable" },
+] as const;
 
-      <CapabilityTeaser />
+const VIEW_LINKS = [
+  {
+    label: "Lab — demo & seed tooling",
+    links: [
+      { href: "/simulator", label: "Simulator" },
+      { href: "/demo", label: "Demo" },
+      { href: "/configurations", label: "Config" },
+      { href: "/records", label: "DB records" },
+      { href: "/deposits", label: "Deposits" },
+      { href: "/withdrawals", label: "Withdrawals" },
+      { href: "/transfers", label: "Transfers" },
+    ],
+  },
+  {
+    label: "Docs — handbook",
+    links: [
+      { href: "/use-cases", label: "Use cases" },
+      { href: "/capability", label: "Capability" },
+    ],
+  },
+] as const;
 
-      <SanitySetup />
+const HERO_TONES: Record<EngineHealthState, { box: string; dot: string; label: string }> = {
+  up: { box: "border-emerald-200 bg-emerald-50/70", dot: "bg-emerald-500", label: "Engine online" },
+  down: { box: "border-rose-200 bg-rose-50/70", dot: "bg-rose-500", label: "Engine offline" },
+  checking: {
+    box: "border-slate-200 bg-white",
+    dot: "bg-slate-400 animate-pulse",
+    label: "Checking engine…",
+  },
+};
 
-      <Card className="mb-6" title="Mapping — one eventType">
-        <p className="mb-3 text-xs text-slate-500">
-          Example: <code className="font-mono">01AXXXX</code> credit-card spend · webhook{" "}
-          <code className="font-mono">eventType=CC_TXN</code> · amount 100 HKD.
-        </p>
-        <div className="overflow-x-auto">
-          <table className="data-table text-xs">
-            <thead>
-              <tr>
-                <th>Step</th>
-                <th>Layer</th>
-                <th>What eventType does</th>
-                <th>What else maps</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="font-mono text-slate-400">0</td>
-                <td>Webhook</td>
-                <td>
-                  Payload field <code>eventType</code>
-                </td>
-                <td>
-                  <code>ownerId</code> · amount · currency · MCC · age
-                </td>
-              </tr>
-              <tr>
-                <td className="font-mono text-slate-400">1</td>
-                <td>
-                  <Link href="/ingest-policies" className="text-emerald-700 hover:underline">
-                    Door
-                  </Link>
-                </td>
-                <td>Optional AND gate (or any)</td>
-                <td>MCC · ccy · amount · age → entered / NOT_ENTERED</td>
-              </tr>
-              <tr>
-                <td className="font-mono text-slate-400">2</td>
-                <td>
-                  <Link href="/digestion-rules" className="text-emerald-700 hover:underline">
-                    Brain
-                  </Link>
-                </td>
-                <td>Required match. First bingo by priority</td>
-                <td>Same four gates + formula → points (e.g. 1 LP)</td>
-              </tr>
-              <tr>
-                <td className="font-mono text-slate-400">3</td>
-                <td>
-                  <Link href="/accounting-rules" className="text-emerald-700 hover:underline">
-                    Accounting
-                  </Link>
-                </td>
-                <td>Bind one combination to this eventType</td>
-                <td>
-                  Walk CR/DR · <code>targetAccount</code> = COA code
-                </td>
-              </tr>
-              <tr>
-                <td className="font-mono text-slate-400">4</td>
-                <td>
-                  <Link href="/coa" className="text-emerald-700 hover:underline">
-                    COA
-                  </Link>{" "}
-                  (chart)
-                </td>
-                <td>Not an event key</td>
-                <td>
-                  Member <code>01-01-01</code> LP on this wallet · house <code>01-02-01</code> LP
-                </td>
-              </tr>
-              <tr>
-                <td className="font-mono text-slate-400">5</td>
-                <td>
-                  <Link href="/wallet-tier-policies" className="text-emerald-700 hover:underline">
-                    Tier
-                  </Link>
-                </td>
-                <td>
-                  After settle, same TX — if policy <code>isEnabled</code>
-                </td>
-                <td>
-                  Sum this wallet’s LP <code>ledgerBalance</code> → write{" "}
-                  <code>wallet.tier</code>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px] text-slate-600">
-          <span className="rounded-md bg-slate-100 px-2 py-1">CC_TXN</span>
-          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="rounded-md bg-sky-50 px-2 py-1 text-sky-800">Door admit</span>
-          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="rounded-md bg-violet-50 px-2 py-1 text-violet-800">Brain score LP</span>
-          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">DR operating LP</span>
-          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">CR 01AXXXX 01-01-01 LP</span>
-          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-800">check wallet.tier</span>
-        </div>
-      </Card>
-
-      {!engineOk && engineOk !== null ? (
-        <div className="mb-4">
-          <Alert tone="warn">
-            Engine unreachable ({engineDetail}). Start{" "}
-            <code className="text-xs">mvn spring-boot:run</code> · check{" "}
-            <code className="text-xs">LEDGER_ENGINE_URL</code>.
-          </Alert>
-        </div>
-      ) : null}
-
-      {/* ── Flow canvas ── */}
-      <div className="mb-8 space-y-3">
-        {/* Ops config on top */}
-        <div className="flex justify-center">
-          <FlowBox
-            tone="ops"
-            title="Ops configures once"
-            subtitle="runtime DB · no restart"
-            href="/ingest-policies"
-          >
-            <ul className="mt-2 space-y-1.5 text-sm">
-              <li>
-                <Link className="flow-link" href="/corporate-coa">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  House · corporate COA <span className="text-slate-400">(company books first)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/ingest-policies">
-                  <DoorOpen className="h-3.5 w-3.5" />
-                  Ingest policy <span className="text-slate-400">(door)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/digestion-rules">
-                  <Brain className="h-3.5 w-3.5" />
-                  Brain · digestion rules
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/coa">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  Customer COA <span className="text-slate-400">(01-01-01 chart)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/use-cases">
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Use cases <span className="text-slate-400">(CC txn → HKD / LP)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/accounting-rules">
-                  <Scale className="h-3.5 w-3.5" />
-                  Accounting rules <span className="text-slate-400">(CR/DR sequence)</span>
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/wallets">
-                  <Wallet className="h-3.5 w-3.5" />
-                  Wallet onboard (optional CRM)
-                </Link>
-              </li>
-              <li>
-                <Link className="flow-link" href="/wallet-tier-policies">
-                  <Medal className="h-3.5 w-3.5" />
-                  Tiering <span className="text-slate-400">(LP total → wallet.tier)</span>
-                </Link>
-              </li>
-            </ul>
-          </FlowBox>
-        </div>
-
-        <div className="flex justify-center text-slate-400">
-          <div className="flex flex-col items-center text-[11px]">
-            <ArrowDown className="h-4 w-4" />
-            runtime DB
-          </div>
-        </div>
-
-        {/* Middle row: upstream → engine */}
-        <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,0.9fr)_auto_minmax(0,1.4fr)]">
-          <FlowBox
-            tone="shoot"
-            title="Upstream POS / OMS"
-            subtitle="you are the upstream"
-            href="/simulator"
-          >
-            <p className="mt-2 text-xs text-slate-500">
-              Sends commerce / loyalty <strong>event JSON</strong> over webhook.
-            </p>
-            <div className="mt-3 flex flex-col gap-2">
-              <Link href="/simulator" className="btn-primary w-full justify-center text-xs">
-                <FlaskConical className="h-3.5 w-3.5" />
-                Simulator
-              </Link>
-              <Link href="/transactions-ingest" className="btn-secondary w-full justify-center text-xs">
-                <Webhook className="h-3.5 w-3.5" />
-                Single webhook fire
-              </Link>
-            </div>
-          </FlowBox>
-
-          <div className="hidden flex-col items-center justify-center gap-1 text-[11px] text-slate-400 lg:flex">
-            <span>webhook</span>
-            <ArrowRight className="h-5 w-5 text-emerald-500" />
-            <span>event JSON</span>
-          </div>
-          <div className="flex justify-center text-slate-400 lg:hidden">
-            <div className="flex flex-col items-center text-[11px]">
-              <ArrowDown className="h-4 w-4 text-emerald-500" />
-              webhook event JSON
-            </div>
-          </div>
-
-          <FlowBox
-            tone="engine"
-            title="LedgeRX"
-            subtitle="Door → Brain → books → tier"
-            href="/review"
-            wide
-          >
-            <ol className="mt-3 space-y-2">
-              <EngineStep
-                n="1"
-                icon={DoorOpen}
-                title="Door — eventType + MCC/ccy/amount/age → entered?"
-                href="/ingest-policies"
-                note="Ingest policy"
-              />
-              <EngineStep
-                n="2"
-                icon={Brain}
-                title="Brain — same eventType, first bingo, score points"
-                href="/digestion-rules"
-                note="Digestion rules"
-              />
-              <EngineStep
-                n="3"
-                icon={Scale}
-                title="Accounting — bound combo walks CR/DR onto COA"
-                href="/accounting-rules"
-                note="Dynamic account id from wallet + chart"
-              />
-              <EngineStep
-                n="4"
-                icon={ScrollText}
-                title="Books — legs + LP on this wallet"
-                href="/ledger-entries"
-                note="Query / review"
-              />
-              <EngineStep
-                n="5"
-                icon={Medal}
-                title="Tier — sum this wallet’s LP, write wallet.tier"
-                href="/wallet-tier-policies"
-                note="Off until Enabled + Save"
-              />
-            </ol>
-          </FlowBox>
-        </div>
-
-        <div className="flex justify-center text-slate-400">
-          <ArrowDown className="h-4 w-4" />
-        </div>
-
-        {/* Outcomes */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <OutcomeCard
-            title="Customer LP balance ↑/↓"
-            desc="Wallet books after earn/burn. Hold locks available only."
-            href="/review"
-            icon={Search}
-            cta="Customer review"
-          />
-          <OutcomeCard
-            title="House operating ↔ member books"
-            desc="Same-currency DE: DR 01-02-01 LP · CR 01-01-01 LP."
-            href="/ledger-entries"
-            icon={ListTree}
-            cta="View DE legs"
-          />
-          <OutcomeCard
-            title="wallet.tier"
-            desc="After books, LP total vs bands. Off until policy Enabled."
-            href="/wallets-list"
-            icon={Medal}
-            cta="Wallets · tier column"
-          />
-          <OutcomeCard
-            title="Fail queue (ops replay)"
-            desc="Ingest failures stored for review / replay — no silent drop."
-            href="/failed-transactions"
-            icon={AlertTriangle}
-            cta="Fail desk"
-            warn
-          />
-        </div>
-      </div>
-
-      {/* Two concepts */}
-      <h2 className="mb-3 text-sm font-semibold text-slate-800">
-        Two configuration concepts (important)
-      </h2>
-      <div className="mb-8 grid gap-3 md:grid-cols-2">
-        <Card title="Ingest policy = Door">
-          <p className="text-sm text-slate-600">
-            Business question: <em>“Do we accept webhooks at all? Create wallet if missing?”</em>
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
-            <li>~1 global policy</li>
-            <li>Kill-switch + auto-wallet settlement/LP</li>
-            <li>API <code>GET/PUT /ingest-policies</code></li>
-          </ul>
-          <Link href="/ingest-policies" className="btn-secondary mt-3 text-xs">
-            Open door config
-          </Link>
-        </Card>
-        <Card title="Brain = digestion · COA = chart · accounting = legs">
-          <p className="text-sm text-slate-600">
-            Brain scores how many points. COA is the account structure. Accounting rules walk CR/DR onto those books.
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
-            <li>One webhook <code>eventType</code> (CC_TXN / CC_CIP / CC_SIP / LN_TXN) on Door, Brain, and accounting</li>
-            <li>COA is the chart only (01-01-01 member · 01-02-01 operating)</li>
-            <li>Accounting bind that same eventType → CR/DR walk</li>
-          </ul>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link href="/use-cases" className="btn-secondary text-xs">
-              Use cases
-            </Link>
-            <Link href="/digestion-rules" className="btn-secondary text-xs">
-              Digestion rules
-            </Link>
-            <Link href="/coa" className="btn-secondary text-xs">
-              COA
-            </Link>
-            <Link href="/accounting-rules" className="btn-secondary text-xs">
-              Accounting rules
-            </Link>
-          </div>
-        </Card>
-      </div>
-
-      {/* Recommended path */}
-      <Card title="Recommended understand path" description="Same order as the diagram">
-        <ol className="space-y-3">
-          {[
-            {
-              n: "1",
-              t: "Rules",
-              d: "Door gates · Brain eventType rule · Accounting CR/DR walk. Same eventType on all three.",
-              href: "/ingest-policies",
-              cta: "Door",
-            },
-            {
-              n: "2",
-              t: "Ingest",
-              d: "Act as POS/OMS — multi-dimension event matrix into webhook.",
-              href: "/simulator",
-              cta: "Simulator",
-            },
-            {
-              n: "3",
-              t: "Ledger",
-              d: "Wallet books, movements, fail queue — status EARNED / SKIPPED.",
-              href: "/review",
-              cta: "Wallet books",
-            },
-            {
-              n: "4",
-              t: "Double-entry",
-              d: "Legs by eventId — house operating vs this customer's 01-01-01.",
-              href: "/ledger-entries",
-              cta: "Double-entry",
-            },
-            {
-              n: "5",
-              t: "Tier",
-              d: "Enable policy, fire CC_TXN, confirm wallet.tier. Refund re-checks the same LP total.",
-              href: "/wallet-tier-policies",
-              cta: "Tiering",
-            },
-          ].map((s) => (
-            <li
-              key={s.n}
-              className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-3"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
-                {s.n}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="font-medium text-slate-900">{s.t}</div>
-                <p className="text-xs text-slate-500">{s.d}</p>
-              </div>
-              <Link href={s.href} className="btn-primary text-xs">
-                {s.cta}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </li>
-          ))}
-        </ol>
-      </Card>
-
-      <p className="mt-6 text-center text-[11px] text-slate-400">
-        Source of truth: <code>ledger-engine/docs/BOOKLET.md</code>
-        {engineDetail ? ` · health ${engineDetail.slice(0, 40)}…` : null}
-      </p>
-    </PageShell>
-  );
+function fmtClock(at: number): string {
+  return new Date(at).toLocaleTimeString("en-GB", { hour12: false });
 }
 
-function FlowBox({
-  title,
-  subtitle,
-  children,
-  tone,
-  href,
-  wide,
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  tone: "ops" | "shoot" | "engine";
-  href?: string;
-  wide?: boolean;
-}) {
-  const ring = {
-    ops: "border-violet-200 bg-violet-50/40",
-    shoot: "border-sky-200 bg-sky-50/40",
-    engine: "border-emerald-200 bg-emerald-50/30",
-  }[tone];
-  const head = {
-    ops: "text-violet-900",
-    shoot: "text-sky-900",
-    engine: "text-emerald-950",
-  }[tone];
-
+/** Last-10 health checks: bar height = probe latency, full rose bar = failed. */
+function HealthChart({ history }: { history: EngineHealthSample[] }) {
+  const maxMs = Math.max(100, ...history.map((h) => h.ms));
+  const okCount = history.filter((h) => h.state === "up").length;
+  const downCount = history.length - okCount;
   return (
-    <div
-      className={clsx(
-        "rounded-2xl border-2 p-4 shadow-sm",
-        ring,
-        wide && "min-h-full",
-      )}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h3 className={clsx("text-sm font-semibold tracking-tight", head)}>{title}</h3>
-          {subtitle ? (
-            <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              {subtitle}
-            </p>
-          ) : null}
-        </div>
-        {href ? (
-          <Link href={href} className="text-[11px] text-emerald-700 hover:underline">
-            open
-          </Link>
+    <div className="mt-5">
+      <div className="flex h-14 items-end gap-[2px] border-b border-slate-200">
+        {history.length === 0 ? (
+          <span className="text-xs text-slate-400">waiting for the first check…</span>
+        ) : (
+          history.map((h) => {
+            const down = h.state === "down";
+            const pct = down ? 100 : Math.max(10, Math.round((h.ms / maxMs) * 100));
+            return (
+              <div
+                key={h.at}
+                className="group relative flex h-full min-w-0 flex-1 items-end justify-center"
+              >
+                <div
+                  className={clsx("w-3 rounded-t-[2px]", down ? "bg-rose-700" : "bg-emerald-600")}
+                  style={{ height: `${pct}%` }}
+                />
+                <div className="pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-md bg-slate-950 px-2 py-1 font-mono text-[10px] text-slate-100 group-hover:block">
+                  {fmtClock(h.at)} · {down ? "failed" : "ok"} · {h.ms}ms
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+      <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400">
+        <span>last {history.length} checks · height = latency · full bar = failed</span>
+        {history.length > 0 ? (
+          <span className="font-mono">
+            {fmtClock(history[0].at)} → {fmtClock(history[history.length - 1].at)}
+          </span>
         ) : null}
       </div>
-      {children}
+      <span className="sr-only">
+        {history.length === 0
+          ? "No health checks recorded yet."
+          : `Last ${history.length} health checks: ${okCount} ok, ${downCount} failed, latest ${history[history.length - 1].ms}ms.`}
+      </span>
     </div>
   );
 }
 
-function EngineStep({
-  n,
-  icon: Icon,
-  title,
-  href,
-  note,
-}: {
-  n: string;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  href: string;
-  note: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-start gap-2.5 rounded-xl border border-emerald-100/80 bg-white/80 px-2.5 py-2 transition hover:border-emerald-300 hover:shadow-sm"
-    >
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-[11px] font-bold text-white">
-        {n}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 text-[13px] font-medium text-slate-800">
-          <Icon className="h-3.5 w-3.5 text-emerald-600" />
-          {title}
-        </div>
-        <div className="text-[11px] text-slate-400">{note}</div>
-      </div>
-      <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-300" />
-    </Link>
-  );
-}
+export default function OverviewPage() {
+  const { state, detail, history, refresh } = useEngineHealth();
+  const tone = HERO_TONES[state];
 
-function OutcomeCard({
-  title,
-  desc,
-  href,
-  icon: Icon,
-  cta,
-  warn,
-}: {
-  title: string;
-  desc: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  cta: string;
-  warn?: boolean;
-}) {
   return (
-    <div
-      className={clsx(
-        "rounded-2xl border bg-white p-4 shadow-sm",
-        warn ? "border-amber-200" : "border-slate-200",
-      )}
-    >
-      <div
-        className={clsx(
-          "mb-2 inline-flex rounded-lg p-2",
-          warn ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-700",
-        )}
-      >
-        <Icon className="h-4 w-4" />
-      </div>
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-slate-500">{desc}</p>
-      <Link href={href} className="btn-secondary mt-3 w-full justify-center text-xs">
-        {cta}
-      </Link>
+    <div className="mx-auto max-w-3xl">
+      {/* Health */}
+      <section className={clsx("rounded-2xl border p-6", tone.box)}>
+        <div className="flex flex-wrap items-center gap-4">
+          <span className={clsx("h-4 w-4 shrink-0 rounded-full", tone.dot)} />
+          <div className="min-w-0 flex-1">
+            <div className="text-2xl font-semibold tracking-tight text-slate-900">{tone.label}</div>
+            <div className="mt-0.5 text-xs text-slate-500">
+              <code className="font-mono">/api/ledger/*</code> →{" "}
+              <code className="font-mono">LEDGER_ENGINE_URL</code> · re-checks every 15s
+            </div>
+          </div>
+          <button type="button" className="btn-secondary text-xs" onClick={refresh}>
+            <RefreshCw className="mr-1.5 inline h-3 w-3" />
+            Check again
+          </button>
+        </div>
+
+        <HealthChart history={history} />
+
+        {state === "down" && detail ? (
+          <pre className="scrollbar-thin mt-4 overflow-auto rounded-xl bg-slate-950 p-3 font-mono text-[11px] leading-relaxed text-rose-100/90">
+            {detail}
+          </pre>
+        ) : null}
+      </section>
+
+      {/* What this is */}
+      <section className="mt-6 text-sm leading-relaxed text-slate-600">
+        <p>
+          <span className="font-semibold text-slate-900">LedgeRX Admin</span> is the ops console for
+          the ledger engine — a double-entry wallet and loyalty ledger. This Ops view is the
+          operations desk; <span className="font-medium text-slate-900">Lab</span> holds demo and
+          seed tooling; <span className="font-medium text-slate-900">Docs</span> is the handbook.
+        </p>
+        <p className="mt-2">
+          A transaction walks the flow: <span className="font-medium text-slate-900">1 Door</span>{" "}
+          admits, <span className="font-medium text-slate-900">2 Brain</span> scores,{" "}
+          <span className="font-medium text-slate-900">3 Accounting</span> posts,{" "}
+          <span className="font-medium text-slate-900">5 Tiering</span> promotes — the Configure
+          group in the sidebar follows the same numbers, and anything that fails lands in the fail
+          queue.
+        </p>
+      </section>
+
+      {/* Ops — the crucial links, grouped */}
+      <section className="mt-6">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          Operate
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {OPERATE_LINKS.map((l) => {
+            const Icon = l.icon;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-emerald-300 hover:shadow-sm"
+              >
+                <Icon className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-slate-900">{l.title}</span>
+                  <span className="block truncate text-xs text-slate-500">{l.desc}</span>
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-500" />
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mb-2 mt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          Configure · the flow
+        </div>
+        <div className="grid gap-3 sm:grid-cols-4">
+          {FLOW_LINKS.map((l) => {
+            const Icon = l.icon;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="group flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-emerald-300 hover:shadow-sm"
+              >
+                <span className="flex items-center justify-between">
+                  <Icon className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <span className="rounded bg-slate-100 px-1.5 font-mono text-[10px] leading-4 text-slate-500 ring-1 ring-slate-200">
+                    {l.step}
+                  </span>
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-slate-900">{l.title}</span>
+                  <span className="block truncate text-xs text-slate-500">{l.desc}</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Lab + Docs */}
+      <section className="mt-6 space-y-3 border-t border-slate-100 pt-4">
+        {VIEW_LINKS.map((group) => (
+          <div key={group.label} className="flex flex-wrap items-center gap-2">
+            <span className="w-40 shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              {group.label}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {group.links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200 transition hover:text-emerald-700 hover:ring-emerald-300"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
     </div>
   );
 }

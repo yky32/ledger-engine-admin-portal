@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { FieldLabel, ExplainBox, HelpTip } from "@/components/ui/help";
+import { useEffect, useState } from "react";
+
 import { engine } from "@/lib/engine";
 import { errMsg, randomOwnerId } from "@/lib/format";
 import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { ExplainBox, FieldLabel, HelpTip } from "@/components/ui/help";
+import { Card, JsonBlock } from "@/components/ui/kit";
 
 export default function WalletsPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -83,8 +84,8 @@ export default function WalletsPage() {
         <ExplainBox title="vs Door auto-create">
           <p>
             If Ingest policy <code className="text-xs">isAutoCreateWallet=true</code>, first
-            eligible webhook can create the wallet (CoaCodes 10-20-00 if no profile). Explicit onboard is for
-            controlled CRM join + product stream.
+            eligible webhook can create the wallet (CoaCodes 10-20-00 if no profile). Explicit
+            onboard is for controlled CRM join + product stream.
           </p>
         </ExplainBox>
       </div>
@@ -115,7 +116,11 @@ export default function WalletsPage() {
             </label>
             <label className="field">
               <span className="field-label">name</span>
-              <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} />
+              <input
+                className="field-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </label>
             <label className="field">
               <FieldLabel tipTitle="vanityCode" tip="Display only — never identity.">

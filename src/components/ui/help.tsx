@@ -1,7 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
 import { HelpCircle } from "lucide-react";
+import { useId, useState } from "react";
+
 import { clsx } from "@/lib/format";
 
 /**
@@ -50,7 +51,7 @@ export function HelpTip({
             "absolute z-50 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-left text-[11px] leading-relaxed text-slate-100 shadow-xl",
             wide ? "w-80" : "w-64",
             side === "top" && "bottom-full left-1/2 mb-2 -translate-x-1/2",
-            side === "bottom" && "top-full left-1/2 mt-2 -translate-x-1/2",
+            side === "bottom" && "left-1/2 top-full mt-2 -translate-x-1/2",
             side === "right" && "left-full top-1/2 ml-2 -translate-y-1/2",
             side === "left" && "right-full top-1/2 mr-2 -translate-y-1/2",
           )}

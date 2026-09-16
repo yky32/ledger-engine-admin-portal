@@ -56,8 +56,8 @@ export function FactorJsonEditor({
       />
 
       <p className="text-[10px] text-slate-400">
-        Leaves: {FACTOR_HELP.leaves}. Ops: {FACTOR_HELP.ops}. Array = AND all.
-        Engine docs: FACTORS.md
+        Leaves: {FACTOR_HELP.leaves}. Ops: {FACTOR_HELP.ops}. Array = AND all. Engine docs:
+        FACTORS.md
       </p>
     </div>
   );

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Card, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { FieldLabel, ExplainBox } from "@/components/ui/help";
-import { PageShell } from "@/components/layout/page-shell";
+
 import { engine } from "@/lib/engine";
 import { errMsg, randomEventId } from "@/lib/format";
 import type { MovementView } from "@/lib/types";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { ExplainBox, FieldLabel } from "@/components/ui/help";
+import { Card, JsonBlock } from "@/components/ui/kit";
 
 type RailKind = "deposit" | "withdraw" | "transfer";
 
@@ -36,7 +37,8 @@ const CONFIG: Record<
   },
   transfer: {
     title: "In-wallet transfer",
-    description: "Move value between two owners in the same currency — POST /movements/transfers/in-wallet",
+    description:
+      "Move value between two owners in the same currency — POST /movements/transfers/in-wallet",
     api: [{ method: "POST", path: "/movements/transfers/in-wallet" }],
     explain:
       "Both owners must be onboarded for the chosen currency. The engine posts a balanced debit/credit pair across the two wallet books.",
@@ -111,7 +113,7 @@ export function RailsMovementPage({ kind }: { kind: RailKind }) {
       <div className="mb-4">
         <ExplainBox title="Canonical rails API" tone="ops">
           <p>{cfg.explain}</p>
-          <p className="mt-2 text-xs text-muted">
+          <p className="text-muted mt-2 text-xs">
             Legacy wallet-id paths under <code>/ledger/*</code> remain for parity tests only — this
             console uses <code>/movements/*</code>.
           </p>
@@ -162,7 +164,11 @@ export function RailsMovementPage({ kind }: { kind: RailKind }) {
 
             <label className="field">
               <FieldLabel tip="Book currency">currency</FieldLabel>
-              <select className="field-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <select
+                className="field-select"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
                 {["LP", "HKD", "USD"].map((c) => (
                   <option key={c}>{c}</option>
                 ))}
@@ -182,7 +188,11 @@ export function RailsMovementPage({ kind }: { kind: RailKind }) {
               <FieldLabel tip="AUTO settles immediately; MANUAL stays pending until PUT /movements/{id}/settle">
                 mode
               </FieldLabel>
-              <select className="field-select" value={mode} onChange={(e) => setMode(e.target.value)}>
+              <select
+                className="field-select"
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+              >
                 {["AUTO", "MANUAL"].map((m) => (
                   <option key={m}>{m}</option>
                 ))}
@@ -221,7 +231,9 @@ export function RailsMovementPage({ kind }: { kind: RailKind }) {
           {result ? (
             <JsonBlock value={result} />
           ) : (
-            <p className="text-sm text-muted">Submit to see movement response (status, orderType, walletId).</p>
+            <p className="text-muted text-sm">
+              Submit to see movement response (status, orderType, walletId).
+            </p>
           )}
         </Card>
       </div>

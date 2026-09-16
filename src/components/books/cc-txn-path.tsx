@@ -9,10 +9,10 @@ import Link from "next/link";
 export function CcTxnPath() {
   const steps = [
     { n: "1", title: "CC txn", href: "/transactions-ingest", note: "eventType=CC_TXN" },
-    { n: "2", title: "Ingest", href: "/ingest-policies", note: "Door admit" },
-    { n: "3", title: "Digest", href: "/digestion-rules", note: "Brain points" },
+    { n: "2", title: "Ingest", href: "/rules/door", note: "Door admit" },
+    { n: "3", title: "Digest", href: "/rules/brain", note: "Brain points" },
     { n: "4", title: "Books", href: "/ledger-entries", note: "DE legs" },
-    { n: "5", title: "Tier", href: "/wallet-tier-policies", note: "if policy on" },
+    { n: "5", title: "Tier", href: "/rules/tier", note: "if policy on" },
   ];
   return (
     <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

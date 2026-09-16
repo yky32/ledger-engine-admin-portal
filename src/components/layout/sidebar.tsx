@@ -1,11 +1,13 @@
 "use client";
 
+import { Hexagon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navGroups } from "@/lib/nav";
-import { clsx } from "@/lib/format";
-import { Hexagon } from "lucide-react";
+
 import { useEngineHealth, type EngineHealthState } from "@/lib/engine-health";
+import { clsx } from "@/lib/format";
+import { navGroups } from "@/lib/nav";
+import { useView } from "@/lib/view";
 
 function EngineBadge({ state }: { state: EngineHealthState }) {
   const online = state === "up";
@@ -35,7 +37,8 @@ function EngineBadge({ state }: { state: EngineHealthState }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const groups = navGroups();
+  const { view } = useView();
+  const groups = navGroups(view);
   const { state: engineState } = useEngineHealth();
 
   return (
@@ -46,14 +49,10 @@ export function Sidebar() {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <div className="truncate text-sm font-semibold tracking-tight text-white">
-              LedgeRX
-            </div>
+            <div className="truncate text-sm font-semibold tracking-tight text-white">LedgeRX</div>
             <EngineBadge state={engineState} />
           </div>
-          <div className="truncate text-[11px] text-slate-400">
-            ingest → digest → books → tier
-          </div>
+          <div className="truncate text-[11px] text-slate-400">ingest → digest → books → tier</div>
         </div>
       </div>
 
@@ -72,35 +71,73 @@ export function Sidebar() {
                 const Icon = item.icon;
                 return (
                   <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={clsx(
-                        "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition",
-                        active
-                          ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25"
-                          : "text-slate-300 hover:bg-white/5 hover:text-white",
-                      )}
-                    >
-                      <Icon
-                        className={clsx(
-                          "h-4 w-4 shrink-0",
-                          active ? "text-emerald-400" : "text-slate-500 group-hover:text-slate-300",
-                        )}
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-medium">{item.label}</span>
-                        {item.blurb ? (
-                          <span
-                            className={clsx(
-                              "block truncate text-[10px] leading-tight",
-                              active ? "text-emerald-400/80" : "text-slate-500",
-                            )}
-                          >
-                            {item.blurb}
+                    {item.disabled ? (
+                      <span
+                        title="Nothing to configure — books & movements live under Wallets"
+                        aria-disabled
+                        className="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-slate-600"
+                      >
+                        <Icon className="h-4 w-4 shrink-0 text-slate-700" />
+                        {item.step ? (
+                          <span className="shrink-0 rounded bg-slate-800/40 px-1 font-mono text-[9px] leading-4 text-slate-600 ring-1 ring-slate-800">
+                            {item.step}
                           </span>
                         ) : null}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{item.label}</span>
+                          {item.blurb ? (
+                            <span className="block truncate text-[10px] leading-tight text-slate-700">
+                              {item.blurb}
+                            </span>
+                          ) : null}
+                        </span>
                       </span>
-                    </Link>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={clsx(
+                          "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition",
+                          active
+                            ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25"
+                            : "text-slate-300 hover:bg-white/5 hover:text-white",
+                        )}
+                      >
+                        <Icon
+                          className={clsx(
+                            "h-4 w-4 shrink-0",
+                            active
+                              ? "text-emerald-400"
+                              : "text-slate-500 group-hover:text-slate-300",
+                          )}
+                        />
+                        {item.step ? (
+                          <span
+                            title={`CC_TXN flow step ${item.step}`}
+                            className={clsx(
+                              "shrink-0 rounded px-1 font-mono text-[9px] leading-4 ring-1",
+                              active
+                                ? "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30"
+                                : "bg-slate-800/80 text-slate-400 ring-slate-700/60",
+                            )}
+                          >
+                            {item.step}
+                          </span>
+                        ) : null}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{item.label}</span>
+                          {item.blurb ? (
+                            <span
+                              className={clsx(
+                                "block truncate text-[10px] leading-tight",
+                                active ? "text-emerald-400/80" : "text-slate-500",
+                              )}
+                            >
+                              {item.blurb}
+                            </span>
+                          ) : null}
+                        </span>
+                      </Link>
+                    )}
                   </li>
                 );
               })}
@@ -111,8 +148,7 @@ export function Sidebar() {
 
       <div className="border-t border-white/5 px-3 py-3 text-[11px] text-slate-500">
         Proxy <code className="text-slate-400">/api/ledger/*</code>
-        <br />
-        → <code className="text-slate-400">LEDGER_ENGINE_URL</code>
+        <br />→ <code className="text-slate-400">LEDGER_ENGINE_URL</code>
       </div>
     </aside>
   );

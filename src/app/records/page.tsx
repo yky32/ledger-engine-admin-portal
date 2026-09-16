@@ -3,13 +3,16 @@
 /**
  * LedgeRX Admin — live DB records via engine GET APIs (what is actually persisted).
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Card, Badge, JsonBlock, Empty, Alert } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { engine } from "@/lib/engine";
 import { errMsg, money, shortId } from "@/lib/format";
+import {
+  clearRememberedOwnerIds,
+  loadRememberedOwnerIds,
+  rememberOwnerId,
+} from "@/lib/owner-memory";
 import type {
   DigestionRule,
   FailedIngest,
@@ -18,11 +21,9 @@ import type {
   WalletView,
 } from "@/lib/types";
 import { AccountBooksTable } from "@/components/books/account-books-table";
-import {
-  clearRememberedOwnerIds,
-  loadRememberedOwnerIds,
-  rememberOwnerId,
-} from "@/lib/owner-memory";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Alert, Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 type Tab = "door" | "brain" | "wallets" | "movements" | "failed";
 
@@ -134,7 +135,11 @@ export default function DbRecordsPage() {
       { id: "door", label: "Door (ingest_policies)" },
       { id: "brain", label: "Brain (rules + COA)", count: brain.length + coa.length },
       { id: "wallets", label: "Wallets by ownerId", count: ownerIds.length },
-      { id: "movements", label: "Movements", count: Object.values(movementsByOwner).reduce((n, a) => n + a.length, 0) },
+      {
+        id: "movements",
+        label: "Movements",
+        count: Object.values(movementsByOwner).reduce((n, a) => n + a.length, 0),
+      },
       { id: "failed", label: "Fail queue", count: failed.length },
     ],
     [brain.length, coa.length, ownerIds.length, movementsByOwner, failed.length],
@@ -167,19 +172,20 @@ export default function DbRecordsPage() {
         </ActionBar>
       }
     >
-
       <Alert tone="info">
         Door/Brain/Fail load automatically. Customer wallets & movements need{" "}
         <strong>ownerId</strong> (add below — also auto-remembered from Simulator when you run).
         {loadedAt ? (
-          <span className="mt-1 block font-mono text-[10px] text-slate-500">last load {loadedAt}</span>
+          <span className="mt-1 block font-mono text-[10px] text-slate-500">
+            last load {loadedAt}
+          </span>
         ) : null}
       </Alert>
 
       <Card className="mb-4 mt-4" title="Track ownerIds">
         <div className="flex flex-wrap gap-2">
           <input
-            className="field-input font-mono max-w-xs"
+            className="field-input max-w-xs font-mono"
             value={ownerInput}
             onChange={(e) => setOwnerInput(e.target.value)}
             placeholder="01A… ownerId"
@@ -222,7 +228,9 @@ export default function DbRecordsPage() {
             ))}
           </div>
         ) : (
-          <p className="mt-2 text-xs text-slate-500">No ownerIds yet — run Simulator or paste one.</p>
+          <p className="mt-2 text-xs text-slate-500">
+            No ownerIds yet — run Simulator or paste one.
+          </p>
         )}
       </Card>
 
@@ -248,7 +256,7 @@ export default function DbRecordsPage() {
         <Card
           title="ingest_policies row (GET /ingest-policies)"
           right={
-            <Link href="/ingest-policies" className="text-xs text-emerald-700 hover:underline">
+            <Link href="/rules/door" className="text-xs text-emerald-700 hover:underline">
               Edit Door →
             </Link>
           }
@@ -284,7 +292,7 @@ export default function DbRecordsPage() {
           <Card
             title={`Brain · digestion_rule (${brain.length}) — GET /digestion-rules`}
             right={
-              <Link href="/digestion-rules" className="text-xs text-emerald-700 hover:underline">
+              <Link href="/rules/brain" className="text-xs text-emerald-700 hover:underline">
                 Edit rules →
               </Link>
             }
@@ -310,7 +318,9 @@ export default function DbRecordsPage() {
                   <tbody>
                     {brain.map((r) => (
                       <tr key={r.id ?? r.code}>
-                        <td className="font-mono text-[10px]">{r.id != null ? shortId(String(r.id), 8) : "—"}</td>
+                        <td className="font-mono text-[10px]">
+                          {r.id != null ? shortId(String(r.id), 8) : "—"}
+                        </td>
                         <td className="font-mono text-xs font-medium">{r.code}</td>
                         <td>{r.eventType}</td>
                         <td>{r.operation}</td>
@@ -321,13 +331,18 @@ export default function DbRecordsPage() {
                         <td className="font-mono text-[10px]">
                           {r.eligibleMccs?.length ? r.eligibleMccs.join(",") : "any"}
                         </td>
-                        <td className="max-w-[140px] truncate font-mono text-[10px]" title={JSON.stringify(r.formula)}>
+                        <td
+                          className="max-w-[140px] truncate font-mono text-[10px]"
+                          title={JSON.stringify(r.formula)}
+                        >
                           {typeof r.formula === "object" && r.formula && "type" in r.formula
                             ? String((r.formula as { type: string }).type)
                             : JSON.stringify(r.formula)}
                         </td>
                         <td>
-                          <Badge tone={r.isEnabled ? "ok" : "neutral"}>{r.isEnabled ? "on" : "off"}</Badge>
+                          <Badge tone={r.isEnabled ? "ok" : "neutral"}>
+                            {r.isEnabled ? "on" : "off"}
+                          </Badge>
                         </td>
                       </tr>
                     ))}
@@ -337,7 +352,9 @@ export default function DbRecordsPage() {
             )}
             {brain[0] ? (
               <details className="mt-3">
-                <summary className="cursor-pointer text-xs text-slate-500">Full JSON (all rules)</summary>
+                <summary className="cursor-pointer text-xs text-slate-500">
+                  Full JSON (all rules)
+                </summary>
                 <div className="mt-2">
                   <JsonBlock value={brain} maxHeight={280} />
                 </div>
@@ -373,7 +390,9 @@ export default function DbRecordsPage() {
                   <tbody>
                     {coa.map((r, i) => (
                       <tr key={String(r.id ?? r.code ?? i)}>
-                        <td className="font-mono text-[10px]">{r.id != null ? String(r.id) : "—"}</td>
+                        <td className="font-mono text-[10px]">
+                          {r.id != null ? String(r.id) : "—"}
+                        </td>
                         <td className="font-mono text-xs font-medium">{String(r.code ?? "—")}</td>
                         <td className="font-mono text-[10px]">
                           {String(r.transactionCode || r.code || "—")}
@@ -441,7 +460,9 @@ export default function DbRecordsPage() {
                         />
                       </div>
                       <details>
-                        <summary className="cursor-pointer text-xs text-slate-500">Raw wallet JSON</summary>
+                        <summary className="cursor-pointer text-xs text-slate-500">
+                          Raw wallet JSON
+                        </summary>
                         <div className="mt-2">
                           <JsonBlock value={w} maxHeight={240} />
                         </div>
@@ -463,7 +484,11 @@ export default function DbRecordsPage() {
             ownerIds.map((oid) => {
               const rows = movementsByOwner[oid] || [];
               return (
-                <Card key={oid} title={`Movements · ${oid}`} description="GET /wallets/{ownerId}/movements">
+                <Card
+                  key={oid}
+                  title={`Movements · ${oid}`}
+                  description="GET /wallets/{ownerId}/movements"
+                >
                   {rows.length === 0 ? (
                     <Empty>No movements (or not refreshed)</Empty>
                   ) : (
@@ -484,7 +509,10 @@ export default function DbRecordsPage() {
                           {rows.map((m) => (
                             <tr key={m.id}>
                               <td className="font-mono text-[10px]">{m.id}</td>
-                              <td className="max-w-[120px] truncate font-mono text-[10px]" title={m.movementKey}>
+                              <td
+                                className="max-w-[120px] truncate font-mono text-[10px]"
+                                title={m.movementKey}
+                              >
                                 {m.movementKey}
                               </td>
                               <td>{m.orderType || m.type}</td>
