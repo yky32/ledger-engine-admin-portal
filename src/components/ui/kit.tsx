@@ -30,7 +30,7 @@ export function PageHeader({
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>
-      <PageApiPaths fallback={api} />
+      {api?.length ? <PageApiPaths fallback={api} /> : null}
     </div>
   );
 }
