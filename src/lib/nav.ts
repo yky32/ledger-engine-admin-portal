@@ -128,8 +128,9 @@ export const NAV: NavItem[] = [
     href: "/records",
     label: "DB records",
     icon: Database,
-    group: "Lab",
-    view: "lab",
+    group: "Investigate",
+    view: "ops",
+    blurb: "raw rows · read-only",
   },
 
   {
