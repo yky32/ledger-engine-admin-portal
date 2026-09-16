@@ -596,7 +596,6 @@ export function AccountingPanel() {
 
   return (
     <PageShell
-      flow="accounting"
       title="Rules · Accounting"
       description="Create reusable CR/DR legs, combine them into executions, bind one combination per eventType. Ingest uses that walk; switch anytime."
       api={[

@@ -554,7 +554,6 @@ export function BrainPanel() {
 
   return (
     <PageShell
-      flow="brain"
       title="Rules · Brain"
       description="Walk is one list: lower priority is 1st. Wrong eventType is skipped, not a fail. First bingo stops. Else SKIPPED / NO_RULE."
       api={[

@@ -96,21 +96,6 @@ function Choice({
   );
 }
 
-function policySentence(p: IngestPolicy, gate: FactorGate, gatesLive: boolean): string {
-  if (!p.isEnabled) return "Every webhook is SKIPPED / DISABLED. Brain never runs.";
-  const who = !gatesLive
-    ? "a custom FactorSet"
-    : gateIsOpen(gate)
-      ? "every webhook"
-      : gateBits(gate)
-          .filter((b) => !b.startsWith("any "))
-          .join(" AND ") || "every webhook";
-  const wallet = p.isAutoCreateWallet
-    ? "Missing wallet → settlement HKD, 01-01-01 HKD + LP on event.mainAccount."
-    : "Missing wallet → NO_WALLET (CRM onboard first).";
-  return `Admit ${who}. Brain scores after. ${wallet}`;
-}
-
 export function DoorPanel() {
   const [policy, setPolicy] = useState<IngestPolicy | null>(null);
   const [saved, setSaved] = useState<IngestPolicy | null>(null);
@@ -221,17 +206,11 @@ export function DoorPanel() {
   };
 
   const admitBits = useMemo(() => (gatesLive ? gateBits(gate) : []), [gate, gatesLive]);
-  const sentence = policy ? policySentence(policy, gate, gatesLive) : "";
 
   return (
     <PageShell
-      flow="door"
       title="Rules · Door"
       description="First gate: accept the webhook at all? Brain scores after. One global row for the engine."
-      api={[
-        { method: "GET", path: "/ingest-policies" },
-        { method: "PUT", path: "/ingest-policies" },
-      ]}
       actions={
         <button
           type="button"
@@ -252,35 +231,6 @@ export function DoorPanel() {
         </ActionBar>
       ) : (
         <>
-          <div
-            className={clsx(
-              "mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border px-4 py-3",
-              policy.isEnabled
-                ? "border-emerald-200 bg-emerald-50/70"
-                : "border-rose-200 bg-rose-50/70",
-            )}
-          >
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={policy.isEnabled ? "ok" : "error"}>
-                  {policy.isEnabled ? "OPEN" : "CLOSED"}
-                </Badge>
-                {policy.isAutoCreateWallet ? (
-                  <Badge tone="info">auto-wallet HKD+LP</Badge>
-                ) : (
-                  <Badge tone="warn">CRM onboard required</Badge>
-                )}
-              </div>
-              <p className="mt-1.5 max-w-2xl text-sm text-slate-700">{sentence}</p>
-            </div>
-            <Link
-              href="/rules/brain"
-              className="text-xs font-medium text-emerald-700 hover:underline"
-            >
-              Brain scores next →
-            </Link>
-          </div>
-
           <Card
             className="mb-4"
             title="Edit door"

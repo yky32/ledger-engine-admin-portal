@@ -102,7 +102,6 @@ export function TierPanel() {
 
   return (
     <PageShell
-      flow="tier"
       title="Rules · Tiering"
       description="Step 5 of CC_TXN → ingest → digest → books → check tier. Save as Enabled to start."
       api={[

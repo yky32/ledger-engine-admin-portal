@@ -28,7 +28,7 @@ export function PageShell({
 }: {
   /** "app" (default) = full ops chrome; "doc" = reading mode. */
   variant?: "app" | "doc";
-  /** Highlight on Door → Brain → Accounting → Ledger → Tier. Omit = strip still shows, none selected. */
+  /** Highlight on Door → Brain → Accounting → Ledger → Tier. Omit = no strip at all. */
   flow?: FlowStep;
   title: string;
   description?: string;
@@ -40,7 +40,7 @@ export function PageShell({
 }) {
   return (
     <div>
-      {variant === "doc" ? null : <FlowStrip active={flow} />}
+      {variant === "doc" || !flow ? null : <FlowStrip active={flow} />}
       <EngineStatusBanner />
       {variant === "doc" ? (
         <div className="mb-6">

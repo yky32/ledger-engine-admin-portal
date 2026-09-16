@@ -41,11 +41,11 @@ export type NavItem = {
 export const NAV: NavItem[] = [
   {
     href: "/",
-    label: "Home",
+    label: "Overview",
     icon: Workflow,
     group: "Overview",
     view: "ops",
-    blurb: "CC_TXN path",
+    blurb: "engine health",
   },
   {
     href: "/failed-transactions",
