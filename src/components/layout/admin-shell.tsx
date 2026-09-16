@@ -2,7 +2,6 @@
 
 import { ViewProvider } from "@/lib/view";
 
-import { ApiCallBar } from "./api-call-bar";
 import { LabBanner } from "./lab-banner";
 import { Sidebar } from "./sidebar";
 import { ViewSwitcher } from "./view-switcher";
@@ -15,8 +14,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-12 shrink-0 items-center gap-2 border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur sm:px-6">
             <ViewSwitcher />
-            <ApiCallBar />
-            <div className="flex shrink-0 items-center gap-2 text-[11px] text-slate-400">
+            <div className="ml-auto flex shrink-0 items-center gap-2 text-[11px] text-slate-400">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
               local
             </div>
