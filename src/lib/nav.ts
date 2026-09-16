@@ -9,6 +9,7 @@ import {
   FlaskConical,
   Layers,
   Settings2,
+  SlidersHorizontal,
   Sparkles,
   Workflow,
 } from "lucide-react";
@@ -45,6 +46,14 @@ export const NAV: NavItem[] = [
     group: "Operate",
     view: "ops",
     blurb: "review / replay",
+  },
+  {
+    href: "/rules",
+    label: "Rules",
+    icon: SlidersHorizontal,
+    group: "Configure",
+    view: "ops",
+    blurb: "Door · Brain · Tier · Accounting",
   },
 
   {

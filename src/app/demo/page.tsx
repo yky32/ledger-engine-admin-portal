@@ -489,11 +489,11 @@ client.events().submit(event);`;
       </div>
 
       <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/ingest-policies" className="btn-secondary justify-start text-xs">
+        <Link href="/rules?tab=door" className="btn-secondary justify-start text-xs">
           <DoorOpen className="h-4 w-4 text-emerald-600" />
           Door
         </Link>
-        <Link href="/digestion-rules" className="btn-secondary justify-start text-xs">
+        <Link href="/rules?tab=brain" className="btn-secondary justify-start text-xs">
           <Brain className="h-4 w-4 text-violet-600" />
           Brain · rules
         </Link>

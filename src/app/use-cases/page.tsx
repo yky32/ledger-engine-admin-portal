@@ -397,7 +397,7 @@ export default function UseCasesPage() {
                 <p className="text-xs text-slate-500">
                   No digestion rule with eventType {def.eventType} and resultCurrency{" "}
                   {def.resultCurrency}.{" "}
-                  <Link href="/digestion-rules" className="text-emerald-700 hover:underline">
+                  <Link href="/rules?tab=brain" className="text-emerald-700 hover:underline">
                     Create one →
                   </Link>
                 </p>
@@ -416,10 +416,10 @@ export default function UseCasesPage() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/digestion-rules" className="btn-secondary text-xs">
+              <Link href="/rules?tab=brain" className="btn-secondary text-xs">
                 Brain
               </Link>
-              <Link href="/accounting-rules" className="btn-secondary text-xs">
+              <Link href="/rules?tab=accounting" className="btn-secondary text-xs">
                 Accounting legs
               </Link>
               <Link href="/transactions-ingest" className="btn-secondary text-xs">
