@@ -46,7 +46,10 @@ export function CoaHero() {
 
         <ol className="mt-4 flex flex-wrap items-stretch gap-1.5 sm:gap-2">
           {SEGMENTS.map((seg, i) => (
-            <li key={seg.sheet} className="flex min-w-[5.5rem] flex-1 items-center gap-1.5 sm:min-w-[7rem]">
+            <li
+              key={seg.sheet}
+              className="flex min-w-[5.5rem] flex-1 items-center gap-1.5 sm:min-w-[7rem]"
+            >
               {i > 0 ? (
                 <span className="hidden text-slate-500 sm:inline" aria-hidden>
                   +
@@ -57,7 +60,9 @@ export function CoaHero() {
                   {seg.sheet}
                   <span className="ml-1 font-mono font-normal text-slate-500">{seg.digits}</span>
                 </div>
-                <div className="mt-0.5 font-mono text-base font-semibold text-emerald-300">{seg.sample}</div>
+                <div className="mt-0.5 font-mono text-base font-semibold text-emerald-300">
+                  {seg.sample}
+                </div>
                 <div className="text-[11px] text-slate-400">{seg.hint}</div>
               </div>
             </li>

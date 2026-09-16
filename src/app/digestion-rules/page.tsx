@@ -1,15 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from "lucide-react";
-import { Card, Badge, Empty, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { FieldLabel } from "@/components/ui/help";
-import { PageShell } from "@/components/layout/page-shell";
-import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { engine } from "@/lib/engine";
-import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
 import {
   BRAIN_FACTOR_PRESETS,
   EMPTY_FACTOR_GATE,
@@ -21,9 +16,15 @@ import {
   parseFactorJson,
   type FactorGate,
 } from "@/lib/factors";
-import { errMsg, clsx } from "@/lib/format";
+import { clsx, errMsg } from "@/lib/format";
+import { EVENT_TYPE_LABELS, EVENT_TYPES } from "@/lib/recipes";
 import type { CreateDigestionRuleBody, DigestionRule } from "@/lib/types";
-import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/recipes";
+import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
+import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { FieldLabel } from "@/components/ui/help";
+import { Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 type FormulaType = "AMOUNT" | "RATE" | "FIXED" | "LINEAR" | "TIERED_RATE" | "TABLE";
 
@@ -54,11 +55,12 @@ function nth(i: number): string {
 
 /** Unique digestion_rule.code from eventType (CC_TXN, CC_TXN_2, …). */
 function suggestCode(eventType: string, existing: DigestionRule[]): string {
-  const base = (eventType || "RULE")
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9_]+/g, "_")
-    .replace(/^_+|_+$/g, "") || "RULE";
+  const base =
+    (eventType || "RULE")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9_]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "RULE";
   const taken = new Set(existing.map((r) => (r.code || "").toUpperCase()).filter(Boolean));
   if (!taken.has(base)) return base;
   for (let i = 2; i < 1000; i++) {
@@ -87,7 +89,13 @@ function allAnyBody(eventType: (typeof EVENT_TYPES)[number]): CreateDigestionRul
 
 const PRESETS = {
   demoCc: {
-    gate: { mccs: "101", currencies: "HKD", ageLte: "30", amtMin: "1", amtMax: "" } satisfies FactorGate,
+    gate: {
+      mccs: "101",
+      currencies: "HKD",
+      ageLte: "30",
+      amtMin: "1",
+      amtMax: "",
+    } satisfies FactorGate,
     identity: {
       code: "CC_TXN",
       name: "Credit card 1%",
@@ -207,7 +215,9 @@ function exampleScore(
   // Engine order: multiplier → floor → cap (cap wins if both bind).
   if (floor != null && Number.isFinite(floor)) pts = Math.max(pts, floor);
   if (cap != null && Number.isFinite(cap)) pts = Math.min(pts, cap);
-  const shown = Number.isInteger(pts) ? String(pts) : pts.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+  const shown = Number.isInteger(pts)
+    ? String(pts)
+    : pts.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
   return `${amount.toLocaleString()} spend → ${shown} ${pointCcy || "LP"}`;
 }
 
@@ -477,14 +487,19 @@ export default function DigestionRulesPage() {
       return String(a.id ?? "").localeCompare(String(b.id ?? ""), undefined, { numeric: true });
     };
     return {
-      on: rows.filter((r) => r.isEnabled !== false).slice().sort(rank),
+      on: rows
+        .filter((r) => r.isEnabled !== false)
+        .slice()
+        .sort(rank),
       off: rows.filter((r) => r.isEnabled === false),
     };
   }, [rows]);
 
   const persistWalk = async (ordered: DigestionRule[]) => {
     const planned = ordered.map((r, i) => ({ r, priority: (i + 1) * 10 }));
-    const updates = planned.filter(({ r, priority }) => Number(r.priority) !== priority && r.id != null);
+    const updates = planned.filter(
+      ({ r, priority }) => Number(r.priority) !== priority && r.id != null,
+    );
     if (updates.length === 0) return;
     setSavingOrder(true);
     setError(null);
@@ -495,7 +510,9 @@ export default function DigestionRulesPage() {
       }),
     );
     try {
-      await Promise.all(updates.map(({ r, priority }) => engine.digestionUpdate(r.id!, { priority })));
+      await Promise.all(
+        updates.map(({ r, priority }) => engine.digestionUpdate(r.id!, { priority })),
+      );
       await load();
     } catch (e) {
       setError(errMsg(e));
@@ -547,13 +564,17 @@ export default function DigestionRulesPage() {
         { method: "DELETE", path: "/digestion-rules/{id}" },
       ]}
       actions={
-        <button type="button" className="btn-primary text-xs" onClick={() => void quickAllAny()} disabled={loading}>
+        <button
+          type="button"
+          className="btn-primary text-xs"
+          onClick={() => void quickAllAny()}
+          disabled={loading}
+        >
           Quick action · all any
         </button>
       }
       ok={ok}
     >
-
       <Card
         className="mb-4"
         title="New rule"
@@ -562,10 +583,18 @@ export default function DigestionRulesPage() {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <StepHead n={1} title="When" sub="AND — all four must match" />
           <div className="flex flex-wrap gap-1.5">
-            <button type="button" className="btn-secondary text-xs" onClick={() => applyPreset("demoCc")}>
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => applyPreset("demoCc")}
+            >
               Demo CC
             </button>
-            <button type="button" className="btn-secondary text-xs" onClick={() => applyPreset("grocery")}>
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => applyPreset("grocery")}
+            >
               Grocery
             </button>
             <button
@@ -593,10 +622,14 @@ export default function DigestionRulesPage() {
               <span>Fires for every event of this eventType — no extra gates.</span>
             ) : (
               <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">Fires when</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-500">
+                  Fires when
+                </span>
                 {summaryBits.map((bit, i) => (
                   <span key={bit} className="inline-flex items-center gap-1.5">
-                    {i > 0 ? <span className="text-[10px] font-bold text-violet-400">AND</span> : null}
+                    {i > 0 ? (
+                      <span className="text-[10px] font-bold text-violet-400">AND</span>
+                    ) : null}
                     <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-[12px] ring-1 ring-violet-200">
                       {bit}
                     </span>
@@ -614,7 +647,11 @@ export default function DigestionRulesPage() {
           className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
           onClick={() => setAdvanced((v) => !v)}
         >
-          {advanced ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          {advanced ? (
+            <ChevronDown className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" />
+          )}
           Advanced JSON
         </button>
         {advanced ? (
@@ -651,19 +688,31 @@ export default function DigestionRulesPage() {
             {formulaType === "RATE" || formulaType === "LINEAR" ? (
               <label className="field max-w-[12rem]">
                 <span className="field-label">rate</span>
-                <input className="field-input font-mono" value={rate} onChange={(e) => setRate(e.target.value)} />
+                <input
+                  className="field-input font-mono"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                />
               </label>
             ) : null}
             {formulaType === "LINEAR" ? (
               <label className="field">
                 <span className="field-label">fixed</span>
-                <input className="field-input font-mono" value={fixed} onChange={(e) => setFixed(e.target.value)} />
+                <input
+                  className="field-input font-mono"
+                  value={fixed}
+                  onChange={(e) => setFixed(e.target.value)}
+                />
               </label>
             ) : null}
             {formulaType === "FIXED" ? (
               <label className="field">
                 <span className="field-label">value</span>
-                <input className="field-input font-mono" value={value} onChange={(e) => setValue(e.target.value)} />
+                <input
+                  className="field-input font-mono"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                />
               </label>
             ) : null}
             {formulaType === "TIERED_RATE" ? (
@@ -737,7 +786,10 @@ export default function DigestionRulesPage() {
           </div>
 
           <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-3">
-            <FieldLabel tipTitle="formula" tip="JSONB on digestion_rule.formula. Example uses spend 1,000.">
+            <FieldLabel
+              tipTitle="formula"
+              tip="JSONB on digestion_rule.formula. Example uses spend 1,000."
+            >
               Worked example
             </FieldLabel>
             <p className="mt-2 font-mono text-lg font-semibold text-emerald-900">
@@ -749,7 +801,11 @@ export default function DigestionRulesPage() {
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800/70 hover:text-emerald-950"
               onClick={() => setShowFormulaJson((v) => !v)}
             >
-              {showFormulaJson ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {showFormulaJson ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
               Formula JSON
             </button>
             {showFormulaJson ? (
@@ -819,8 +875,8 @@ export default function DigestionRulesPage() {
           ))}
         </div>
         <p className="mt-1 text-[11px] text-slate-500">
-          Upstream: CC_TXN credit card · CC_CIP cash instalment · CC_SIP spending instalment · LN_TXN
-          loan. Reward is Loyalty / Cashback, not a suffix on this code.
+          Upstream: CC_TXN credit card · CC_CIP cash instalment · CC_SIP spending instalment ·
+          LN_TXN loan. Reward is Loyalty / Cashback, not a suffix on this code.
         </p>
         <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
           <label className="field">
@@ -910,7 +966,9 @@ export default function DigestionRulesPage() {
         description="Drag a row to swap 1st / 2nd. Saves priority 10, 20, 30… via PUT /digestion-rules/{id}."
         right={
           <div className="flex items-center gap-2">
-            {savingOrder ? <span className="text-[11px] text-violet-700">Saving order…</span> : null}
+            {savingOrder ? (
+              <span className="text-[11px] text-violet-700">Saving order…</span>
+            ) : null}
             <Link href="/transactions-ingest" className="text-xs text-emerald-700 hover:underline">
               Dry-run explain →
             </Link>
@@ -922,19 +980,21 @@ export default function DigestionRulesPage() {
         ) : (
           <div>
             {error ? (
-              <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>
+              <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                {error}
+              </p>
             ) : null}
             <p className="mb-3 rounded-lg bg-violet-50 px-3 py-2 text-[12px] text-violet-950">
-              Grip the <span className="font-semibold">⋮⋮</span> handle and drop on another row. Engine walk follows
-              this list (wrong eventType is skipped, not a fail).
+              Grip the <span className="font-semibold">⋮⋮</span> handle and drop on another row.
+              Engine walk follows this list (wrong eventType is skipped, not a fail).
             </p>
             <ol className={savingOrder ? "pointer-events-none opacity-70" : undefined}>
               {walk.on.map((r, i) => (
                 <li key={r.id ?? r.code}>
                   {i > 0 ? (
                     <div className="flex items-center gap-2 py-1.5 pl-2 text-[11px] font-medium text-slate-400">
-                      <span className="ml-2.5 inline-block h-4 w-px bg-slate-200" />
-                      ↓ no bingo / eventType mismatch → try #{i + 1}
+                      <span className="ml-2.5 inline-block h-4 w-px bg-slate-200" />↓ no bingo /
+                      eventType mismatch → try #{i + 1}
                     </div>
                   ) : null}
                   <div
@@ -979,7 +1039,9 @@ export default function DigestionRulesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <div className="font-mono text-sm font-semibold text-slate-900">{r.code}</div>
+                          <div className="font-mono text-sm font-semibold text-slate-900">
+                            {r.code}
+                          </div>
                           <div className="mt-0.5 text-xs text-slate-500">
                             {[
                               r.name,
@@ -1018,8 +1080,9 @@ export default function DigestionRulesPage() {
                         </div>
                       </div>
                       <p className="mt-1.5 text-[11px] text-slate-500">
-                        Webhook eventType must be <span className="font-mono text-slate-700">{r.eventType}</span>{" "}
-                        or this row is skipped.
+                        Webhook eventType must be{" "}
+                        <span className="font-mono text-slate-700">{r.eventType}</span> or this row
+                        is skipped.
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <span className="rounded-md bg-violet-50 px-1.5 py-0.5 font-mono text-[11px] text-violet-900 ring-1 ring-violet-100">
@@ -1036,8 +1099,8 @@ export default function DigestionRulesPage() {
             </ol>
             {walk.on.length > 0 ? (
               <div className="mt-2 rounded-lg border border-dashed border-rose-200 bg-rose-50/60 px-3 py-2 text-[12px] text-rose-900">
-                ↓ still no bingo after #{walk.on.length} → <span className="font-mono font-semibold">NO_RULE</span>{" "}
-                (SKIPPED, fail queue)
+                ↓ still no bingo after #{walk.on.length} →{" "}
+                <span className="font-mono font-semibold">NO_RULE</span> (SKIPPED, fail queue)
               </div>
             ) : null}
             {walk.off.length ? (

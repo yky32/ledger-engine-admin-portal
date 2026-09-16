@@ -1,11 +1,12 @@
 "use client";
 
+import { Hexagon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navGroups } from "@/lib/nav";
-import { clsx } from "@/lib/format";
-import { Hexagon } from "lucide-react";
+
 import { useEngineHealth, type EngineHealthState } from "@/lib/engine-health";
+import { clsx } from "@/lib/format";
+import { navGroups } from "@/lib/nav";
 
 function EngineBadge({ state }: { state: EngineHealthState }) {
   const online = state === "up";
@@ -46,14 +47,10 @@ export function Sidebar() {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <div className="truncate text-sm font-semibold tracking-tight text-white">
-              LedgeRX
-            </div>
+            <div className="truncate text-sm font-semibold tracking-tight text-white">LedgeRX</div>
             <EngineBadge state={engineState} />
           </div>
-          <div className="truncate text-[11px] text-slate-400">
-            ingest → digest → books → tier
-          </div>
+          <div className="truncate text-[11px] text-slate-400">ingest → digest → books → tier</div>
         </div>
       </div>
 
@@ -111,8 +108,7 @@ export function Sidebar() {
 
       <div className="border-t border-white/5 px-3 py-3 text-[11px] text-slate-500">
         Proxy <code className="text-slate-400">/api/ledger/*</code>
-        <br />
-        → <code className="text-slate-400">LEDGER_ENGINE_URL</code>
+        <br />→ <code className="text-slate-400">LEDGER_ENGINE_URL</code>
       </div>
     </aside>
   );

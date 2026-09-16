@@ -1,8 +1,8 @@
 "use client";
 
-import { Empty } from "@/components/ui/kit";
 import { money } from "@/lib/format";
 import type { WalletAccount } from "@/lib/types";
+import { Empty } from "@/components/ui/kit";
 
 /** DB account COA unique key, then full_number + balances. JSON names = DTO = camelCase of DB. */
 const COA_COLS = [
@@ -76,8 +76,7 @@ function groupAccounts(accounts: WalletAccount[]): { stem: string; rows: WalletA
     map.set(stem, list);
   }
   const keys = [...map.keys()].sort((a, b) => {
-    const rank = (s: string) =>
-      s === "01-02" ? 0 : s === "01-04" ? 1 : s === "01-01" ? 2 : 9;
+    const rank = (s: string) => (s === "01-02" ? 0 : s === "01-04" ? 1 : s === "01-01" ? 2 : 9);
     return rank(a) - rank(b) || a.localeCompare(b);
   });
   return keys.map((stem) => ({
@@ -147,7 +146,9 @@ export function AccountBooksTable({
                 ))}
                 <td className="font-mono text-[10px] text-slate-600">{cell(a.fullNumber)}</td>
                 {showName ? (
-                  <td className="text-xs">{a.name || a.refCode || (a.primary ? "primary" : "—")}</td>
+                  <td className="text-xs">
+                    {a.name || a.refCode || (a.primary ? "primary" : "—")}
+                  </td>
                 ) : null}
                 <td className="font-mono text-xs">{money(a.ledgerBalance)}</td>
                 <td className="font-mono text-xs">{money(a.availableBalance)}</td>

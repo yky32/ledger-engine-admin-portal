@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Badge, Empty, Alert, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { FieldLabel } from "@/components/ui/help";
-import { PageShell } from "@/components/layout/page-shell";
+import { useCallback, useEffect, useState } from "react";
+
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { HOUSE_COA_PRESETS, HOUSE_OWNER_ID, isHouseCoaCode } from "@/lib/recipes";
 import type { WalletAccount } from "@/lib/types";
 import { AccountBooksTable } from "@/components/books/account-books-table";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { FieldLabel } from "@/components/ui/help";
+import { Alert, Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 type CoaRow = {
   id?: number | string;
@@ -69,12 +70,14 @@ export default function CorporateCoaPage() {
   const [house, setHouse] = useState<HouseBooks | null>(null);
 
   const applyHouse = (data: HouseBooks | null, fallbackProfiles?: CoaRow[]) => {
-    const profiles =
-      data?.profiles?.length ? data.profiles : (fallbackProfiles ?? []).filter((x) => isHouseCoaCode(x.code));
+    const profiles = data?.profiles?.length
+      ? data.profiles
+      : (fallbackProfiles ?? []).filter((x) => isHouseCoaCode(x.code));
     setRows(profiles);
     setHouse(data);
     const pick =
-      (selectedId != null && profiles.find((x) => String(x.id) === String(selectedId))) || profiles[0];
+      (selectedId != null && profiles.find((x) => String(x.id) === String(selectedId))) ||
+      profiles[0];
     if (pick?.id != null) {
       setSelectedId(pick.id);
       setForm(formFromRow(pick));
@@ -209,7 +212,9 @@ export default function CorporateCoaPage() {
       const r = await engine.houseEnsure(HOUSE_OWNER_ID);
       const data = r.data as HouseBooks;
       applyHouse(data);
-      setOk(`Company wallet ready · walletId ${data.walletId} · ${data.accounts?.length ?? 0} account(s)`);
+      setOk(
+        `Company wallet ready · walletId ${data.walletId} · ${data.accounts?.length ?? 0} account(s)`,
+      );
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -239,7 +244,6 @@ export default function CorporateCoaPage() {
         </Link>
       }
     >
-
       <Alert tone="info">
         House profiles are chart codes (<code className="text-xs">HOUSE_*</code>), not webhook{" "}
         <code className="text-xs">eventType</code>. Bind <code className="text-xs">CC_TXN</code> on{" "}
@@ -260,7 +264,9 @@ export default function CorporateCoaPage() {
               onClick={() => void createPreset(p)}
               title={p.name}
             >
-              <span className="block font-mono text-[11px] font-semibold text-emerald-900">+ {p.code}</span>
+              <span className="block font-mono text-[11px] font-semibold text-emerald-900">
+                + {p.code}
+              </span>
               <span className="block font-mono text-[10px] text-emerald-800/80">
                 {p.entity}-{p.type}-{p.subType}-{p.buffer} · {p.currency}
               </span>
@@ -269,9 +275,11 @@ export default function CorporateCoaPage() {
         </div>
         <p className="mt-2 text-[11px] text-slate-500">
           UA sheet: entity <span className="font-mono">01 CC</span> · type{" "}
-          <span className="font-mono">02 Operating</span> / <span className="font-mono">04 Expense</span> · subType{" "}
-          <span className="font-mono">02 Corporate</span> · main <span className="font-mono">9999</span>. Member
-          custodian <span className="font-mono">01-01-01</span> stays on Customer COA.
+          <span className="font-mono">02 Operating</span> /{" "}
+          <span className="font-mono">04 Expense</span> · subType{" "}
+          <span className="font-mono">02 Corporate</span> · main{" "}
+          <span className="font-mono">9999</span>. Member custodian{" "}
+          <span className="font-mono">01-01-01</span> stays on Customer COA.
         </p>
       </Card>
 
@@ -394,7 +402,12 @@ export default function CorporateCoaPage() {
             <div className="sm:col-span-2">
               <ActionBar loading={loading} error={error} ok={ok}>
                 {selectedId != null ? (
-                  <button type="button" className="btn-primary" onClick={() => void save()} disabled={loading}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => void save()}
+                    disabled={loading}
+                  >
                     Save
                   </button>
                 ) : (
@@ -418,7 +431,12 @@ export default function CorporateCoaPage() {
                 >
                   New
                 </button>
-                <button type="button" className="btn-secondary" onClick={() => void load()} disabled={loading}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => void load()}
+                  disabled={loading}
+                >
                   Reload
                 </button>
               </ActionBar>
@@ -436,7 +454,9 @@ export default function CorporateCoaPage() {
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Badge tone="ok">wallet assigned</Badge>
             <span className="font-mono text-xs text-slate-700">walletId {walletId}</span>
-            <span className="text-xs text-slate-500">ownerId {house?.ownerId || HOUSE_OWNER_ID}</span>
+            <span className="text-xs text-slate-500">
+              ownerId {house?.ownerId || HOUSE_OWNER_ID}
+            </span>
             <Link
               href={`/wallets-list?ownerId=${encodeURIComponent(house?.ownerId || HOUSE_OWNER_ID)}`}
               className="text-xs text-emerald-700 hover:underline"
@@ -464,7 +484,12 @@ export default function CorporateCoaPage() {
           >
             Ensure company wallet
           </button>
-          <button type="button" className="btn-secondary" onClick={() => void load()} disabled={loading}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => void load()}
+            disabled={loading}
+          >
             Reload
           </button>
         </ActionBar>

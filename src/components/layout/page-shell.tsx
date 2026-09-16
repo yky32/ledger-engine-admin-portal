@@ -1,9 +1,9 @@
 "use client";
 
-import { FlowStrip } from "@/components/layout/flow-strip";
 import { EngineStatusBanner } from "@/components/layout/engine-status-banner";
-import { PageHeader, Alert } from "@/components/ui/kit";
+import { FlowStrip } from "@/components/layout/flow-strip";
 import type { ApiRef } from "@/components/ui/api-path";
+import { Alert, PageHeader } from "@/components/ui/kit";
 
 export type FlowStep = "door" | "brain" | "accounting" | "ledger" | "tier";
 

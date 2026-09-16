@@ -1,19 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Card, JsonBlock } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
+
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Card, JsonBlock } from "@/components/ui/kit";
 
 export default function ConfigurationsPage() {
   const [target, setTarget] = useState("uaa");
   const [scope, setScope] = useState("global");
   const [name, setName] = useState("user-register.otp");
-  const [valueJson, setValueJson] = useState(
-    '{\n  "ttlSec": 300,\n  "resendSec": 60\n}\n',
-  );
+  const [valueJson, setValueJson] = useState('{\n  "ttlSec": 300,\n  "resendSec": 60\n}\n');
   const [data, setData] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +58,11 @@ export default function ConfigurationsPage() {
           <div className="space-y-3">
             <label className="field">
               <span className="field-label">name</span>
-              <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} />
+              <input
+                className="field-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </label>
             <label className="field">
               <span className="field-label">target</span>

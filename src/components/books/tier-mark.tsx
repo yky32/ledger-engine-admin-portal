@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+
 import { clsx } from "@/lib/format";
 
 export function normalizeTier(code?: string | null): string {
@@ -47,13 +48,7 @@ const FALLBACK: Look = {
   text: "text-slate-600",
 };
 
-function MedalSvg({
-  kind,
-  size,
-}: {
-  kind: Look["kind"];
-  size: number;
-}) {
+function MedalSvg({ kind, size }: { kind: Look["kind"]; size: number }) {
   const raw = useId().replace(/:/g, "");
   const g1 = `tm-${raw}-a`;
   const g2 = `tm-${raw}-b`;

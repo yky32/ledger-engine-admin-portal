@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Badge, Empty } from "@/components/ui/kit";
+
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { LedgerLeg } from "@/lib/types";
 import { PageShell } from "@/components/layout/page-shell";
 import { FilterBar } from "@/components/ui/filter-bar";
+import { Badge, Card, Empty } from "@/components/ui/kit";
 
 export default function LegsPage() {
   const [eventId, setEventId] = useState("");
@@ -78,9 +79,7 @@ export default function LegsPage() {
                     <td className="font-mono text-[10px]">{e.entryId}</td>
                     <td className="font-mono text-[10px]">{e.fullNumber || "—"}</td>
                     <td>
-                      <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
-                        {e.direction}
-                      </Badge>
+                      <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>{e.direction}</Badge>
                     </td>
                     <td className="font-mono text-xs">{money(e.amount)}</td>
                     <td>{e.currency}</td>

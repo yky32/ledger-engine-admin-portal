@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import { clsx } from "@/lib/format";
 
 /** Compact flow strip — CC spend: Door → Brain → Accounting → Ledger → Tier */

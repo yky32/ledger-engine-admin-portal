@@ -5,9 +5,9 @@
  */
 import { ledger, qs } from "@/lib/api";
 import type {
-  AsOfBalance,
   AccountingRule,
   AccountingRuleExecution,
+  AsOfBalance,
   CoaDictionaryRow,
   CreateDigestionRuleBody,
   CreateWalletOnboardBody,
@@ -16,13 +16,13 @@ import type {
   FailedIngest,
   HoldReleaseBody,
   IngestPolicy,
-  WalletTierPolicy,
   IngestResult,
   LedgerLeg,
   MovementView,
   TransactionalEventBody,
   TransferBody,
   UseCaseCatalogItem,
+  WalletTierPolicy,
   WalletView,
   WithdrawalBody,
 } from "@/lib/types";
@@ -56,16 +56,13 @@ export const engine = {
   listWallets: () => ledger.get<WalletView[]>("/wallets"),
 
   /** GET /wallets/{ownerId} */
-  getWallet: (ownerId: string) =>
-    ledger.get<WalletView>(`/wallets/${encodeURIComponent(ownerId)}`),
+  getWallet: (ownerId: string) => ledger.get<WalletView>(`/wallets/${encodeURIComponent(ownerId)}`),
 
   /** GET /wallets?ownerId= */
-  getWalletByQuery: (ownerId: string) =>
-    ledger.get<WalletView>(`/wallets${qs({ ownerId })}`),
+  getWalletByQuery: (ownerId: string) => ledger.get<WalletView>(`/wallets${qs({ ownerId })}`),
 
   /** POST /wallets */
-  onboardWallet: (body: CreateWalletOnboardBody) =>
-    ledger.post<WalletView>("/wallets", body),
+  onboardWallet: (body: CreateWalletOnboardBody) => ledger.post<WalletView>("/wallets", body),
 
   /** GET /wallets/{ownerId}/movements?page&size&… */
   movements: (
@@ -179,8 +176,7 @@ export const engine = {
   digestionRules: (params?: { enabledOnly?: boolean; code?: string }) =>
     ledger.get<DigestionRule[] | DigestionRule>(`/digestion-rules${qs(params || {})}`),
 
-  digestionGet: (id: number | string) =>
-    ledger.get<DigestionRule>(`/digestion-rules/${id}`),
+  digestionGet: (id: number | string) => ledger.get<DigestionRule>(`/digestion-rules/${id}`),
 
   /** POST /digestion-rules */
   digestionCreate: (body: CreateDigestionRuleBody | Record<string, unknown>) =>
@@ -197,8 +193,7 @@ export const engine = {
     ledger.post<DigestionRule>(`/digestion-rules/${id}/disable`),
 
   /** DELETE /digestion-rules/{id} */
-  digestionDelete: (id: string | number) =>
-    ledger.delete<unknown>(`/digestion-rules/${id}`),
+  digestionDelete: (id: string | number) => ledger.delete<unknown>(`/digestion-rules/${id}`),
 
   /* ─── Brain: COA profiles (books map) ─── */
   coaProfiles: () => ledger.get("/coa-profiles"),
@@ -215,8 +210,7 @@ export const engine = {
     ledger.post<CoaDictionaryRow>("/coa-dictionary", body),
   coaDictionaryUpdate: (id: string | number, body: Record<string, unknown>) =>
     ledger.put<CoaDictionaryRow>(`/coa-dictionary/${id}`, body),
-  coaDictionaryDelete: (id: string | number) =>
-    ledger.delete<unknown>(`/coa-dictionary/${id}`),
+  coaDictionaryDelete: (id: string | number) => ledger.delete<unknown>(`/coa-dictionary/${id}`),
 
   /** GET /accounting-rules — posting-sequence legs */
   accountingRules: (page = 1, size = 500) =>
@@ -253,8 +247,7 @@ export const engine = {
   houseBooks: () => ledger.get("/corporate-coa"),
 
   /** POST /corporate-coa — createIfNotFound house COA + company wallet + accounts */
-  houseEnsure: (ownerId?: string) =>
-    ledger.post("/corporate-coa", ownerId ? { ownerId } : {}),
+  houseEnsure: (ownerId?: string) => ledger.post("/corporate-coa", ownerId ? { ownerId } : {}),
 
   /* ─── Door ─── */
   /** GET /ingest-policies */
@@ -282,8 +275,7 @@ export const engine = {
     ledger.post<MovementView>("/movements/transfers/in-wallet", body),
 
   /** POST /movements/{id}/refund — reverse DR/CR of a settled EARN/BURN. */
-  refundMovement: (id: number | string) =>
-    ledger.post<MovementView>(`/movements/${id}/refund`, {}),
+  refundMovement: (id: number | string) => ledger.post<MovementView>(`/movements/${id}/refund`, {}),
 
   /* ─── Config ─── */
   /** GET /configurations?target&scope=global */
@@ -291,10 +283,6 @@ export const engine = {
     ledger.get(`/configurations${qs({ target, scope })}`),
 
   /** PUT /configurations  body: name?, target, scope?, value */
-  configPut: (body: {
-    name?: string;
-    target: string;
-    scope?: string;
-    value: unknown;
-  }) => ledger.put("/configurations", body),
+  configPut: (body: { name?: string; target: string; scope?: string; value: unknown }) =>
+    ledger.put("/configurations", body),
 };

@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Card, Badge, Empty, Alert, Spinner } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { engine } from "@/lib/engine";
-import { errMsg, clsx } from "@/lib/format";
-import { EVENT_TYPES, EVENT_TYPE_LABELS, HOUSE_MAIN_ACCOUNT } from "@/lib/recipes";
-import { Chip } from "@/components/factors/gate-ui";
+import { clsx, errMsg } from "@/lib/format";
+import { EVENT_TYPE_LABELS, EVENT_TYPES, HOUSE_MAIN_ACCOUNT } from "@/lib/recipes";
 import type { AccountingRule, AccountingRuleExecution } from "@/lib/types";
+import { Chip } from "@/components/factors/gate-ui";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Alert, Badge, Card, Empty, Spinner } from "@/components/ui/kit";
 
 type CoaRow = {
   code?: string;
@@ -194,7 +195,9 @@ function LegPairCell({ rule }: { rule?: AccountingRule }) {
         <span className="font-mono text-xs font-semibold">{rule.name}</span>
         <Badge tone={dir === "CREDIT" ? "ok" : "error"}>{rule.direction}</Badge>
       </div>
-      <div className="mt-0.5 font-mono text-[11px] text-emerald-800">{rule.targetAccount || "—"}</div>
+      <div className="mt-0.5 font-mono text-[11px] text-emerald-800">
+        {rule.targetAccount || "—"}
+      </div>
       <div className="text-[11px] text-slate-500">
         ×{String(rule.multiplier ?? "1")}
         {rule.description ? ` · ${rule.description}` : ""}
@@ -312,7 +315,9 @@ function TAccount({ book }: { book: BookCell }) {
         <div className="text-xs font-semibold text-slate-800">{book.title}</div>
         <div className="mt-0.5 font-mono text-[10px] text-slate-500">{book.path}</div>
         <div className="mt-1">
-          <Badge tone={book.house ? "info" : "ok"}>{book.house ? "house wallet" : "customer wallet · runtime"}</Badge>
+          <Badge tone={book.house ? "info" : "ok"}>
+            {book.house ? "house wallet" : "customer wallet · runtime"}
+          </Badge>
         </div>
       </div>
       <div className="grid grid-cols-2 divide-x divide-slate-200">
@@ -358,7 +363,9 @@ function SequenceCard({
       description={seq.description}
       right={
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <Badge tone={seq.live ? "ok" : "warn"}>{seq.live ? "live DB" : "spec (not in DB yet)"}</Badge>
+          <Badge tone={seq.live ? "ok" : "warn"}>
+            {seq.live ? "live DB" : "spec (not in DB yet)"}
+          </Badge>
           <Badge>{seq.eventType}</Badge>
           <Badge tone="neutral">{seq.orderType}</Badge>
         </div>
@@ -390,13 +397,15 @@ function SequenceCard({
         ))}
       </div>
       <p className="mt-3 text-[11px] text-slate-500">
-        <code className="text-[10px]">xxxxxxxx</code> is the wallet main account — customer books resolve at
-        runtime (different account id per CUST). House operating uses the company wallet (
-        {HOUSE_MAIN_ACCOUNT}).
+        <code className="text-[10px]">xxxxxxxx</code> is the wallet main account — customer books
+        resolve at runtime (different account id per CUST). House operating uses the company wallet
+        ({HOUSE_MAIN_ACCOUNT}).
       </p>
       {seq.live && seq.eventType && !seq.eventType.startsWith("(") && onBind ? (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Switch combo</span>
+          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            Switch combo
+          </span>
           <select
             className="field-select max-w-xs text-xs"
             value={seq.id || ""}
@@ -596,7 +605,6 @@ export default function AccountingRulesPage() {
         </ActionBar>
       }
     >
-
       <Alert tone="info">
         Product use cases:{" "}
         <Link href="/use-cases" className="underline">
@@ -607,38 +615,62 @@ export default function AccountingRulesPage() {
           CC Transaction → LP
         </Link>
         . Legs are reusable. An <strong>execution</strong> is an ordered combination. Binding{" "}
-        <code className="text-xs">eventType</code> makes that combo live for ingest — previous binding for
-        the same eventType is cleared.
+        <code className="text-xs">eventType</code> makes that combo live for ingest — previous
+        binding for the same eventType is cleared.
       </Alert>
 
       <div className="mt-4 space-y-4">
         {loading && shown.length === 0 ? <Spinner label="Loading posting sequences…" /> : null}
         {shown.map((s) => (
-          <SequenceCard key={s.key} seq={s} combos={executions} onBind={(id, et) => void bind(id, et)} />
+          <SequenceCard
+            key={s.key}
+            seq={s}
+            combos={executions}
+            onBind={(id, et) => void bind(id, et)}
+          />
         ))}
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="New leg" description="POST /accounting-rules — one CR or DR template. targetAccount is a COA code.">
+        <Card
+          title="New leg"
+          description="POST /accounting-rules — one CR or DR template. targetAccount is a COA code."
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="field">
               <span className="field-label">Name</span>
-              <input className="field-input" value={legName} onChange={(e) => setLegName(e.target.value)} />
+              <input
+                className="field-input"
+                value={legName}
+                onChange={(e) => setLegName(e.target.value)}
+              />
             </label>
             <label className="field">
               <span className="field-label">Direction</span>
-              <select className="field-select" value={legDir} onChange={(e) => setLegDir(e.target.value as "CREDIT" | "DEBIT")}>
+              <select
+                className="field-select"
+                value={legDir}
+                onChange={(e) => setLegDir(e.target.value as "CREDIT" | "DEBIT")}
+              >
                 <option value="CREDIT">CREDIT</option>
                 <option value="DEBIT">DEBIT</option>
               </select>
             </label>
             <label className="field">
               <span className="field-label">Multiplier</span>
-              <input className="field-input" value={legMult} onChange={(e) => setLegMult(e.target.value)} />
+              <input
+                className="field-input"
+                value={legMult}
+                onChange={(e) => setLegMult(e.target.value)}
+              />
             </label>
             <label className="field">
               <span className="field-label">COA targetAccount</span>
-              <select className="field-select" value={legCoa} onChange={(e) => setLegCoa(e.target.value)}>
+              <select
+                className="field-select"
+                value={legCoa}
+                onChange={(e) => setLegCoa(e.target.value)}
+              >
                 <option value="">Select COA…</option>
                 {coa.map((p) => (
                   <option key={p.code} value={p.code}>
@@ -649,10 +681,18 @@ export default function AccountingRulesPage() {
             </label>
             <label className="field sm:col-span-2">
               <span className="field-label">Description</span>
-              <input className="field-input" value={legDesc} onChange={(e) => setLegDesc(e.target.value)} />
+              <input
+                className="field-input"
+                value={legDesc}
+                onChange={(e) => setLegDesc(e.target.value)}
+              />
             </label>
           </div>
-          <button type="button" className="btn-primary mt-3 text-xs" onClick={() => void createLeg()}>
+          <button
+            type="button"
+            className="btn-primary mt-3 text-xs"
+            onClick={() => void createLeg()}
+          >
             Create leg
           </button>
         </Card>
@@ -664,11 +704,19 @@ export default function AccountingRulesPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="field">
               <span className="field-label">Name</span>
-              <input className="field-input" value={comboName} onChange={(e) => setComboName(e.target.value)} />
+              <input
+                className="field-input"
+                value={comboName}
+                onChange={(e) => setComboName(e.target.value)}
+              />
             </label>
             <label className="field">
               <span className="field-label">Order type</span>
-              <select className="field-select" value={comboOrder} onChange={(e) => setComboOrder(e.target.value)}>
+              <select
+                className="field-select"
+                value={comboOrder}
+                onChange={(e) => setComboOrder(e.target.value)}
+              >
                 <option value="EARN">EARN</option>
                 <option value="BURN">BURN</option>
                 <option value="ADJUSTMENT">ADJUSTMENT</option>
@@ -699,7 +747,11 @@ export default function AccountingRulesPage() {
           <div className="mt-3 flex flex-wrap items-end gap-2">
             <label className="field min-w-[12rem] flex-1">
               <span className="field-label">Add leg</span>
-              <select className="field-select" value={comboPick} onChange={(e) => setComboPick(e.target.value)}>
+              <select
+                className="field-select"
+                value={comboPick}
+                onChange={(e) => setComboPick(e.target.value)}
+              >
                 <option value="">Select a leg…</option>
                 {rules.map((r) => (
                   <option key={String(r.id)} value={String(r.id)}>
@@ -746,7 +798,11 @@ export default function AccountingRulesPage() {
           ) : (
             <p className="mt-2 text-xs text-slate-500">Walk is empty — add CR/DR legs in order.</p>
           )}
-          <button type="button" className="btn-primary mt-3 text-xs" onClick={() => void createCombo()}>
+          <button
+            type="button"
+            className="btn-primary mt-3 text-xs"
+            onClick={() => void createCombo()}
+          >
             Create combination
           </button>
         </Card>
@@ -799,7 +855,9 @@ export default function AccountingRulesPage() {
       </Card>
 
       {bound.length === 0 && executions.length > 0 ? (
-        <p className="mt-3 text-xs text-slate-500">{executions.length} combination(s) stored, none bound to an eventType yet.</p>
+        <p className="mt-3 text-xs text-slate-500">
+          {executions.length} combination(s) stored, none bound to an eventType yet.
+        </p>
       ) : null}
     </PageShell>
   );

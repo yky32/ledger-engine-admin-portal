@@ -1,6 +1,6 @@
 import { engine } from "@/lib/engine";
 import { errMsg, isConflictError } from "@/lib/format";
-import { COA_PRESETS, EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/recipes";
+import { COA_PRESETS, EVENT_TYPE_LABELS, EVENT_TYPES } from "@/lib/recipes";
 import type { DigestionRule } from "@/lib/types";
 
 export type SanityStep = {
@@ -60,7 +60,9 @@ async function setupCoa(): Promise<string> {
       if (!isConflictError(e)) throw e;
     }
   }
-  return created.length ? `HOUSE + ${created.join(", ")}` : "HOUSE + customer 01-01-01 already present";
+  return created.length
+    ? `HOUSE + ${created.join(", ")}`
+    : "HOUSE + customer 01-01-01 already present";
 }
 
 /** UA accounting sequences (CC_TXN_LP / HKD). */

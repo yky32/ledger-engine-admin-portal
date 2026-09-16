@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 
-const ledgerUrl =
-  process.env.LEDGER_ENGINE_URL?.replace(/\/$/, "") || "http://localhost:8080";
+const ledgerUrl = process.env.LEDGER_ENGINE_URL?.replace(/\/$/, "") || "http://localhost:8080";
 
 const nextConfig: NextConfig = {
+  // Standalone output: server.js + minimal node_modules (no `next start` runtime needed).
+  output: "standalone",
+
   async rewrites() {
     return [
       {

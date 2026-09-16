@@ -31,14 +31,14 @@ http://localhost:3000 → Home → Webhook / Wallets / Tiering.
 
 ## Key routes
 
-| Step | Route | Engine API |
-|------|-------|------------|
-| 1 Door | `/ingest-policies` | GET/PUT `/ingest-policies` |
-| 2 Brain | `/digestion-rules` | `/digestion-rules` |
-| 3 Books | `/accounting-rules` · `/wallets-list` | CR/DR · GET `/wallets` |
-| 4 Tier | `/wallet-tier-policies` | GET/PUT `/wallet-tier-policies` |
-| — | `/capability` | Reward System row vs slide |
-| Shoot | `/transactions-ingest` | POST webhook |
-| Fail | `/failed-transactions` | review / replay |
+| Step    | Route                                 | Engine API                      |
+| ------- | ------------------------------------- | ------------------------------- |
+| 1 Door  | `/ingest-policies`                    | GET/PUT `/ingest-policies`      |
+| 2 Brain | `/digestion-rules`                    | `/digestion-rules`              |
+| 3 Books | `/accounting-rules` · `/wallets-list` | CR/DR · GET `/wallets`          |
+| 4 Tier  | `/wallet-tier-policies`               | GET/PUT `/wallet-tier-policies` |
+| —       | `/capability`                         | Reward System row vs slide      |
+| Shoot   | `/transactions-ingest`                | POST webhook                    |
+| Fail    | `/failed-transactions`                | review / replay                 |
 
 Each main screen shows the **Flow** strip (Door → Brain → Accounting → Ledger → Tier).

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowDown, ArrowRight } from "lucide-react";
-import { Badge, Card } from "@/components/ui/kit";
+import Link from "next/link";
+
 import {
   CAP_STATUS_LABEL,
   PRESENTED_CASES,
@@ -10,10 +10,17 @@ import {
   type CapStatus,
   type CaseVerdict,
 } from "@/lib/capability";
+import { Badge, Card } from "@/components/ui/kit";
 
 function StatusChip({ status }: { status: CapStatus }) {
   const tone =
-    status === "live" ? "ok" : status === "partial" ? "info" : status === "named" ? "warn" : "neutral";
+    status === "live"
+      ? "ok"
+      : status === "partial"
+        ? "info"
+        : status === "named"
+          ? "warn"
+          : "neutral";
   return <Badge tone={tone}>{CAP_STATUS_LABEL[status]}</Badge>;
 }
 
@@ -30,7 +37,9 @@ function LaneCard({
 }) {
   return (
     <div className="rounded-2xl border border-sky-200/80 bg-white p-3 shadow-sm">
-      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
+      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {title}
+      </h3>
       <ul className="space-y-1.5">
         {items.map((it) => {
           const inner = (
@@ -47,12 +56,12 @@ function LaneCard({
               {it.href ? (
                 <Link
                   href={it.href}
-                  className="block rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-sky-50"
+                  className="-mx-1.5 block rounded-lg px-1.5 py-1 hover:bg-sky-50"
                 >
                   {inner}
                 </Link>
               ) : (
-                <div className="px-1.5 py-1 -mx-1.5">{inner}</div>
+                <div className="-mx-1.5 px-1.5 py-1">{inner}</div>
               )}
             </li>
           );
@@ -72,7 +81,9 @@ export function CapabilityStatement() {
       <AlertScope />
 
       <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Not us · product</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          Not us · product
+        </p>
         <p className="mt-1 text-sm text-slate-600">
           Credit Card Experience APIs · Loan Reward · E6 / card partner. They send{" "}
           <code className="text-xs">CC_TXN</code> / <code className="text-xs">LN_TXN</code>.
@@ -113,7 +124,8 @@ export function CapabilityStatement() {
           Not us · sibling
         </p>
         <p className="mt-1 text-sm text-slate-600">
-          Digital Coupon System (catalog, issuance, COD / YUU / Mannings). Stays outside this engine.
+          Digital Coupon System (catalog, issuance, COD / YUU / Mannings). Stays outside this
+          engine.
         </p>
       </div>
 
@@ -123,10 +135,7 @@ export function CapabilityStatement() {
       >
         <div className="space-y-3">
           {PRESENTED_CASES.map((c) => (
-            <div
-              key={c.id}
-              className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-3"
-            >
+            <div key={c.id} className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold text-slate-900">{c.title}</h3>
                 <VerdictChip verdict={c.verdict} />
@@ -134,7 +143,10 @@ export function CapabilityStatement() {
               <p className="mt-1 text-xs leading-relaxed text-slate-600">{c.how}</p>
               {c.note ? <p className="mt-1 text-[11px] text-slate-500">{c.note}</p> : null}
               {c.href ? (
-                <Link href={c.href} className="mt-2 inline-flex text-xs text-emerald-700 hover:underline">
+                <Link
+                  href={c.href}
+                  className="mt-2 inline-flex text-xs text-emerald-700 hover:underline"
+                >
                   Open {c.href}
                   <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </Link>
@@ -178,8 +190,8 @@ export function CapabilityStatement() {
           </table>
         </div>
         <p className="mt-3 text-[11px] text-slate-500">
-          Named = on the slide / API token, not booked yet. Slide only = box on the architecture, no engine
-          surface.
+          Named = on the slide / API token, not booked yet. Slide only = box on the architecture, no
+          engine surface.
         </p>
       </Card>
     </div>
@@ -189,8 +201,8 @@ export function CapabilityStatement() {
 function AlertScope() {
   return (
     <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm text-sky-950">
-      LedgeRX is the <strong>Reward System</strong> row. Upstream is CC / Loan via Kafka or REST. Coupon
-      catalog and redemption are a sibling system.
+      LedgeRX is the <strong>Reward System</strong> row. Upstream is CC / Loan via Kafka or REST.
+      Coupon catalog and redemption are a sibling system.
     </div>
   );
 }

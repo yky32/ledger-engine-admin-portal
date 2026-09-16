@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, Badge, Empty } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
-import { FilterBar } from "@/components/ui/filter-bar";
-import { CoaHero } from "@/components/books/coa-hero";
-import { engine } from "@/lib/engine";
-import { errMsg, clsx } from "@/lib/format";
-import type { CoaDictionaryRow } from "@/lib/types";
 import { Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { engine } from "@/lib/engine";
+import { clsx, errMsg } from "@/lib/format";
+import type { CoaDictionaryRow } from "@/lib/types";
+import { CoaHero } from "@/components/books/coa-hero";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { FilterBar } from "@/components/ui/filter-bar";
+import { Badge, Card, Empty } from "@/components/ui/kit";
 
 const KIND_ORDER = ["STEM", "PATH", "ENTITY", "TYPE", "SUB_TYPE", "BUFFER"] as const;
 
@@ -25,7 +26,11 @@ const KIND_LABEL: Record<string, string> = {
 const SIDES = ["BOTH", "HOUSE", "CUSTOMER"] as const;
 
 function asList(data: unknown): CoaDictionaryRow[] {
-  return Array.isArray(data) ? (data as CoaDictionaryRow[]) : data ? [data as CoaDictionaryRow] : [];
+  return Array.isArray(data)
+    ? (data as CoaDictionaryRow[])
+    : data
+      ? [data as CoaDictionaryRow]
+      : [];
 }
 
 export default function CoaDictionaryPage() {
@@ -96,7 +101,9 @@ export default function CoaDictionaryPage() {
     });
     return keys.map((kind) => ({
       kind,
-      rows: (map.get(kind) ?? []).slice().sort((a, b) => String(a.code).localeCompare(String(b.code))),
+      rows: (map.get(kind) ?? [])
+        .slice()
+        .sort((a, b) => String(a.code).localeCompare(String(b.code))),
     }));
   }, [filtered]);
 
@@ -204,7 +211,12 @@ export default function CoaDictionaryPage() {
         { method: "POST", path: "/coa-dictionary/ensure" },
       ]}
       actions={
-        <button type="button" className="btn-secondary text-xs" onClick={() => void seed()} disabled={loading}>
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={() => void seed()}
+          disabled={loading}
+        >
           Seed UA dictionary
         </button>
       }
@@ -246,7 +258,11 @@ export default function CoaDictionaryPage() {
             <Empty>{loading ? "Loading…" : "No dictionary rows — Seed UA dictionary."}</Empty>
           ) : (
             groups.map((g) => (
-              <Card key={g.kind} title={KIND_LABEL[g.kind] || g.kind} description={`${g.rows.length} definition(s)`}>
+              <Card
+                key={g.kind}
+                title={KIND_LABEL[g.kind] || g.kind}
+                description={`${g.rows.length} definition(s)`}
+              >
                 <div className="table-wrap">
                   <table className="data-table">
                     <thead>
@@ -269,12 +285,18 @@ export default function CoaDictionaryPage() {
                           )}
                           onClick={() => pick(r)}
                         >
-                          <td className="whitespace-nowrap font-mono text-xs font-semibold">{r.code}</td>
+                          <td className="whitespace-nowrap font-mono text-xs font-semibold">
+                            {r.code}
+                          </td>
                           <td className="text-xs">{r.name || "—"}</td>
                           <td>
                             <Badge
                               tone={
-                                r.side === "HOUSE" ? "info" : r.side === "CUSTOMER" ? "ok" : "neutral"
+                                r.side === "HOUSE"
+                                  ? "info"
+                                  : r.side === "CUSTOMER"
+                                    ? "ok"
+                                    : "neutral"
                               }
                             >
                               {r.side || "—"}
