@@ -17,8 +17,8 @@ export function RefundHow() {
       </h2>
       <p className="mt-1 max-w-3xl text-sm text-slate-600">
         Same engine path either way: find the settled earn/burn, post{" "}
-        <span className="font-mono text-xs">ADJUSTMENT_REFUND</span> with DR/CR swapped.
-        Do not send a second earn. Amount on the refund event is not re-scored.
+        <span className="font-mono text-xs">ADJUSTMENT_REFUND</span> with DR/CR swapped. Do not send
+        a second earn. Amount on the refund event is not re-scored.
       </p>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -27,8 +27,8 @@ export function RefundHow() {
             1 · Upstream refund event
           </div>
           <p className="mt-1 text-sm text-slate-800">
-            Same <span className="font-mono text-xs">eventType</span> as the spend.
-            Split <span className="font-mono text-xs">action=REFUND</span> + pointer.
+            Same <span className="font-mono text-xs">eventType</span> as the spend. Split{" "}
+            <span className="font-mono text-xs">action=REFUND</span> + pointer.
           </p>
           <pre className="scrollbar-thin mt-2 overflow-auto rounded-lg bg-slate-950 p-3 font-mono text-[11px] leading-relaxed text-emerald-100/90">{`POST /integrations/webhooks/transactions
 {
@@ -52,23 +52,33 @@ export function RefundHow() {
               <tbody className="font-mono text-slate-800">
                 <tr className="border-t border-slate-100">
                   <td className="px-2 py-1">SPEND</td>
-                  <td className="px-2 py-1 font-sans text-slate-600">omit on first fire · Door → Brain</td>
+                  <td className="px-2 py-1 font-sans text-slate-600">
+                    omit on first fire · Door → Brain
+                  </td>
                 </tr>
                 <tr className="border-t border-slate-100">
                   <td className="px-2 py-1">REFUND / VOID / CHARGEBACK</td>
-                  <td className="px-2 py-1 font-sans text-slate-600">full reverse of originalEventId</td>
+                  <td className="px-2 py-1 font-sans text-slate-600">
+                    full reverse of originalEventId
+                  </td>
                 </tr>
                 <tr className="border-t border-slate-100">
                   <td className="px-2 py-1">PARTIAL / ADJUST</td>
-                  <td className="px-2 py-1 font-sans text-slate-600">recognised · not booked yet</td>
+                  <td className="px-2 py-1 font-sans text-slate-600">
+                    recognised · not booked yet
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="mt-2 text-[12px] text-slate-500">
-            Keep <span className="font-mono">eventType=CC_TXN</span>. Amount on a reverse is not re-scored.
+            Keep <span className="font-mono">eventType=CC_TXN</span>. Amount on a reverse is not
+            re-scored.
           </p>
-          <Link href="/transactions-ingest" className="mt-2 inline-block text-xs font-medium text-emerald-700 hover:underline">
+          <Link
+            href="/transactions-ingest"
+            className="mt-2 inline-block text-xs font-medium text-emerald-700 hover:underline"
+          >
             Open Webhook →
           </Link>
         </div>
@@ -90,7 +100,10 @@ export function RefundHow() {
             Idempotent: second call returns the existing refund (
             <span className="font-mono">{"{movementKey}-refund"}</span>).
           </p>
-          <Link href="/wallets-list" className="mt-2 inline-block text-xs font-medium text-emerald-700 hover:underline">
+          <Link
+            href="/wallets-list"
+            className="mt-2 inline-block text-xs font-medium text-emerald-700 hover:underline"
+          >
             Open Wallets →
           </Link>
         </div>

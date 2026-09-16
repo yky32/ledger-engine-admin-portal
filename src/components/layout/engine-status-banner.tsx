@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert } from "@/components/ui/kit";
 import { useEngineHealth } from "@/lib/engine-health";
+import { Alert } from "@/components/ui/kit";
 
 /** Soft banner — engine down / URL misconfigured (shows on pages that need API). */
 export function EngineStatusBanner() {

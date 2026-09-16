@@ -77,9 +77,7 @@ export function Alert({
     warn: "border-amber-200 bg-amber-50 text-amber-950",
     error: "border-rose-200 bg-rose-50 text-rose-900",
   }[tone];
-  return (
-    <div className={clsx("rounded-xl border px-3 py-2.5 text-sm", styles)}>{children}</div>
-  );
+  return <div className={clsx("rounded-xl border px-3 py-2.5 text-sm", styles)}>{children}</div>;
 }
 
 export function Badge({
@@ -101,7 +99,7 @@ export function Badge({
 
 export function JsonBlock({ value, maxHeight = 320 }: { value: unknown; maxHeight?: number }) {
   const text =
-    typeof value === "string" ? value : JSON.stringify(value, null, 2) ?? String(value);
+    typeof value === "string" ? value : (JSON.stringify(value, null, 2) ?? String(value));
   return (
     <pre
       className="scrollbar-thin overflow-auto rounded-xl bg-slate-950 p-3 font-mono text-[11px] leading-relaxed text-emerald-100/90"

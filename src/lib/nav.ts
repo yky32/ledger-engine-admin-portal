@@ -1,29 +1,29 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Wallet,
-  ArrowLeftRight,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Settings2,
-  Webhook,
-  CreditCard,
-  Brain,
-  DoorOpen,
   AlertTriangle,
-  Search,
-  Lock,
-  ListTree,
-  FlaskConical,
-  Workflow,
-  Database,
-  Sparkles,
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ArrowUpFromLine,
+  Brain,
   Building2,
-  Users,
-  Scale,
-  Library,
-  UserPlus,
-  Medal,
+  CreditCard,
+  Database,
+  DoorOpen,
+  FlaskConical,
   Layers,
+  Library,
+  ListTree,
+  Lock,
+  Medal,
+  Scale,
+  Search,
+  Settings2,
+  Sparkles,
+  UserPlus,
+  Users,
+  Wallet,
+  Webhook,
+  Workflow,
 } from "lucide-react";
 
 /**
@@ -221,7 +221,5 @@ export function navGroups(): { name: string; items: NavItem[] }[] {
     map.get(item.group)!.push(item);
   }
   const order = ["Home", "Run", "Books", "Pipeline", "Chart", "Rails", "More"];
-  return order
-    .filter((n) => map.has(n))
-    .map((name) => ({ name, items: map.get(name)! }));
+  return order.filter((n) => map.has(n)).map((name) => ({ name, items: map.get(name)! }));
 }

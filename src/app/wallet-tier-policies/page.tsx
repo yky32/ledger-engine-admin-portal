@@ -1,15 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Card, Alert, JsonBlock, Badge } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { PageShell } from "@/components/layout/page-shell";
-import { CcTxnPath } from "@/components/books/cc-txn-path";
-import { TierMark } from "@/components/books/tier-mark";
+
 import { engine } from "@/lib/engine";
 import { errMsg } from "@/lib/format";
 import { setupTier } from "@/lib/sanity-setup";
 import type { WalletTierBand, WalletTierPolicy } from "@/lib/types";
+import { CcTxnPath } from "@/components/books/cc-txn-path";
+import { TierMark } from "@/components/books/tier-mark";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { Alert, Badge, Card, JsonBlock } from "@/components/ui/kit";
 
 const emptyBand = (): WalletTierBand => ({ code: "", upgradeAt: "0", downgradeBelow: "" });
 
@@ -121,7 +122,8 @@ export default function WalletTierPoliciesPage() {
       <CcTxnPath />
       <Alert tone="info">
         Amount total = sum of this wallet’s <code className="text-xs">ledgerBalance</code> in{" "}
-        <code className="text-xs">{currency || "LP"}</code> (via <code className="text-xs">account.walletId</code>
+        <code className="text-xs">{currency || "LP"}</code> (via{" "}
+        <code className="text-xs">account.walletId</code>
         ). Upgrade at <code className="text-xs">upgradeAt</code>; drop when below{" "}
         <code className="text-xs">downgradeBelow</code> (blank = use upgradeAt). HOUSE skipped.
         Click <strong>Enabled</strong> then <strong>Save</strong> to start. Changing bands does not
@@ -220,16 +222,24 @@ export default function WalletTierPoliciesPage() {
 
           <div className="mt-4">
             <ActionBar loading={loading} error={error}>
-              <button type="button" className="btn-secondary" onClick={() => void load()} disabled={loading}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => void load()}
+                disabled={loading}
+              >
                 Reload
               </button>
-              <button type="button" className="btn-primary" onClick={() => void save()} disabled={loading}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => void save()}
+                disabled={loading}
+              >
                 Save
               </button>
             </ActionBar>
-            {ok ? (
-              <p className="mt-2 text-xs text-emerald-700">{ok}</p>
-            ) : null}
+            {ok ? <p className="mt-2 text-xs text-emerald-700">{ok}</p> : null}
           </div>
         </Card>
         <Card

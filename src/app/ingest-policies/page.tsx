@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Card, Badge, JsonBlock, Alert } from "@/components/ui/kit";
-import { ActionBar } from "@/components/ui/action";
-import { FieldLabel } from "@/components/ui/help";
-import { PageShell } from "@/components/layout/page-shell";
-import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
-import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+import { engine } from "@/lib/engine";
 import {
   DOOR_FACTOR_PRESETS,
   EMPTY_FACTOR_GATE,
@@ -20,9 +16,14 @@ import {
   parseFactorJson,
   type FactorGate,
 } from "@/lib/factors";
-import { engine } from "@/lib/engine";
-import { errMsg, clsx } from "@/lib/format";
+import { clsx, errMsg } from "@/lib/format";
 import type { IngestPolicy } from "@/lib/types";
+import { FactorJsonEditor } from "@/components/factors/factor-json-editor";
+import { AndGateGrid, Chip, StepHead } from "@/components/factors/gate-ui";
+import { PageShell } from "@/components/layout/page-shell";
+import { ActionBar } from "@/components/ui/action";
+import { FieldLabel } from "@/components/ui/help";
+import { Alert, Badge, Card, JsonBlock } from "@/components/ui/kit";
 
 const TIPS = {
   settlement: {
@@ -36,7 +37,14 @@ const TIPS = {
 } as const;
 
 const GATE_PRESETS: Record<string, FactorGate> = {
-  demoCc: { ...EMPTY_FACTOR_GATE, mccs: "101", currencies: "HKD", ageLte: "30", amtMin: "1", eventTypes: "CC_TXN" },
+  demoCc: {
+    ...EMPTY_FACTOR_GATE,
+    mccs: "101",
+    currencies: "HKD",
+    ageLte: "30",
+    amtMin: "1",
+    eventTypes: "CC_TXN",
+  },
   grocery: {
     ...EMPTY_FACTOR_GATE,
     mccs: "5411,5412",
@@ -225,13 +233,17 @@ export default function IngestPolicyPage() {
         { method: "PUT", path: "/ingest-policies" },
       ]}
       actions={
-        <button type="button" className="btn-primary text-xs" onClick={() => void quickAllAny()} disabled={loading}>
+        <button
+          type="button"
+          className="btn-primary text-xs"
+          onClick={() => void quickAllAny()}
+          disabled={loading}
+        >
           Quick action · all any
         </button>
       }
       ok={ok}
     >
-
       {!policy ? (
         <ActionBar loading={loading} error={error}>
           <button type="button" className="btn-secondary" onClick={() => void load()}>
@@ -250,7 +262,9 @@ export default function IngestPolicyPage() {
           >
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={policy.isEnabled ? "ok" : "error"}>{policy.isEnabled ? "OPEN" : "CLOSED"}</Badge>
+                <Badge tone={policy.isEnabled ? "ok" : "error"}>
+                  {policy.isEnabled ? "OPEN" : "CLOSED"}
+                </Badge>
                 {policy.isAutoCreateWallet ? (
                   <Badge tone="info">auto-wallet HKD+LP</Badge>
                 ) : (
@@ -259,7 +273,10 @@ export default function IngestPolicyPage() {
               </div>
               <p className="mt-1.5 max-w-2xl text-sm text-slate-700">{sentence}</p>
             </div>
-            <Link href="/digestion-rules" className="text-xs font-medium text-emerald-700 hover:underline">
+            <Link
+              href="/digestion-rules"
+              className="text-xs font-medium text-emerald-700 hover:underline"
+            >
               Brain scores next →
             </Link>
           </div>
@@ -270,7 +287,12 @@ export default function IngestPolicyPage() {
             description="Empty gate = admit anyone. Chips write entryFactors live — no Apply."
           >
             <div className="mb-3">
-              <StepHead n={1} title="Master switch" sub="Kill-switch for all inbound webhooks" tone="emerald" />
+              <StepHead
+                n={1}
+                title="Master switch"
+                sub="Kill-switch for all inbound webhooks"
+                tone="emerald"
+              />
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Choice
@@ -295,7 +317,12 @@ export default function IngestPolicyPage() {
             <hr className="my-5 border-slate-100" />
 
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <StepHead n={2} title="Who may enter" sub="AND — skip a gate to allow any" tone="emerald" />
+              <StepHead
+                n={2}
+                title="Who may enter"
+                sub="AND — skip a gate to allow any"
+                tone="emerald"
+              />
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
@@ -343,7 +370,9 @@ export default function IngestPolicyPage() {
             <AndGateGrid gate={gate} onChange={patchGate} tone="emerald" />
 
             <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Channel</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Channel
+              </div>
               <div className="mt-1 truncate font-mono text-lg font-semibold text-slate-900">
                 {gate.channel?.trim() || "any"}
               </div>
@@ -392,7 +421,9 @@ export default function IngestPolicyPage() {
                       .filter((b) => !b.startsWith("any "))
                       .map((bit, i) => (
                         <span key={bit} className="inline-flex items-center gap-1.5">
-                          {i > 0 ? <span className="text-[10px] font-bold text-emerald-400">AND</span> : null}
+                          {i > 0 ? (
+                            <span className="text-[10px] font-bold text-emerald-400">AND</span>
+                          ) : null}
                           <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-[12px] ring-1 ring-emerald-200">
                             {bit}
                           </span>
@@ -410,7 +441,11 @@ export default function IngestPolicyPage() {
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
               onClick={() => setAdvanced((v) => !v)}
             >
-              {advanced ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {advanced ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
               Advanced JSON
             </button>
             {advanced ? (
@@ -462,7 +497,8 @@ export default function IngestPolicyPage() {
             {policy.isAutoCreateWallet ? (
               <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-3">
                 <p className="font-mono text-sm font-semibold text-emerald-900">
-                  {(policy.autoWalletNamePrefix || "") + "01A…"} → settlement HKD · 01-01-01 HKD + LP
+                  {(policy.autoWalletNamePrefix || "") + "01A…"} → settlement HKD · 01-01-01 HKD +
+                  LP
                 </p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
@@ -528,7 +564,11 @@ export default function IngestPolicyPage() {
                   className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800/70 hover:text-emerald-950"
                   onClick={() => setOnboardExtra((v) => !v)}
                 >
-                  {onboardExtra ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  {onboardExtra ? (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  )}
                   Name, source label, COA
                 </button>
                 {onboardExtra ? (
@@ -538,7 +578,9 @@ export default function IngestPolicyPage() {
                       <input
                         className="field-input text-xs"
                         value={String(policy.autoWalletNamePrefix ?? "")}
-                        onChange={(e) => setPolicy({ ...policy, autoWalletNamePrefix: e.target.value })}
+                        onChange={(e) =>
+                          setPolicy({ ...policy, autoWalletNamePrefix: e.target.value })
+                        }
                         placeholder="Demo "
                       />
                     </label>
@@ -547,7 +589,9 @@ export default function IngestPolicyPage() {
                       <input
                         className="field-input text-xs"
                         value={String(policy.autoWalletAssociatedFrom ?? "")}
-                        onChange={(e) => setPolicy({ ...policy, autoWalletAssociatedFrom: e.target.value })}
+                        onChange={(e) =>
+                          setPolicy({ ...policy, autoWalletAssociatedFrom: e.target.value })
+                        }
                         placeholder="POS"
                       />
                     </label>
@@ -556,7 +600,9 @@ export default function IngestPolicyPage() {
                       <input
                         className="field-input font-mono text-xs"
                         value={String(policy.autoWalletCoaProfileCode ?? "")}
-                        onChange={(e) => setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })}
+                        onChange={(e) =>
+                          setPolicy({ ...policy, autoWalletCoaProfileCode: e.target.value })
+                        }
                         placeholder="CUSTOMER_CUST_LP"
                       />
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -616,7 +662,11 @@ export default function IngestPolicyPage() {
               className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
               onClick={() => setShowJson((v) => !v)}
             >
-              {showJson ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {showJson ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
               DB JSON
             </button>
             {showJson ? (

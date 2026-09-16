@@ -1,19 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Card, Badge, Empty, JsonBlock, ApiPath } from "@/components/ui/kit";
-import { PageShell } from "@/components/layout/page-shell";
-import { FilterBar } from "@/components/ui/filter-bar";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { engine } from "@/lib/engine";
-import { errMsg, money, shortId, clsx } from "@/lib/format";
+import { clsx, errMsg, money, shortId } from "@/lib/format";
 import { rememberOwnerId } from "@/lib/owner-memory";
 import type { LedgerLeg, MovementView, WalletAccount, WalletView } from "@/lib/types";
 import { AccountBooksTable } from "@/components/books/account-books-table";
 import { RefundHow } from "@/components/books/refund-how";
 import { TierMark } from "@/components/books/tier-mark";
 import { Chip } from "@/components/factors/gate-ui";
+import { PageShell } from "@/components/layout/page-shell";
+import { FilterBar } from "@/components/ui/filter-bar";
+import { ApiPath, Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 /** Wallet table columns = DB / JSON names (GET /wallets). */
 const WALLET_COLS: { key: keyof WalletView; label: string; mono?: boolean }[] = [
@@ -389,7 +390,9 @@ export default function WalletsQueryListPage() {
                   <tr
                     key={r.walletId ?? r.ownerId ?? i}
                     className={
-                      selected?.ownerId === r.ownerId ? "cursor-pointer bg-emerald-50" : "cursor-pointer"
+                      selected?.ownerId === r.ownerId
+                        ? "cursor-pointer bg-emerald-50"
+                        : "cursor-pointer"
                     }
                     onClick={() => void openWallet(r)}
                   >
@@ -398,7 +401,9 @@ export default function WalletsQueryListPage() {
                       if (c.key === "status") {
                         return (
                           <td key={c.key}>
-                            <Badge tone={r.status === "ACTIVE" ? "ok" : "neutral"}>{r.status || "—"}</Badge>
+                            <Badge tone={r.status === "ACTIVE" ? "ok" : "neutral"}>
+                              {r.status || "—"}
+                            </Badge>
                           </td>
                         );
                       }
@@ -412,7 +417,13 @@ export default function WalletsQueryListPage() {
                       if (c.key === "walletType") {
                         return (
                           <td key={c.key}>
-                            <Badge tone={String(r.walletType).toUpperCase() === "CORPORATE" ? "info" : "neutral"}>
+                            <Badge
+                              tone={
+                                String(r.walletType).toUpperCase() === "CORPORATE"
+                                  ? "info"
+                                  : "neutral"
+                              }
+                            >
                               {r.walletType || "—"}
                             </Badge>
                           </td>
@@ -562,7 +573,9 @@ export default function WalletsQueryListPage() {
                               {fmtDt(m.createDt)}
                             </td>
                             <td>
-                              <div className="text-xs font-medium">{m.orderType || m.type || "—"}</div>
+                              <div className="text-xs font-medium">
+                                {m.orderType || m.type || "—"}
+                              </div>
                               <div className="font-mono text-[10px] text-slate-400">
                                 {m.id} {m.alias ? `· ${m.alias}` : ""}
                               </div>
@@ -637,7 +650,9 @@ export default function WalletsQueryListPage() {
                 </div>
               ) : null}
               {legs.length === 0 ? (
-                <Empty>{selectedMovementId ? "No DE legs on this movement" : "Click a history row"}</Empty>
+                <Empty>
+                  {selectedMovementId ? "No DE legs on this movement" : "Click a history row"}
+                </Empty>
               ) : (
                 <div className="table-wrap">
                   <table className="data-table">
@@ -667,9 +682,13 @@ export default function WalletsQueryListPage() {
                                 {e.direction}
                               </Badge>
                               {mine ? (
-                                <div className="mt-0.5 text-[10px] font-medium text-emerald-700">this book</div>
+                                <div className="mt-0.5 text-[10px] font-medium text-emerald-700">
+                                  this book
+                                </div>
                               ) : (
-                                <div className="mt-0.5 text-[10px] text-slate-400">counterparty</div>
+                                <div className="mt-0.5 text-[10px] text-slate-400">
+                                  counterparty
+                                </div>
                               )}
                             </td>
                             <td className="font-mono text-xs">
@@ -699,7 +718,11 @@ export default function WalletsQueryListPage() {
             className="mb-4 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
             onClick={() => setShowJson((v) => !v)}
           >
-            {showJson ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            {showJson ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
             Wallet JSON
           </button>
           {showJson ? (

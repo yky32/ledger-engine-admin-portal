@@ -38,8 +38,18 @@ export const REWARD_LANES: CapLane[] = [
     id: "wallet",
     title: "Wallet",
     items: [
-      { slide: "Reward Wallet", engine: "1 ownerId → 1 wallet", status: "live", href: "/wallets-list" },
-      { slide: "Balance Inquiry", engine: "GET /wallets/{ownerId}", status: "live", href: "/review" },
+      {
+        slide: "Reward Wallet",
+        engine: "1 ownerId → 1 wallet",
+        status: "live",
+        href: "/wallets-list",
+      },
+      {
+        slide: "Balance Inquiry",
+        engine: "GET /wallets/{ownerId}",
+        status: "live",
+        href: "/review",
+      },
       {
         slide: "Hold & Release",
         engine: "Freeze available; ledger unchanged (ops / investigation)",
@@ -95,7 +105,12 @@ export const REWARD_LANES: CapLane[] = [
     id: "ledger",
     title: "Ledger",
     items: [
-      { slide: "Chart of Accounts", engine: "House 01-02 / 01-04 · customer 01-01-01", status: "live", href: "/coa" },
+      {
+        slide: "Chart of Accounts",
+        engine: "House 01-02 / 01-04 · customer 01-01-01",
+        status: "live",
+        href: "/coa",
+      },
       {
         slide: "Double-Entry Posting",
         engine: "Accounting walk + DE legs",
@@ -110,8 +125,18 @@ export const REWARD_LANES: CapLane[] = [
     id: "audit",
     title: "Audit",
     items: [
-      { slide: "Audit Trail", engine: "Movements + ledger entries", status: "partial", href: "/movements" },
-      { slide: "Event Log", engine: "Ingest + fail queue", status: "partial", href: "/failed-transactions" },
+      {
+        slide: "Audit Trail",
+        engine: "Movements + ledger entries",
+        status: "partial",
+        href: "/movements",
+      },
+      {
+        slide: "Event Log",
+        engine: "Ingest + fail queue",
+        status: "partial",
+        href: "/failed-transactions",
+      },
       { slide: "Change History", engine: "createDt / updateDt on rows", status: "partial" },
       { slide: "Access Log", engine: "—", status: "slide" },
     ],
@@ -120,7 +145,12 @@ export const REWARD_LANES: CapLane[] = [
     id: "config",
     title: "Configuration",
     items: [
-      { slide: "Rule Configurator", engine: "Door + Brain + Accounting", status: "live", href: "/ingest-policies" },
+      {
+        slide: "Rule Configurator",
+        engine: "Door + Brain + Accounting",
+        status: "live",
+        href: "/ingest-policies",
+      },
       {
         slide: "Wallet Tiering",
         engine: "Unique criterion + currency",

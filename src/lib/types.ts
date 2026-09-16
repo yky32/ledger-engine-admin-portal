@@ -168,7 +168,8 @@ export type TransactionalEventBody = {
 /** IngestionResult + Trust pack B */
 export type IngestResult = {
   eventId?: string;
-  status?: "EARNED" | "BURNED" | "PROCESSED" | "REFUNDED" | "SKIPPED" | "DUPLICATE" | "ERROR" | string;
+  status?:
+    "EARNED" | "BURNED" | "PROCESSED" | "REFUNDED" | "SKIPPED" | "DUPLICATE" | "ERROR" | string;
   operation?: string;
   reason?: string;
   points?: number | string;

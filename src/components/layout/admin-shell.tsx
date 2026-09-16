@@ -1,7 +1,7 @@
 "use client";
 
-import { Sidebar } from "./sidebar";
 import { ApiCallBar } from "./api-call-bar";
+import { Sidebar } from "./sidebar";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   return (

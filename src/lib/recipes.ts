@@ -13,16 +13,72 @@ export type RecipeDef = {
 };
 
 export const POSTING_RECIPES: RecipeDef[] = [
-  { code: "CC_TXN", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "credit card transaction" },
-  { code: "CC_CIP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "credit card cash instalment" },
-  { code: "CC_SIP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "credit card spending instalment" },
-  { code: "LN_TXN", profile: "UA_LOAN", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "loan transaction" },
-  { code: "CC_TXN_HKD", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "HKD", note: "legacy alias" },
-  { code: "CC_TXN_LP", profile: "UA_CC", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "legacy alias" },
-  { code: "CC_TXN_HKD_REDEEM", profile: "UA_CC", atoms: ["CREDIT_REWARD", "REDEEM"], rewardCcy: "HKD" },
-  { code: "CC_TXN_HKD_CASHBACK", profile: "UA_CC", atoms: ["CREDIT_REWARD", "CASHBACK"], rewardCcy: "HKD" },
-  { code: "CC_TXN_LP_REDEEM", profile: "UA_CC", atoms: ["CREDIT_REWARD", "REDEEM"], rewardCcy: "LP" },
-  { code: "CC_TXN_LP_CASHBACK", profile: "UA_CC", atoms: ["CREDIT_REWARD", "CASHBACK"], rewardCcy: "LP" },
+  {
+    code: "CC_TXN",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "LP",
+    note: "credit card transaction",
+  },
+  {
+    code: "CC_CIP",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "LP",
+    note: "credit card cash instalment",
+  },
+  {
+    code: "CC_SIP",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "LP",
+    note: "credit card spending instalment",
+  },
+  {
+    code: "LN_TXN",
+    profile: "UA_LOAN",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "LP",
+    note: "loan transaction",
+  },
+  {
+    code: "CC_TXN_HKD",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "HKD",
+    note: "legacy alias",
+  },
+  {
+    code: "CC_TXN_LP",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "LP",
+    note: "legacy alias",
+  },
+  {
+    code: "CC_TXN_HKD_REDEEM",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD", "REDEEM"],
+    rewardCcy: "HKD",
+  },
+  {
+    code: "CC_TXN_HKD_CASHBACK",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD", "CASHBACK"],
+    rewardCcy: "HKD",
+  },
+  {
+    code: "CC_TXN_LP_REDEEM",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD", "REDEEM"],
+    rewardCcy: "LP",
+  },
+  {
+    code: "CC_TXN_LP_CASHBACK",
+    profile: "UA_CC",
+    atoms: ["CREDIT_REWARD", "CASHBACK"],
+    rewardCcy: "LP",
+  },
   {
     code: "CC_TXN_HKD_TO_LP",
     profile: "UA_CC",
@@ -43,8 +99,19 @@ export const POSTING_RECIPES: RecipeDef[] = [
   },
   { code: "LOAN_DD_HKD", profile: "UA_LOAN", atoms: ["CREDIT_REWARD"], rewardCcy: "HKD" },
   { code: "LOAN_DD_LP", profile: "UA_LOAN", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
-  { code: "LOAN_DD_LP_REDEEM", profile: "UA_LOAN", atoms: ["CREDIT_REWARD", "REDEEM"], rewardCcy: "LP" },
-  { code: "LIKE_FB_PAGE", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP", note: "FIXED 5 via Brain" },
+  {
+    code: "LOAN_DD_LP_REDEEM",
+    profile: "UA_LOAN",
+    atoms: ["CREDIT_REWARD", "REDEEM"],
+    rewardCcy: "LP",
+  },
+  {
+    code: "LIKE_FB_PAGE",
+    profile: "UA_ENGAGE",
+    atoms: ["CREDIT_REWARD"],
+    rewardCcy: "LP",
+    note: "FIXED 5 via Brain",
+  },
   { code: "SOCIAL_LIKE", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
   { code: "FOLLOW_IG", profile: "UA_ENGAGE", atoms: ["CREDIT_REWARD"], rewardCcy: "LP" },
 ];
@@ -129,7 +196,13 @@ export const HOUSE_COA_PRESETS = [
 
 export function isHouseCoaCode(code?: string | null): boolean {
   const c = (code ?? "").toUpperCase();
-  return c.startsWith("HOUSE_") || c.startsWith("CORP_") || c.startsWith("GL_") || c === "PROGRAM" || c === "HOUSE";
+  return (
+    c.startsWith("HOUSE_") ||
+    c.startsWith("CORP_") ||
+    c.startsWith("GL_") ||
+    c === "PROGRAM" ||
+    c === "HOUSE"
+  );
 }
 
 /** Shared webhook / Brain / accounting bind codes. Reward is resultCurrency, not a suffix. */

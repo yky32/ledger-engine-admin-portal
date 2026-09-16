@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Badge, Empty, JsonBlock, Alert } from "@/components/ui/kit";
+import { useCallback, useEffect, useState } from "react";
+
 import { engine } from "@/lib/engine";
 import { errMsg, money } from "@/lib/format";
 import type { FailedIngest, LedgerLeg, MovementView, WalletView } from "@/lib/types";
@@ -10,6 +10,7 @@ import { AccountBooksTable } from "@/components/books/account-books-table";
 import { TierMark } from "@/components/books/tier-mark";
 import { PageShell } from "@/components/layout/page-shell";
 import { FilterBar } from "@/components/ui/filter-bar";
+import { Alert, Badge, Card, Empty, JsonBlock } from "@/components/ui/kit";
 
 export default function ReviewPage() {
   const [ownerId, setOwnerId] = useState("");
@@ -148,11 +149,7 @@ export default function ReviewPage() {
         <Card
           title="Movements"
           description={`${movements.length} row(s)`}
-          right={
-            selectedMovementId ? (
-              <Badge tone="info">legs · {selectedMovementId}</Badge>
-            ) : null
-          }
+          right={selectedMovementId ? <Badge tone="info">legs · {selectedMovementId}</Badge> : null}
         >
           {movements.length === 0 ? (
             <Empty>No movements</Empty>
@@ -229,13 +226,9 @@ export default function ReviewPage() {
                       <td className="font-mono text-[10px]">{f.id}</td>
                       <td className="font-mono text-xs">{f.failureCode}</td>
                       <td>
-                        <Badge tone={f.status === "OPEN" ? "warn" : "neutral"}>
-                          {f.status}
-                        </Badge>
+                        <Badge tone={f.status === "OPEN" ? "warn" : "neutral"}>{f.status}</Badge>
                       </td>
-                      <td className="max-w-[180px] truncate text-xs text-slate-600">
-                        {f.reason}
-                      </td>
+                      <td className="max-w-[180px] truncate text-xs text-slate-600">{f.reason}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -271,9 +264,7 @@ export default function ReviewPage() {
                     <td className="font-mono text-[10px]">{e.entryId}</td>
                     <td className="font-mono text-[10px]">{e.fullNumber || "—"}</td>
                     <td>
-                      <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>
-                        {e.direction}
-                      </Badge>
+                      <Badge tone={e.direction === "CREDIT" ? "ok" : "warn"}>{e.direction}</Badge>
                     </td>
                     <td className="font-mono text-xs">{money(e.amount)}</td>
                     <td>{e.currency}</td>

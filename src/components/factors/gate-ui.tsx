@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { clsx } from "@/lib/format";
+
 import type { FactorGate } from "@/lib/factors";
-import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/recipes";
+import { clsx } from "@/lib/format";
+import { EVENT_TYPE_LABELS, EVENT_TYPES } from "@/lib/recipes";
 
 export type ChipTone = "violet" | "emerald" | "sky" | "rose";
 
@@ -37,7 +38,10 @@ export function Chip({
       type="button"
       onClick={onClick}
       title={title}
-      className={clsx("rounded-full px-2.5 py-1 text-[11px] font-medium transition", active ? on : off)}
+      className={clsx(
+        "rounded-full px-2.5 py-1 text-[11px] font-medium transition",
+        active ? on : off,
+      )}
     >
       {children}
     </button>
@@ -90,8 +94,12 @@ export function GateCard({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 truncate font-mono text-lg font-semibold text-slate-900">{value || "any"}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </div>
+      <div className="mt-1 truncate font-mono text-lg font-semibold text-slate-900">
+        {value || "any"}
+      </div>
       <div className="mt-2 flex flex-wrap gap-1.5">{children}</div>
       {footer ? <div className="mt-2">{footer}</div> : null}
     </div>
@@ -175,11 +183,20 @@ export function AndGateGrid({
         }
       >
         {["HKD", "USD", "HKD,USD", "LP"].map((v) => (
-          <Chip key={v} tone={tone} active={gate.currencies === v} onClick={() => onChange({ currencies: v })}>
+          <Chip
+            key={v}
+            tone={tone}
+            active={gate.currencies === v}
+            onClick={() => onChange({ currencies: v })}
+          >
             {v}
           </Chip>
         ))}
-        <Chip tone={tone} active={gate.currencies === ""} onClick={() => onChange({ currencies: "" })}>
+        <Chip
+          tone={tone}
+          active={gate.currencies === ""}
+          onClick={() => onChange({ currencies: "" })}
+        >
           any
         </Chip>
       </GateCard>
@@ -196,7 +213,12 @@ export function AndGateGrid({
         }
       >
         {["7", "30", "90"].map((v) => (
-          <Chip key={v} tone={tone} active={gate.ageLte === v} onClick={() => onChange({ ageLte: v })}>
+          <Chip
+            key={v}
+            tone={tone}
+            active={gate.ageLte === v}
+            onClick={() => onChange({ ageLte: v })}
+          >
             ≤{v}d
           </Chip>
         ))}

@@ -1,7 +1,7 @@
 "use client";
 
-import { PageShell } from "@/components/layout/page-shell";
 import { CapabilityStatement } from "@/components/books/capability-statement";
+import { PageShell } from "@/components/layout/page-shell";
 
 export default function CapabilityPage() {
   return (

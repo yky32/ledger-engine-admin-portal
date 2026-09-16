@@ -1,32 +1,33 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Card, Badge, Alert } from "@/components/ui/kit";
-import { PageShell } from "@/components/layout/page-shell";
-import { SanitySetup } from "@/components/books/sanity-setup";
-import { CapabilityTeaser } from "@/components/books/capability-statement";
-import { engine } from "@/lib/engine";
-import { errMsg, clsx } from "@/lib/format";
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowRight,
-  CheckCircle2,
-  XCircle,
-  DoorOpen,
-  Brain,
   BookOpen,
-  ScrollText,
-  FlaskConical,
-  Webhook,
-  Search,
-  AlertTriangle,
-  ListTree,
-  Wallet,
-  Scale,
+  Brain,
+  CheckCircle2,
   CreditCard,
+  DoorOpen,
+  FlaskConical,
+  ListTree,
   Medal,
+  Scale,
+  ScrollText,
+  Search,
+  Wallet,
+  Webhook,
+  XCircle,
 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { engine } from "@/lib/engine";
+import { clsx, errMsg } from "@/lib/format";
+import { CapabilityTeaser } from "@/components/books/capability-statement";
+import { SanitySetup } from "@/components/books/sanity-setup";
+import { PageShell } from "@/components/layout/page-shell";
+import { Alert, Badge, Card } from "@/components/ui/kit";
 
 /**
  * Home = interactive Door → Brain → Accounting → Ledger picture.
@@ -70,23 +71,22 @@ export default function HomePage() {
           <Link href="/coa" className="btn-secondary text-xs">
             COA chart
           </Link>
-            {engineOk === null ? (
-              <Badge>engine…</Badge>
-            ) : engineOk ? (
-              <Badge tone="ok">
-                <CheckCircle2 className="mr-1 inline h-3 w-3" />
-                engine up
-              </Badge>
-            ) : (
-              <Badge tone="error">
-                <XCircle className="mr-1 inline h-3 w-3" />
-                engine down
-              </Badge>
-            )}
-          </div>
-        }
-      >
-
+          {engineOk === null ? (
+            <Badge>engine…</Badge>
+          ) : engineOk ? (
+            <Badge tone="ok">
+              <CheckCircle2 className="mr-1 inline h-3 w-3" />
+              engine up
+            </Badge>
+          ) : (
+            <Badge tone="error">
+              <XCircle className="mr-1 inline h-3 w-3" />
+              engine down
+            </Badge>
+          )}
+        </div>
+      }
+    >
       <CapabilityTeaser />
 
       <SanitySetup />
@@ -173,8 +173,7 @@ export default function HomePage() {
                   After settle, same TX — if policy <code>isEnabled</code>
                 </td>
                 <td>
-                  Sum this wallet’s LP <code>ledgerBalance</code> → write{" "}
-                  <code>wallet.tier</code>
+                  Sum this wallet’s LP <code>ledgerBalance</code> → write <code>wallet.tier</code>
                 </td>
               </tr>
             </tbody>
@@ -187,8 +186,12 @@ export default function HomePage() {
           <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
           <span className="rounded-md bg-violet-50 px-2 py-1 text-violet-800">Brain score LP</span>
           <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">DR operating LP</span>
-          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">CR 01AXXXX 01-01-01 LP</span>
+          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">
+            DR operating LP
+          </span>
+          <span className="rounded-md bg-emerald-50 px-2 py-1 text-emerald-800">
+            CR 01AXXXX 01-01-01 LP
+          </span>
           <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
           <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-800">check wallet.tier</span>
         </div>
@@ -218,7 +221,8 @@ export default function HomePage() {
               <li>
                 <Link className="flow-link" href="/corporate-coa">
                   <BookOpen className="h-3.5 w-3.5" />
-                  House · corporate COA <span className="text-slate-400">(company books first)</span>
+                  House · corporate COA{" "}
+                  <span className="text-slate-400">(company books first)</span>
                 </Link>
               </li>
               <li>
@@ -290,7 +294,10 @@ export default function HomePage() {
                 <FlaskConical className="h-3.5 w-3.5" />
                 Simulator
               </Link>
-              <Link href="/transactions-ingest" className="btn-secondary w-full justify-center text-xs">
+              <Link
+                href="/transactions-ingest"
+                className="btn-secondary w-full justify-center text-xs"
+              >
                 <Webhook className="h-3.5 w-3.5" />
                 Single webhook fire
               </Link>
@@ -406,7 +413,9 @@ export default function HomePage() {
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
             <li>~1 global policy</li>
             <li>Kill-switch + auto-wallet settlement/LP</li>
-            <li>API <code>GET/PUT /ingest-policies</code></li>
+            <li>
+              API <code>GET/PUT /ingest-policies</code>
+            </li>
           </ul>
           <Link href="/ingest-policies" className="btn-secondary mt-3 text-xs">
             Open door config
@@ -414,10 +423,14 @@ export default function HomePage() {
         </Card>
         <Card title="Brain = digestion · COA = chart · accounting = legs">
           <p className="text-sm text-slate-600">
-            Brain scores how many points. COA is the account structure. Accounting rules walk CR/DR onto those books.
+            Brain scores how many points. COA is the account structure. Accounting rules walk CR/DR
+            onto those books.
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
-            <li>One webhook <code>eventType</code> (CC_TXN / CC_CIP / CC_SIP / LN_TXN) on Door, Brain, and accounting</li>
+            <li>
+              One webhook <code>eventType</code> (CC_TXN / CC_CIP / CC_SIP / LN_TXN) on Door, Brain,
+              and accounting
+            </li>
             <li>COA is the chart only (01-01-01 member · 01-02-01 operating)</li>
             <li>Accounting bind that same eventType → CR/DR walk</li>
           </ul>
@@ -533,13 +546,7 @@ function FlowBox({
   }[tone];
 
   return (
-    <div
-      className={clsx(
-        "rounded-2xl border-2 p-4 shadow-sm",
-        ring,
-        wide && "min-h-full",
-      )}
-    >
+    <div className={clsx("rounded-2xl border-2 p-4 shadow-sm", ring, wide && "min-h-full")}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className={clsx("text-sm font-semibold tracking-tight", head)}>{title}</h3>
