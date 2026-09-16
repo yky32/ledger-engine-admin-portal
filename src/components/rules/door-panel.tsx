@@ -56,7 +56,7 @@ const GATE_PRESETS: Record<string, FactorGate> = {
   hkdPos: { ...EMPTY_FACTOR_GATE, currencies: "HKD", channel: "POS" },
 };
 
-/** Compact segmented toggle for boolean choices. */
+/** Compact segmented toggle for boolean choices; options may carry an active tone. */
 function SegToggle({
   value,
   onChange,
@@ -64,8 +64,14 @@ function SegToggle({
 }: {
   value: boolean;
   onChange: (v: boolean) => void;
-  options: Array<{ v: boolean; label: string }>;
+  options: Array<{ v: boolean; label: string; tone?: "emerald" | "rose" }>;
 }) {
+  const activeCls = (tone?: "emerald" | "rose") =>
+    tone === "emerald"
+      ? "bg-emerald-600 text-white shadow-sm"
+      : tone === "rose"
+        ? "bg-rose-600 text-white shadow-sm"
+        : "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200";
   return (
     <div className="inline-flex shrink-0 rounded-lg bg-slate-100 p-0.5">
       {options.map((o) => (
@@ -75,9 +81,7 @@ function SegToggle({
           onClick={() => onChange(o.v)}
           className={clsx(
             "rounded-md px-2.5 py-1 text-[11px] font-medium transition",
-            o.v === value
-              ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
-              : "text-slate-500 hover:text-slate-800",
+            o.v === value ? activeCls(o.tone) : "text-slate-500 hover:text-slate-800",
           )}
         >
           {o.label}
@@ -349,6 +353,7 @@ export function DoorPanel() {
 
           <Card
             title="Edit door"
+            className="mb-4"
             description="Empty gate = admit anyone. Chips write entryFactors live — no Apply."
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -362,8 +367,8 @@ export function DoorPanel() {
                 value={!!policy.isEnabled}
                 onChange={(v) => setPolicy({ ...policy, isEnabled: v })}
                 options={[
-                  { v: true, label: "Open" },
-                  { v: false, label: "Closed" },
+                  { v: true, label: "Open", tone: "emerald" },
+                  { v: false, label: "Closed", tone: "rose" },
                 ]}
               />
             </div>
