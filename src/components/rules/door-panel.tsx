@@ -426,7 +426,7 @@ export function DoorPanel() {
             </div>
 
             <div className="mt-2.5 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span className="w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 channel
               </span>
               {["POS", "CRM", "OMS"].map((v) => (
@@ -452,39 +452,6 @@ export function DoorPanel() {
                 onChange={(e) => patchGate({ channel: e.target.value })}
                 placeholder="metadata.channel"
               />
-            </div>
-
-            <div
-              className={clsx(
-                "mt-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium",
-                gatesLive ? "bg-emerald-50 text-emerald-950" : "bg-amber-50 text-amber-950",
-              )}
-            >
-              {gatesLive ? (
-                gateIsOpen(gate) ? (
-                  <span>Admits every webhook — only the master switch applies.</span>
-                ) : (
-                  <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
-                      Admits when
-                    </span>
-                    {admitBits
-                      .filter((b) => !b.startsWith("any "))
-                      .map((bit, i) => (
-                        <span key={bit} className="inline-flex items-center gap-1.5">
-                          {i > 0 ? (
-                            <span className="text-[10px] font-bold text-emerald-400">AND</span>
-                          ) : null}
-                          <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-[11px] ring-1 ring-emerald-200">
-                            {bit}
-                          </span>
-                        </span>
-                      ))}
-                  </span>
-                )
-              ) : (
-                <span>Custom FactorSet — chips paused until you pick a gate or Anyone.</span>
-              )}
             </div>
 
             <button

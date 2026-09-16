@@ -81,32 +81,19 @@ export function StepHead({
   );
 }
 
-export function GateCard({
-  label,
-  value,
-  children,
-  footer,
-}: {
-  label: string;
-  value: string;
-  children: ReactNode;
-  footer?: ReactNode;
-}) {
+/** One gate = one line: label + preset chips + free-text input. */
+function GateRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="w-20 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         {label}
-      </div>
-      <div className="mt-1 truncate font-mono text-lg font-semibold text-slate-900">
-        {value || "any"}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">{children}</div>
-      {footer ? <div className="mt-2">{footer}</div> : null}
+      </span>
+      {children}
     </div>
   );
 }
 
-/** Shared eventType × MCC × currency × age × amount AND grid (Door + Brain). */
+/** Shared eventType × MCC × currency × age × amount AND rows (Door + Brain). */
 export function AndGateGrid({
   gate,
   onChange,
@@ -117,19 +104,8 @@ export function AndGateGrid({
   tone?: ChipTone;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <GateCard
-        label="eventType"
-        value={gate.eventTypes ?? ""}
-        footer={
-          <input
-            className="field-input font-mono text-xs"
-            value={gate.eventTypes ?? ""}
-            onChange={(e) => onChange({ eventTypes: e.target.value.toUpperCase() })}
-            placeholder="CC_TXN, CC_CIP,…"
-          />
-        }
-      >
+    <div className="space-y-1.5">
+      <GateRow label="eventType">
         {EVENT_TYPES.map((v) => (
           <Chip
             key={v}
@@ -148,19 +124,15 @@ export function AndGateGrid({
         >
           any
         </Chip>
-      </GateCard>
-      <GateCard
-        label="MCC"
-        value={gate.mccs}
-        footer={
-          <input
-            className="field-input font-mono text-xs"
-            value={gate.mccs}
-            onChange={(e) => onChange({ mccs: e.target.value })}
-            placeholder="custom csv"
-          />
-        }
-      >
+        <input
+          className="field-input w-44 font-mono text-xs"
+          value={gate.eventTypes ?? ""}
+          onChange={(e) => onChange({ eventTypes: e.target.value.toUpperCase() })}
+          placeholder="CC_TXN, CC_CIP,…"
+        />
+      </GateRow>
+
+      <GateRow label="MCC">
         {["101", "5411", "5411,5412", "5812"].map((v) => (
           <Chip key={v} tone={tone} active={gate.mccs === v} onClick={() => onChange({ mccs: v })}>
             {v}
@@ -169,19 +141,15 @@ export function AndGateGrid({
         <Chip tone={tone} active={gate.mccs === ""} onClick={() => onChange({ mccs: "" })}>
           any
         </Chip>
-      </GateCard>
-      <GateCard
-        label="Currency"
-        value={gate.currencies}
-        footer={
-          <input
-            className="field-input font-mono text-xs"
-            value={gate.currencies}
-            onChange={(e) => onChange({ currencies: e.target.value })}
-            placeholder="custom csv"
-          />
-        }
-      >
+        <input
+          className="field-input w-24 font-mono text-xs"
+          value={gate.mccs}
+          onChange={(e) => onChange({ mccs: e.target.value })}
+          placeholder="custom csv"
+        />
+      </GateRow>
+
+      <GateRow label="currency">
         {["HKD", "USD", "HKD,USD", "LP"].map((v) => (
           <Chip
             key={v}
@@ -199,19 +167,15 @@ export function AndGateGrid({
         >
           any
         </Chip>
-      </GateCard>
-      <GateCard
-        label="Age"
-        value={gate.ageLte ? `≤${gate.ageLte}d` : ""}
-        footer={
-          <input
-            className="field-input font-mono text-xs"
-            value={gate.ageLte}
-            onChange={(e) => onChange({ ageLte: e.target.value })}
-            placeholder="max days"
-          />
-        }
-      >
+        <input
+          className="field-input w-28 font-mono text-xs"
+          value={gate.currencies}
+          onChange={(e) => onChange({ currencies: e.target.value })}
+          placeholder="custom csv"
+        />
+      </GateRow>
+
+      <GateRow label="age">
         {["7", "30", "90"].map((v) => (
           <Chip
             key={v}
@@ -225,35 +189,15 @@ export function AndGateGrid({
         <Chip tone={tone} active={gate.ageLte === ""} onClick={() => onChange({ ageLte: "" })}>
           any
         </Chip>
-      </GateCard>
-      <GateCard
-        label="Amount"
-        value={
-          gate.amtMin && gate.amtMax
-            ? `${gate.amtMin}–${gate.amtMax}`
-            : gate.amtMin
-              ? `≥${gate.amtMin}`
-              : gate.amtMax
-                ? `≤${gate.amtMax}`
-                : ""
-        }
-        footer={
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              className="field-input font-mono text-xs"
-              value={gate.amtMin}
-              onChange={(e) => onChange({ amtMin: e.target.value })}
-              placeholder="min"
-            />
-            <input
-              className="field-input font-mono text-xs"
-              value={gate.amtMax}
-              onChange={(e) => onChange({ amtMax: e.target.value })}
-              placeholder="max"
-            />
-          </div>
-        }
-      >
+        <input
+          className="field-input w-16 font-mono text-xs"
+          value={gate.ageLte}
+          onChange={(e) => onChange({ ageLte: e.target.value })}
+          placeholder="max days"
+        />
+      </GateRow>
+
+      <GateRow label="amount">
         {(
           [
             ["1", "", "≥1"],
@@ -278,7 +222,19 @@ export function AndGateGrid({
         >
           any
         </Chip>
-      </GateCard>
+        <input
+          className="field-input w-16 font-mono text-xs"
+          value={gate.amtMin}
+          onChange={(e) => onChange({ amtMin: e.target.value })}
+          placeholder="min"
+        />
+        <input
+          className="field-input w-16 font-mono text-xs"
+          value={gate.amtMax}
+          onChange={(e) => onChange({ amtMax: e.target.value })}
+          placeholder="max"
+        />
+      </GateRow>
     </div>
   );
 }
