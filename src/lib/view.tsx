@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 import { viewForPath } from "@/lib/nav";
 
@@ -32,35 +32,31 @@ const ViewContext = createContext<{ view: AdminView; setView: (v: AdminView) => 
 });
 
 /**
- * Active console view (Ops / Lab / Docs). The stored choice is restored after
- * mount (never during SSR — avoids hydration mismatch), but a route owned by
- * another view always wins: deep-linking /simulator while Ops is stored flips
- * the session to Lab, because lab writes are about to happen.
+ * Active console view (Ops / Lab / Docs).
+ *
+ * The view is DERIVED from the current route during render — never stored in
+ * state — so switching views is a single navigation and a single re-render,
+ * with no effects fighting the router. localStorage is only a fallback for
+ * routes no view owns (legacy shims like /digestion-rules), restored after
+ * mount to stay hydration-safe.
  */
 export function ViewProvider({ children }: { children: ReactNode }) {
-  const [view, setViewState] = useState<AdminView>("ops");
   const pathname = usePathname();
+  const [stored, setStored] = useState<AdminView | null>(readStoredView());
 
-  useEffect(() => {
-    const stored = readStoredView();
-    if (stored) setViewState(stored);
-  }, []);
-
-  useEffect(() => {
-    const owner = viewForPath(pathname);
-    if (owner && owner !== view) setViewState(owner);
-  }, [pathname, view]);
-
-  const setView = (v: AdminView) => {
-    setViewState(v);
+  const setView = useCallback((v: AdminView) => {
+    setStored(v);
     try {
       window.localStorage.setItem(VIEW_KEY, v);
     } catch {
-      // storage unavailable (private mode) — view stays session-only
+      // storage unavailable (private mode) — view stays route-derived
     }
-  };
+  }, []);
 
-  return <ViewContext.Provider value={{ view, setView }}>{children}</ViewContext.Provider>;
+  const view = viewForPath(pathname) ?? stored ?? "ops";
+  const value = useMemo(() => ({ view, setView }), [view, setView]);
+
+  return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;
 }
 
 export function useView() {
